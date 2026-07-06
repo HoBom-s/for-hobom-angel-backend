@@ -1,3 +1,4 @@
+import { TenantScope } from "src/shared/tenant/tenant-scope";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { UserRole } from "src/hb-backend-api/user/domain/enums/user-role.enum";
 import { UserStatus } from "src/hb-backend-api/user/domain/enums/user-status.enum";
@@ -101,6 +102,14 @@ export class User {
     return (
       this.isPlatformAdmin() ||
       this.shelterRoles.some((grant) => grant.matches(shelterId, role))
+    );
+  }
+
+  /** The tenant boundary this user may act within (see {@link TenantScope}). */
+  public toTenantScope(): TenantScope {
+    return TenantScope.of(
+      this.isPlatformAdmin(),
+      this.shelterRoles.map((grant) => grant.getShelterId.toString()),
     );
   }
 

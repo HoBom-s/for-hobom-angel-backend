@@ -9,7 +9,7 @@ import { OutboxStatus } from "src/hb-backend-api/outbox/domain/enums/outbox-stat
  * domain state change (PENDING), then polled over gRPC by hobom-event-processor
  * and published to Kafka. `version` supports optimistic updates on transition.
  */
-@Schema({ collection: "outbox" })
+@Schema({ collection: "outbox", timestamps: true })
 export class OutboxEntity extends BaseEntity {
   @Prop({ required: true, unique: true, default: () => randomUUID() })
   public eventId: string;

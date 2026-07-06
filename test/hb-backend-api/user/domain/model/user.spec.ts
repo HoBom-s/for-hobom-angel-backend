@@ -99,6 +99,22 @@ describe("User aggregate", () => {
         true,
       );
     });
+
+    it("toTenantScope reflects shelter grants (admin is unscoped)", () => {
+      const s = shelter();
+      const scope = reconstitute({
+        shelterRoles: [ShelterRoleGrant.of(s, UserRole.SHELTER_STAFF)],
+      }).toTenantScope();
+      expect(scope.isPlatformAdmin).toBe(false);
+      expect(scope.canAccess(s.toString())).toBe(true);
+      expect(scope.canAccess(shelter().toString())).toBe(false);
+
+      expect(
+        reconstitute({
+          roles: [UserRole.USER, UserRole.SYSTEM_ADMIN],
+        }).toTenantScope().isPlatformAdmin,
+      ).toBe(true);
+    });
   });
 
   describe("state transitions", () => {

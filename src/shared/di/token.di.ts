@@ -26,8 +26,16 @@ class AuthModuleToken extends TokenRegistry {
   );
 }
 
+class AuditModuleToken extends TokenRegistry {
+  public readonly AuditPersistencePort = this.register(
+    "audit.persistence.port",
+  );
+  public readonly AuditRepository = this.register("audit.repository");
+}
+
 export const DIToken = {
   OutboxModule: new OutboxModuleToken(),
   UserModule: new UserModuleToken(),
   AuthModule: new AuthModuleToken(),
+  AuditModule: new AuditModuleToken(),
 } as const;

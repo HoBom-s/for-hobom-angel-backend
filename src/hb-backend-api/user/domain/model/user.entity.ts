@@ -11,7 +11,7 @@ import { ShelterRole } from "src/hb-backend-api/user/domain/model/shelter-role";
  * duplicate signups. `realNameEnc`/`phoneEnc` are AES-256-GCM ciphertext at
  * rest; only `nickname` is public. `di` is optional.
  */
-@Schema({ collection: "users" })
+@Schema({ collection: "users", timestamps: true })
 export class UserEntity extends BaseEntity {
   @Prop({ required: true, unique: true })
   public nickname: string;
