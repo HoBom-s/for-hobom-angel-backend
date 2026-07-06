@@ -41,4 +41,13 @@ describe("App (e2e)", () => {
     const res = await request(app.getHttpServer()).get("/");
     expect(res.status).toBe(200);
   });
+
+  it("exposes liveness and readiness probes", async () => {
+    expect(
+      (await request(app.getHttpServer()).get("/health/live")).status,
+    ).toBe(200);
+    expect(
+      (await request(app.getHttpServer()).get("/health/ready")).status,
+    ).toBe(200);
+  });
 });

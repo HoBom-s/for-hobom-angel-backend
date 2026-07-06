@@ -25,6 +25,21 @@ describe("OutboxPayloadFactoryRegistry", () => {
     expect(p).toMatchObject({ reason: "EXPIRED", animalId: "a-1" });
   });
 
+  it("builds a HOBOM_LOG access-log payload", () => {
+    const p = OutboxPayloadFactoryRegistry[EventType.HOBOM_LOG]({
+      traceId: "t",
+      level: "INFO",
+      method: "GET",
+      path: "/x",
+      statusCode: 200,
+      host: "h",
+      userId: "u",
+      message: "m",
+      meta: { redacted: true },
+    });
+    expect(p).toMatchObject({ level: "INFO", statusCode: 200, userId: "u" });
+  });
+
   it("has a factory for every event type", () => {
     for (const type of Object.values(EventType)) {
       expect(typeof OutboxPayloadFactoryRegistry[type]).toBe("function");

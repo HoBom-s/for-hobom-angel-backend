@@ -20,6 +20,19 @@ export interface FosterTerminationPayloadInput {
   occurredAt: string;
 }
 
+export interface HobomLogPayloadInput {
+  traceId: string | null;
+  level: "INFO" | "ERROR";
+  method: string;
+  path: string;
+  statusCode: number;
+  host: string;
+  userId: string;
+  message: string;
+  /** Redacted request context (query/body/headers) — never raw PII/secrets. */
+  meta: Record<string, unknown>;
+}
+
 interface PayloadFactoryMap {
   [EventType.ADOPTION_APPROVED]: (
     input: ApprovalPayloadInput,
@@ -36,6 +49,9 @@ interface PayloadFactoryMap {
   [EventType.FOSTER_TERMINATED]: (
     input: FosterTerminationPayloadInput,
   ) => Record<string, unknown>;
+  [EventType.HOBOM_LOG]: (
+    input: HobomLogPayloadInput,
+  ) => Record<string, unknown>;
 }
 
 const approvalPayload = (
@@ -48,4 +64,5 @@ export const OutboxPayloadFactoryRegistry: PayloadFactoryMap = {
   [EventType.STAFF_PROMOTION_APPROVED]: approvalPayload,
   [EventType.SHELTER_VERIFICATION_APPROVED]: approvalPayload,
   [EventType.FOSTER_TERMINATED]: (input) => ({ ...input }),
+  [EventType.HOBOM_LOG]: (input) => ({ ...input }),
 };

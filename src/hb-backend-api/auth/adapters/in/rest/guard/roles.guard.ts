@@ -9,7 +9,6 @@ import { Reflector } from "@nestjs/core";
 import { Request } from "express";
 import { DIToken } from "src/shared/di/token.di";
 import { ROLES_KEY } from "src/hb-backend-api/auth/adapters/in/rest/decorator/roles.decorator";
-import { AuthenticatedUser } from "src/hb-backend-api/auth/domain/model/token-pair";
 import { UserRole } from "src/hb-backend-api/user/domain/enums/user-role.enum";
 import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-query.port";
 
@@ -36,7 +35,7 @@ export class RolesGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<Request>();
-    const principal = request.user as AuthenticatedUser | undefined;
+    const principal = request.user;
     if (!principal) {
       throw new ForbiddenException("Not authenticated");
     }
