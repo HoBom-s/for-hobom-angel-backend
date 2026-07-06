@@ -6,29 +6,30 @@ on:
     branches: [main, develop]
 
 jobs:
-  # Filesystem scan: dependency CVEs + IaC/Dockerfile misconfigurations.
+  # Dependency CVE scan via the official Trivy image (avoids action-version drift).
   trivy:
     name: Trivy filesystem scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Trivy scan (fail on HIGH/CRITICAL)
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          scan-type: fs
-          scan-ref: .
-          severity: HIGH,CRITICAL
-          exit-code: "1"
-          ignore-unfixed: true
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" aquasec/trivy:latest \
+            fs /repo \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --exit-code 1
 
-  # Secret scanning: block credentials/keys from entering history.
+  # Secret scan via the free gitleaks CLI image. The gitleaks *action* requires a
+  # paid license for organizations; the CLI itself does not.
   gitleaks:
     name: Gitleaks secret scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Gitleaks scan
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" \
+            ghcr.io/gitleaks/gitleaks:latest \
+            dir /repo --redact --exit-code 1
