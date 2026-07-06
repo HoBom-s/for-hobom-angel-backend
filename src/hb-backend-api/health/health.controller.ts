@@ -6,8 +6,12 @@ import {
 } from "@nestjs/terminus";
 
 /**
- * Smoke-check endpoint. Jenkins pings `GET /` (smokeCheckPath).
- * Verifies the Mongo connection is up.
+ * Health endpoints, split by intent:
+ *  - `GET /`             smoke check for the deploy pipeline (readiness).
+ *  - `GET /health/live`  liveness — is the process up? No dependencies, so a
+ *                        slow/down Mongo never gets the container killed.
+ *  - `GET /health/ready` readiness — can it serve traffic? Checks dependencies
+ *                        (Mongo now; Kafka/gateway indicators plug in here).
  */
 @Controller()
 export class HealthController {
@@ -19,6 +23,18 @@ export class HealthController {
   @Get()
   @HealthCheck()
   public check() {
+    return this.health.check([() => this.mongoose.pingCheck("mongo")]);
+  }
+
+  @Get("health/live")
+  @HealthCheck()
+  public live() {
+    return this.health.check([]);
+  }
+
+  @Get("health/ready")
+  @HealthCheck()
+  public ready() {
     return this.health.check([() => this.mongoose.pingCheck("mongo")]);
   }
 }

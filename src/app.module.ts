@@ -10,6 +10,7 @@ import { LoggerModule } from "nestjs-pino";
 import { TransactionModule } from "src/infra/mongo/transaction/transaction.module";
 import { CryptoModule } from "src/shared/crypto/crypto.module";
 import { DiscordModule } from "src/shared/discord/discord.module";
+import { HttpLogInterceptor } from "src/shared/observability/http-log.interceptor";
 import { TraceContext } from "src/shared/trace/trace.context";
 import { TraceInterceptor } from "src/shared/trace/trace.interceptor";
 import { AuditModule } from "src/hb-backend-api/audit/audit.module";
@@ -57,7 +58,9 @@ import { UserModule } from "src/hb-backend-api/user/user.module";
   ],
   providers: [
     TraceContext,
+    // Order matters: trace id is bound first, then the access log can read it.
     { provide: APP_INTERCEPTOR, useClass: TraceInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: HttpLogInterceptor },
   ],
 })
 export class AppModule {}
