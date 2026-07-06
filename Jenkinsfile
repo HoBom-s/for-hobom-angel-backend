@@ -1,0 +1,16 @@
+@Library('hobom-shared-lib') _
+
+// Angel BE deploy job.
+// hostPort 8083 (external) -> 8080 (container). Reuses shared docker repo/creds;
+// tag is distinguished by serviceName. gRPC TLS certs mounted read-only.
+hobomPipeline(
+  serviceName:    'dev-for-hobom-angel-backend',
+  hostPort:       '8083',
+  containerPort:  '8080',
+  memory:         '512m',
+  cpus:           '1',
+  envPath:        '/etc/hobom-dev/dev-for-hobom-angel-backend/.env',
+  addHost:        true,
+  extraVolumes:   ['/home/infra-admin/certs:/etc/grpc-tls:ro'],
+  smokeCheckPath: '/'
+)

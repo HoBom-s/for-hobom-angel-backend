@@ -1,0 +1,10 @@
+/dist
+/node_modules
+/build
+/coverage
+.idea
+.env
+.env.local
+*.log
+/proto
+!.gitmodules
