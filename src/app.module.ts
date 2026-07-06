@@ -9,6 +9,7 @@ import { IncomingMessage } from "http";
 import { LoggerModule } from "nestjs-pino";
 import { TransactionModule } from "src/infra/mongo/transaction/transaction.module";
 import { CryptoModule } from "src/shared/crypto/crypto.module";
+import { validate } from "src/shared/config/env.validation";
 import { DiscordModule } from "src/shared/discord/discord.module";
 import { HttpLogInterceptor } from "src/shared/observability/http-log.interceptor";
 import { TraceContext } from "src/shared/trace/trace.context";
@@ -21,7 +22,7 @@ import { UserModule } from "src/hb-backend-api/user/user.module";
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, validate }),
     LoggerModule.forRoot({
       pinoHttp: {
         genReqId: (req: IncomingMessage) => {
