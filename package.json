@@ -130,5 +130,8 @@
   },
   "lint-staged": {
     "*.ts": ["eslint --fix", "prettier --write"]
+  },
+  "overrides": {
+    "multer": "^2.2.0"
   }
 }
