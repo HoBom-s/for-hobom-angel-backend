@@ -1,0 +1,24 @@
+version: 2
+updates:
+  # npm dependencies — patch/minor grouped to reduce PR noise; majors separate.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    labels:
+      - dependencies
+
+  # Keep GitHub Actions pinned versions fresh (supply-chain of the CI itself).
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+      - ci

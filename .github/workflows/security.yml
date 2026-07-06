@@ -1,0 +1,35 @@
+name: Security
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+jobs:
+  # Dependency CVE scan via the official Trivy image (avoids action-version drift).
+  trivy:
+    name: Trivy filesystem scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trivy scan (fail on HIGH/CRITICAL)
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" aquasec/trivy:latest \
+            fs /repo \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --exit-code 1
+
+  # Secret scan via the free gitleaks CLI image. The gitleaks *action* requires a
+  # paid license for organizations; the CLI itself does not.
+  gitleaks:
+    name: Gitleaks secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Gitleaks scan
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" \
+            ghcr.io/gitleaks/gitleaks:latest \
+            dir /repo --redact --exit-code 1
