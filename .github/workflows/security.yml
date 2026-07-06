@@ -11,7 +11,7 @@ jobs:
     name: Trivy filesystem scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Trivy scan (fail on HIGH/CRITICAL)
         run: |
           docker run --rm -v "${{ github.workspace }}:/repo" aquasec/trivy:latest \
@@ -27,7 +27,7 @@ jobs:
     name: Gitleaks secret scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Gitleaks scan
         run: |
           docker run --rm -v "${{ github.workspace }}:/repo" \
