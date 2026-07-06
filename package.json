@@ -86,6 +86,7 @@
     "moduleFileExtensions": ["js", "json", "ts"],
     "rootDir": ".",
     "roots": ["<rootDir>/src", "<rootDir>/test"],
+    "setupFiles": ["reflect-metadata"],
     "testRegex": ".*\\.spec\\.ts$",
     "moduleNameMapper": {
       "^src/(.*)$": "<rootDir>/src/$1"
