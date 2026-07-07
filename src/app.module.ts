@@ -15,6 +15,7 @@ import { DiscordModule } from "src/shared/discord/discord.module";
 import { HttpLogInterceptor } from "src/shared/observability/http-log.interceptor";
 import { TraceContext } from "src/shared/trace/trace.context";
 import { TraceInterceptor } from "src/shared/trace/trace.interceptor";
+import { ApprovalModule } from "src/hb-backend-api/approval/approval.module";
 import { AuditModule } from "src/hb-backend-api/audit/audit.module";
 import { AuthModule } from "src/hb-backend-api/auth/auth.module";
 import { HealthModule } from "src/hb-backend-api/health/health.module";
@@ -57,6 +58,7 @@ import { UserModule } from "src/hb-backend-api/user/user.module";
     AuthModule,
     AuditModule,
     IdempotencyModule,
+    ApprovalModule,
   ],
   providers: [
     TraceContext,

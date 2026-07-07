@@ -16,6 +16,10 @@ export class ShelterId {
     return new ShelterId(new Types.ObjectId(id));
   }
 
+  public static generate(): ShelterId {
+    return new ShelterId(new Types.ObjectId());
+  }
+
   public equals(other: ShelterId): boolean {
     return this.value.equals(other.value);
   }

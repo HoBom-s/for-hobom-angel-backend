@@ -40,10 +40,40 @@ class IdempotencyModuleToken extends TokenRegistry {
   );
 }
 
+class ApprovalModuleToken extends TokenRegistry {
+  public readonly SubmitApprovalUseCase = this.register(
+    "approval.submit.use-case",
+  );
+  public readonly DecideApprovalUseCase = this.register(
+    "approval.decide.use-case",
+  );
+  public readonly ApprovalPersistencePort = this.register(
+    "approval.persistence.port",
+  );
+  public readonly ApprovalQueryPort = this.register("approval.query.port");
+  public readonly ApprovalRepository = this.register("approval.repository");
+}
+
+class ShelterModuleToken extends TokenRegistry {
+  public readonly ShelterPersistencePort = this.register(
+    "shelter.persistence.port",
+  );
+  public readonly ShelterQueryPort = this.register("shelter.query.port");
+  public readonly ShelterRepository = this.register("shelter.repository");
+  public readonly PublicShelterDataPort = this.register(
+    "shelter.public-data.port",
+  );
+  public readonly BusinessRegistryPort = this.register(
+    "shelter.business-registry.port",
+  );
+}
+
 export const DIToken = {
   OutboxModule: new OutboxModuleToken(),
   UserModule: new UserModuleToken(),
   AuthModule: new AuthModuleToken(),
   AuditModule: new AuditModuleToken(),
   IdempotencyModule: new IdempotencyModuleToken(),
+  ApprovalModule: new ApprovalModuleToken(),
+  ShelterModule: new ShelterModuleToken(),
 } as const;
