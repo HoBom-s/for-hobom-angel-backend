@@ -21,8 +21,8 @@ class UserModuleToken extends TokenRegistry {
 
 class AuthModuleToken extends TokenRegistry {
   public readonly JwtAuthPort = this.register("auth.jwt.port");
-  public readonly IssueTokenUseCase = this.register(
-    "auth.issue-token.use-case",
+  public readonly RefreshTokenRepository = this.register(
+    "auth.refresh-token.repository",
   );
 }
 
