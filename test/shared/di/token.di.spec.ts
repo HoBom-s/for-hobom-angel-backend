@@ -9,7 +9,9 @@ describe("DIToken", () => {
       DIToken.UserModule.UserQueryPort,
       DIToken.UserModule.UserRepository,
       DIToken.AuthModule.JwtAuthPort,
-      DIToken.AuthModule.IssueTokenUseCase,
+      DIToken.AuthModule.RefreshTokenRepository,
+      DIToken.AuditModule.AuditPersistencePort,
+      DIToken.IdempotencyModule.IdempotencyPort,
     ];
     tokens.forEach((t) => expect(typeof t).toBe("symbol"));
     expect(new Set(tokens).size).toBe(tokens.length);
