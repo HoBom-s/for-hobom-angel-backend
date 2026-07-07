@@ -33,9 +33,17 @@ class AuditModuleToken extends TokenRegistry {
   public readonly AuditRepository = this.register("audit.repository");
 }
 
+class IdempotencyModuleToken extends TokenRegistry {
+  public readonly IdempotencyPort = this.register("idempotency.port");
+  public readonly IdempotencyRepository = this.register(
+    "idempotency.repository",
+  );
+}
+
 export const DIToken = {
   OutboxModule: new OutboxModuleToken(),
   UserModule: new UserModuleToken(),
   AuthModule: new AuthModuleToken(),
   AuditModule: new AuditModuleToken(),
+  IdempotencyModule: new IdempotencyModuleToken(),
 } as const;

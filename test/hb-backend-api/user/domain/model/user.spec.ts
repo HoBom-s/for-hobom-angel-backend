@@ -38,6 +38,7 @@ const reconstitute = (
     status: UserStatus.ACTIVE,
     withdrawnAt: null,
     purgeAfter: null,
+    version: 0,
     ...overrides,
   });
 
@@ -56,6 +57,11 @@ describe("User aggregate", () => {
       expect(user.getRoles).toEqual(
         expect.arrayContaining([UserRole.USER, UserRole.SYSTEM_ADMIN]),
       );
+    });
+
+    it("starts at version 0; reconstitute carries the loaded version", () => {
+      expect(User.register(registration()).getVersion).toBe(0);
+      expect(reconstitute({ version: 5 }).getVersion).toBe(5);
     });
   });
 

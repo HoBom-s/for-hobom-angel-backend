@@ -18,6 +18,7 @@ import { TraceInterceptor } from "src/shared/trace/trace.interceptor";
 import { AuditModule } from "src/hb-backend-api/audit/audit.module";
 import { AuthModule } from "src/hb-backend-api/auth/auth.module";
 import { HealthModule } from "src/hb-backend-api/health/health.module";
+import { IdempotencyModule } from "src/hb-backend-api/idempotency/idempotency.module";
 import { OutboxModule } from "src/hb-backend-api/outbox/outbox.module";
 import { UserModule } from "src/hb-backend-api/user/user.module";
 
@@ -55,6 +56,7 @@ import { UserModule } from "src/hb-backend-api/user/user.module";
     UserModule,
     AuthModule,
     AuditModule,
+    IdempotencyModule,
   ],
   providers: [
     TraceContext,

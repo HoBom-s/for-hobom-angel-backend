@@ -15,7 +15,16 @@ export type UserAuthzPatch = Partial<
  */
 export interface UserRepository {
   insert(doc: Partial<UserEntity>): Promise<UserEntity>;
-  update(id: Types.ObjectId, patch: UserAuthzPatch): Promise<void>;
+  /**
+   * Version-guarded update: applies `patch` (and bumps version) only if the
+   * stored version still equals `expectedVersion`. Throws
+   * {@link OptimisticLockException} when it doesn't (a concurrent update won).
+   */
+  update(
+    id: Types.ObjectId,
+    expectedVersion: number,
+    patch: UserAuthzPatch,
+  ): Promise<void>;
   findById(id: Types.ObjectId): Promise<UserEntity | null>;
   findByNickname(nickname: string): Promise<UserEntity | null>;
   findByCi(ci: string): Promise<UserEntity | null>;

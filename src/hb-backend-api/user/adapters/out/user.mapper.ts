@@ -25,5 +25,6 @@ export function toDomain(doc: UserEntity): User {
     status: doc.status,
     withdrawnAt: doc.withdrawnAt ?? null,
     purgeAfter: doc.purgeAfter ?? null,
+    version: doc.version ?? 0,
   });
 }
