@@ -2,7 +2,10 @@ import { TransactionRunner } from "src/infra/mongo/transaction/transaction.runne
 import { RefreshTokenStatus } from "src/hb-backend-api/auth/domain/enums/refresh-token-status.enum";
 import { InvalidRefreshTokenException } from "src/hb-backend-api/auth/domain/exception/invalid-refresh-token.exception";
 import { JwtAuthPort } from "src/hb-backend-api/auth/domain/ports/out/jwt-auth.port";
-import { RefreshTokenRepository } from "src/hb-backend-api/auth/domain/repositories/refresh-token.repository";
+import {
+  RefreshTokenRepository,
+  StoredRefreshToken,
+} from "src/hb-backend-api/auth/domain/repositories/refresh-token.repository";
 import { RefreshTokenService } from "src/hb-backend-api/auth/application/use-cases/refresh-token.service";
 
 describe("RefreshTokenService", () => {
@@ -60,12 +63,14 @@ describe("RefreshTokenService", () => {
       sid: "fam-1",
       jti: "old-jti",
     });
-    repo.findByJti.mockResolvedValue({
-      jti: "old-jti",
-      familyId: "fam-1",
-      userId: "user-1",
-      status: RefreshTokenStatus.ACTIVE,
-    });
+    repo.findByJti.mockResolvedValue(
+      StoredRefreshToken.of({
+        jti: "old-jti",
+        familyId: "fam-1",
+        userId: "user-1",
+        status: RefreshTokenStatus.ACTIVE,
+      }),
+    );
 
     const pair = await service.rotate("presented");
 
@@ -82,12 +87,14 @@ describe("RefreshTokenService", () => {
       sid: "fam-1",
       jti: "spent",
     });
-    repo.findByJti.mockResolvedValue({
-      jti: "spent",
-      familyId: "fam-1",
-      userId: "user-1",
-      status: RefreshTokenStatus.ROTATED,
-    });
+    repo.findByJti.mockResolvedValue(
+      StoredRefreshToken.of({
+        jti: "spent",
+        familyId: "fam-1",
+        userId: "user-1",
+        status: RefreshTokenStatus.ROTATED,
+      }),
+    );
 
     await expect(service.rotate("presented")).rejects.toThrow(
       InvalidRefreshTokenException,
@@ -109,12 +116,14 @@ describe("RefreshTokenService", () => {
       InvalidRefreshTokenException,
     );
 
-    repo.findByJti.mockResolvedValueOnce({
-      jti: "x",
-      familyId: "f",
-      userId: "u",
-      status: RefreshTokenStatus.REVOKED,
-    });
+    repo.findByJti.mockResolvedValueOnce(
+      StoredRefreshToken.of({
+        jti: "x",
+        familyId: "f",
+        userId: "u",
+        status: RefreshTokenStatus.REVOKED,
+      }),
+    );
     await expect(service.rotate("p")).rejects.toThrow(
       InvalidRefreshTokenException,
     );

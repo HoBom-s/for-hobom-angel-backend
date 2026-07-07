@@ -3,7 +3,6 @@ import { randomUUID } from "crypto";
 import { Transactional } from "src/infra/mongo/transaction/transaction.decorator";
 import { TransactionRunner } from "src/infra/mongo/transaction/transaction.runner";
 import { DIToken } from "src/shared/di/token.di";
-import { RefreshTokenStatus } from "src/hb-backend-api/auth/domain/enums/refresh-token-status.enum";
 import { InvalidRefreshTokenException } from "src/hb-backend-api/auth/domain/exception/invalid-refresh-token.exception";
 import { TokenPair } from "src/hb-backend-api/auth/domain/model/token-pair";
 import { JwtAuthPort } from "src/hb-backend-api/auth/domain/ports/out/jwt-auth.port";
@@ -42,10 +41,10 @@ export class RefreshTokenService {
     );
     const stored = await this.refreshTokenRepository.findByJti(payload.jti);
 
-    if (!stored || stored.status === RefreshTokenStatus.REVOKED) {
+    if (!stored || stored.isRevoked()) {
       throw new InvalidRefreshTokenException();
     }
-    if (stored.status === RefreshTokenStatus.ROTATED) {
+    if (stored.isRotated()) {
       // Reuse of a spent token — the family is compromised. Burn it all down.
       await this.refreshTokenRepository.revokeFamily(stored.familyId);
       throw new InvalidRefreshTokenException();
