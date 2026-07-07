@@ -2,6 +2,7 @@
 /node_modules
 /build
 /coverage
+*.tsbuildinfo
 .idea
 .env
 .env.local
