@@ -10,6 +10,7 @@ import { LoggerModule } from "nestjs-pino";
 import { TransactionModule } from "src/infra/mongo/transaction/transaction.module";
 import { CryptoModule } from "src/shared/crypto/crypto.module";
 import { validate } from "src/shared/config/env.validation";
+import { buildMongooseOptions } from "src/shared/config/mongoose-options";
 import { DiscordModule } from "src/shared/discord/discord.module";
 import { HttpLogInterceptor } from "src/shared/observability/http-log.interceptor";
 import { TraceContext } from "src/shared/trace/trace.context";
@@ -42,9 +43,7 @@ import { UserModule } from "src/hb-backend-api/user/user.module";
     ScheduleModule.forRoot(),
     MongooseModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        uri: config.getOrThrow<string>("HOBOM_SYSTEM_ANGEL_BACKEND_TIGER_DB"),
-      }),
+      useFactory: buildMongooseOptions,
     }),
     // Global infra
     TransactionModule,
