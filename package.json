@@ -27,6 +27,7 @@
     "migrate:down": "migrate-mongo down",
     "migrate:status": "migrate-mongo status",
     "migrate:create": "migrate-mongo create",
+    "indexes:sync": "node dist/scripts/sync-indexes.js",
     "prepare": "husky"
   },
   "dependencies": {
@@ -109,7 +110,8 @@
       "\\.strategy\\.ts$",
       "\\.controller\\.ts$",
       "main\\.ts$",
-      "src/infra/"
+      "src/infra/",
+      "src/scripts/"
     ],
     "coverageThreshold": {
       "global": {
