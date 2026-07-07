@@ -38,12 +38,12 @@ export class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
     if (!doc) {
       return null;
     }
-    return {
+    return StoredRefreshToken.of({
       jti: doc.jti,
       familyId: doc.familyId,
       userId: doc.userId,
       status: doc.status,
-    };
+    });
   }
 
   public async markRotated(jti: string): Promise<void> {

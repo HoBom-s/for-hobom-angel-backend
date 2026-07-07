@@ -2,7 +2,6 @@ import { INestApplication } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { Test } from "@nestjs/testing";
 import { MongoMemoryServer } from "mongodb-memory-server";
-import { RefreshTokenStatus } from "src/hb-backend-api/auth/domain/enums/refresh-token-status.enum";
 import { RefreshTokenEntity } from "src/hb-backend-api/auth/domain/model/refresh-token.entity";
 import { RefreshTokenSchema } from "src/hb-backend-api/auth/domain/model/refresh-token.schema";
 import { RefreshTokenRepositoryImpl } from "src/hb-backend-api/auth/infra/repositories/refresh-token.repository.impl";
@@ -45,20 +44,15 @@ describe("RefreshTokenRepositoryImpl", () => {
   it("creates and finds a token by jti (ACTIVE)", async () => {
     await create({ jti: "j1", familyId: "f1" });
     const found = await repository.findByJti("j1");
-    expect(found).toMatchObject({
-      jti: "j1",
-      familyId: "f1",
-      status: RefreshTokenStatus.ACTIVE,
-    });
+    expect(found).toMatchObject({ jti: "j1", familyId: "f1" });
+    expect(found?.isActive()).toBe(true);
     expect(await repository.findByJti("missing")).toBeNull();
   });
 
   it("marks a token rotated", async () => {
     await create({ jti: "j2", familyId: "f2" });
     await repository.markRotated("j2");
-    expect((await repository.findByJti("j2"))?.status).toBe(
-      RefreshTokenStatus.ROTATED,
-    );
+    expect((await repository.findByJti("j2"))?.isRotated()).toBe(true);
   });
 
   it("revokes every token in a family", async () => {
@@ -68,14 +62,8 @@ describe("RefreshTokenRepositoryImpl", () => {
 
     await repository.revokeFamily("f3");
 
-    expect((await repository.findByJti("j3a"))?.status).toBe(
-      RefreshTokenStatus.REVOKED,
-    );
-    expect((await repository.findByJti("j3b"))?.status).toBe(
-      RefreshTokenStatus.REVOKED,
-    );
-    expect((await repository.findByJti("other"))?.status).toBe(
-      RefreshTokenStatus.ACTIVE,
-    );
+    expect((await repository.findByJti("j3a"))?.isRevoked()).toBe(true);
+    expect((await repository.findByJti("j3b"))?.isRevoked()).toBe(true);
+    expect((await repository.findByJti("other"))?.isActive()).toBe(true);
   });
 });
