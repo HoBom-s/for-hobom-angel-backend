@@ -2,6 +2,7 @@ import { INestApplication } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { Test } from "@nestjs/testing";
 import { MongoMemoryServer } from "mongodb-memory-server";
+import { OptimisticLockException } from "src/shared/exception/optimistic-lock.exception";
 import { UserEntity } from "src/hb-backend-api/user/domain/model/user.entity";
 import { UserSchema } from "src/hb-backend-api/user/domain/model/user.schema";
 import { UserRole } from "src/hb-backend-api/user/domain/enums/user-role.enum";
@@ -68,12 +69,13 @@ describe("UserRepositoryImpl", () => {
     expect(await repository.findByCi("ghost")).toBeNull();
   });
 
-  it("updates only the authz/lifecycle patch", async () => {
+  it("updates the authz patch and bumps the version at the expected version", async () => {
     const created = await repository.insert(
       sampleDoc({ nickname: "patcher", ci: "ci-patch" }),
     );
+    expect(created.version).toBe(0);
 
-    await repository.update(created._id, {
+    await repository.update(created._id, 0, {
       roles: [UserRole.USER, UserRole.SYSTEM_ADMIN],
       status: UserStatus.WITHDRAWN,
     });
@@ -81,7 +83,25 @@ describe("UserRepositoryImpl", () => {
     const reloaded = await repository.findById(created._id);
     expect(reloaded?.roles).toEqual([UserRole.USER, UserRole.SYSTEM_ADMIN]);
     expect(reloaded?.status).toBe(UserStatus.WITHDRAWN);
-    // untouched fields survive
-    expect(reloaded?.email).toBe("hobom@example.com");
+    expect(reloaded?.version).toBe(1); // bumped
+    expect(reloaded?.email).toBe("hobom@example.com"); // untouched fields survive
+  });
+
+  it("rejects a stale update (optimistic lock)", async () => {
+    const created = await repository.insert(
+      sampleDoc({ nickname: "racer", ci: "ci-race" }),
+    );
+
+    // first writer wins (version 0 -> 1)
+    await repository.update(created._id, 0, { status: UserStatus.DORMANT });
+
+    // second writer still holds version 0 -> must be rejected
+    await expect(
+      repository.update(created._id, 0, { status: UserStatus.WITHDRAWN }),
+    ).rejects.toThrow(OptimisticLockException);
+
+    const reloaded = await repository.findById(created._id);
+    expect(reloaded?.status).toBe(UserStatus.DORMANT);
+    expect(reloaded?.version).toBe(1);
   });
 });

@@ -17,6 +17,7 @@ const doc = (over: Partial<UserEntity> = {}): UserEntity =>
     status: UserStatus.ACTIVE,
     withdrawnAt: null,
     purgeAfter: null,
+    version: 0,
     ...over,
   }) as unknown as UserEntity;
 
@@ -38,5 +39,12 @@ describe("user.mapper toDomain", () => {
     );
     expect(user.getShelterRoles).toHaveLength(1);
     expect(user.getShelterRoles[0].getRole).toBe(UserRole.SHELTER_STAFF);
+  });
+
+  it("carries the persisted version (defaults to 0)", () => {
+    expect(toDomain(doc({ version: 7 })).getVersion).toBe(7);
+    const noVersion = doc();
+    delete (noVersion as { version?: number }).version;
+    expect(toDomain(noVersion).getVersion).toBe(0);
   });
 });

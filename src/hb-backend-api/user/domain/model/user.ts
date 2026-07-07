@@ -33,6 +33,7 @@ export class User {
     private status: UserStatus,
     private withdrawnAt: Date | null,
     private purgeAfter: Date | null,
+    private readonly version: number,
   ) {}
 
   public static register(registration: RegisterUser): User {
@@ -51,6 +52,7 @@ export class User {
       UserStatus.ACTIVE,
       null,
       null,
+      0,
     );
   }
 
@@ -65,6 +67,7 @@ export class User {
     status: UserStatus;
     withdrawnAt: Date | null;
     purgeAfter: Date | null;
+    version: number;
   }): User {
     return new User(
       params.id,
@@ -77,6 +80,7 @@ export class User {
       params.status,
       params.withdrawnAt,
       params.purgeAfter,
+      params.version,
     );
   }
 
@@ -186,5 +190,9 @@ export class User {
   }
   public get getPurgeAfter(): Date | null {
     return this.purgeAfter;
+  }
+  /** Loaded version, used as the optimistic-lock guard on the next save. */
+  public get getVersion(): number {
+    return this.version;
   }
 }

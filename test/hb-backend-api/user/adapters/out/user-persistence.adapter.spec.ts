@@ -64,7 +64,8 @@ describe("UserPersistenceAdapter", () => {
     user.promoteToShelterStaff(shelter);
     await adapter.save(user);
 
-    const [, patch] = repo.update.mock.calls[0];
+    const [, expectedVersion, patch] = repo.update.mock.calls[0];
+    expect(expectedVersion).toBe(user.getVersion); // optimistic-lock guard
     expect(patch.shelterRoles).toHaveLength(1);
     expect(patch.status).toBeDefined();
     expect(patch).not.toHaveProperty("realNameEnc");
