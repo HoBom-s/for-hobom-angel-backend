@@ -88,6 +88,33 @@ class AnimalModuleToken extends TokenRegistry {
   public readonly AnimalRepository = this.register("animal.repository");
 }
 
+class AdoptionModuleToken extends TokenRegistry {
+  public readonly DefineAdoptionQuestionnaireUseCase = this.register(
+    "adoption.define-questionnaire.use-case",
+  );
+  public readonly SubmitAdoptionApplicationUseCase = this.register(
+    "adoption.submit-application.use-case",
+  );
+  public readonly AdoptionQuestionnairePersistencePort = this.register(
+    "adoption.questionnaire.persistence.port",
+  );
+  public readonly AdoptionQuestionnaireQueryPort = this.register(
+    "adoption.questionnaire.query.port",
+  );
+  public readonly AdoptionQuestionnaireRepository = this.register(
+    "adoption.questionnaire.repository",
+  );
+  public readonly AdoptionApplicationPersistencePort = this.register(
+    "adoption.application.persistence.port",
+  );
+  public readonly AdoptionApplicationQueryPort = this.register(
+    "adoption.application.query.port",
+  );
+  public readonly AdoptionApplicationRepository = this.register(
+    "adoption.application.repository",
+  );
+}
+
 export const DIToken = {
   OutboxModule: new OutboxModuleToken(),
   UserModule: new UserModuleToken(),
@@ -97,4 +124,5 @@ export const DIToken = {
   ApprovalModule: new ApprovalModuleToken(),
   ShelterModule: new ShelterModuleToken(),
   AnimalModule: new AnimalModuleToken(),
+  AdoptionModule: new AdoptionModuleToken(),
 } as const;
