@@ -55,6 +55,9 @@ class ApprovalModuleToken extends TokenRegistry {
 }
 
 class ShelterModuleToken extends TokenRegistry {
+  public readonly RegisterShelterUseCase = this.register(
+    "shelter.register.use-case",
+  );
   public readonly ShelterPersistencePort = this.register(
     "shelter.persistence.port",
   );
