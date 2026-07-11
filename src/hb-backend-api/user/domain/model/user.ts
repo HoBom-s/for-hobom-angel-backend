@@ -109,6 +109,14 @@ export class User {
     );
   }
 
+  /** Whether this member may manage a shelter's content (its staff or admin). */
+  public canManageShelter(shelterId: ShelterId): boolean {
+    return (
+      this.hasShelterRole(shelterId, UserRole.SHELTER_STAFF) ||
+      this.hasShelterRole(shelterId, UserRole.SHELTER_ADMIN)
+    );
+  }
+
   /** The tenant boundary this user may act within (see {@link TenantScope}). */
   public toTenantScope(): TenantScope {
     return TenantScope.of(

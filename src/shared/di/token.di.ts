@@ -74,6 +74,20 @@ class ShelterModuleToken extends TokenRegistry {
   );
 }
 
+class AnimalModuleToken extends TokenRegistry {
+  public readonly RegisterAnimalUseCase = this.register(
+    "animal.register.use-case",
+  );
+  public readonly UpdateAnimalProfileUseCase = this.register(
+    "animal.update-profile.use-case",
+  );
+  public readonly AnimalPersistencePort = this.register(
+    "animal.persistence.port",
+  );
+  public readonly AnimalQueryPort = this.register("animal.query.port");
+  public readonly AnimalRepository = this.register("animal.repository");
+}
+
 export const DIToken = {
   OutboxModule: new OutboxModuleToken(),
   UserModule: new UserModuleToken(),
@@ -82,4 +96,5 @@ export const DIToken = {
   IdempotencyModule: new IdempotencyModuleToken(),
   ApprovalModule: new ApprovalModuleToken(),
   ShelterModule: new ShelterModuleToken(),
+  AnimalModule: new AnimalModuleToken(),
 } as const;
