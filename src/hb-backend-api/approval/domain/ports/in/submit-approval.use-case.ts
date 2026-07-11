@@ -5,6 +5,8 @@ export interface SubmitApprovalCommand {
   type: ApprovalType;
   subjectRef: string;
   requesterId: string;
+  /** Immutable extra scope/parties the type's callback needs (e.g. shelterId). */
+  context?: Record<string, unknown>;
 }
 
 /** Opens a pending approval request (called inside a consumer's transaction). */

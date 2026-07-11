@@ -13,14 +13,17 @@ import { ShelterPersistenceAdapter } from "src/hb-backend-api/shelter/adapters/o
 import { ShelterQueryAdapter } from "src/hb-backend-api/shelter/adapters/out/shelter-query.adapter";
 import { ShelterRepositoryImpl } from "src/hb-backend-api/shelter/infra/repositories/shelter.repository.impl";
 import { RegisterShelterService } from "src/hb-backend-api/shelter/application/use-cases/register-shelter.service";
+import { RequestStaffPromotionService } from "src/hb-backend-api/shelter/application/use-cases/request-staff-promotion.service";
 import { ShelterVerificationCallback } from "src/hb-backend-api/shelter/application/shelter-verification.callback";
+import { StaffPromotionCallback } from "src/hb-backend-api/shelter/application/staff-promotion.callback";
 
 /**
- * Shelter store and the approval engine's first consumer. Registering a shelter
- * opens a SHELTER_VERIFICATION request; {@link ShelterVerificationCallback}
- * completes it (verify + grant admin + notify) inside the decision transaction.
- * The callback is registered into the engine's {@link ApprovalCallbackRegistry}
- * on init, keeping the engine ignorant of the shelter domain.
+ * Shelter store and the approval engine's first consumers. Registering a shelter
+ * opens a SHELTER_VERIFICATION request; promoting a member opens a
+ * STAFF_PROMOTION request. Each has a callback that completes the decision
+ * (verify + grant, or grant staff) inside the decision transaction. Both
+ * callbacks are registered into the engine's {@link ApprovalCallbackRegistry} on
+ * init, keeping the engine ignorant of the shelter domain.
  */
 @Module({
   imports: [
@@ -35,6 +38,10 @@ import { ShelterVerificationCallback } from "src/hb-backend-api/shelter/applicat
     {
       provide: DIToken.ShelterModule.RegisterShelterUseCase,
       useClass: RegisterShelterService,
+    },
+    {
+      provide: DIToken.ShelterModule.RequestStaffPromotionUseCase,
+      useClass: RequestStaffPromotionService,
     },
     {
       provide: DIToken.ShelterModule.ShelterRepository,
@@ -57,9 +64,11 @@ import { ShelterVerificationCallback } from "src/hb-backend-api/shelter/applicat
       useClass: BusinessRegistryAdapter,
     },
     ShelterVerificationCallback,
+    StaffPromotionCallback,
   ],
   exports: [
     DIToken.ShelterModule.RegisterShelterUseCase,
+    DIToken.ShelterModule.RequestStaffPromotionUseCase,
     DIToken.ShelterModule.ShelterQueryPort,
   ],
 })
@@ -67,9 +76,11 @@ export class ShelterModule implements OnModuleInit {
   constructor(
     private readonly callbackRegistry: ApprovalCallbackRegistry,
     private readonly shelterVerificationCallback: ShelterVerificationCallback,
+    private readonly staffPromotionCallback: StaffPromotionCallback,
   ) {}
 
   public onModuleInit(): void {
     this.callbackRegistry.register(this.shelterVerificationCallback);
+    this.callbackRegistry.register(this.staffPromotionCallback);
   }
 }

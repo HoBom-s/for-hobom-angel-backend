@@ -8,6 +8,7 @@ export function toDomain(doc: ApprovalRequestEntity): ApprovalRequest {
     type: doc.type,
     subjectRef: doc.subjectRef,
     requesterId: doc.requesterId,
+    context: doc.context ?? null,
     status: doc.status,
     decidedBy: doc.decidedBy ?? null,
     decidedAt: doc.decidedAt ?? null,

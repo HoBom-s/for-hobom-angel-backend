@@ -14,6 +14,9 @@ export class ApprovalRequestEntity extends BaseEntity {
   @Prop({ required: true })
   public requesterId: string;
 
+  @Prop({ type: Object })
+  public context?: Record<string, unknown>;
+
   @Prop({
     required: true,
     enum: ApprovalStatus,
