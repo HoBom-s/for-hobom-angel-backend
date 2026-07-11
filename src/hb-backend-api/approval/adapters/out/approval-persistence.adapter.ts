@@ -18,6 +18,7 @@ export class ApprovalPersistenceAdapter implements ApprovalPersistencePort {
       type: request.getType,
       subjectRef: request.getSubjectRef,
       requesterId: request.getRequesterId,
+      context: request.getContext ?? undefined,
       status: request.getStatus,
       version: request.getVersion,
     });

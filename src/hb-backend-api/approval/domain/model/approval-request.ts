@@ -8,9 +8,10 @@ import { ApprovalId } from "src/hb-backend-api/approval/domain/model/vo/approval
  * on a terminal decision the use-case runs a type-specific callback that
  * transitions the target aggregate in the same transaction.
  *
- * `subjectRef` is the target domain entity id (e.g. a shelterId). Decision
- * details a callback needs (e.g. the granted trust tier) ride in
- * `decisionMetadata`, so the engine stays domain-agnostic.
+ * `subjectRef` is the target domain entity id (e.g. a shelterId). Immutable
+ * extra parties/scope a callback needs at submit time (e.g. a staff promotion's
+ * shelterId) ride in `context`; decision-time details (e.g. the granted trust
+ * tier) ride in `decisionMetadata`. Both keep the engine domain-agnostic.
  */
 export class ApprovalRequest {
   private constructor(
@@ -18,6 +19,7 @@ export class ApprovalRequest {
     private readonly type: ApprovalType,
     private readonly subjectRef: string,
     private readonly requesterId: string,
+    private readonly context: Record<string, unknown> | null,
     private status: ApprovalStatus,
     private decidedBy: string | null,
     private decidedAt: Date | null,
@@ -30,6 +32,7 @@ export class ApprovalRequest {
     type: ApprovalType;
     subjectRef: string;
     requesterId: string;
+    context?: Record<string, unknown> | null;
   }): ApprovalRequest {
     if (!params.subjectRef?.trim() || !params.requesterId?.trim()) {
       throw new Error("승인 대상과 신청자가 필요해요.");
@@ -39,6 +42,7 @@ export class ApprovalRequest {
       params.type,
       params.subjectRef,
       params.requesterId,
+      params.context ?? null,
       ApprovalStatus.PENDING,
       null,
       null,
@@ -53,6 +57,7 @@ export class ApprovalRequest {
     type: ApprovalType;
     subjectRef: string;
     requesterId: string;
+    context?: Record<string, unknown> | null;
     status: ApprovalStatus;
     decidedBy: string | null;
     decidedAt: Date | null;
@@ -65,6 +70,7 @@ export class ApprovalRequest {
       params.type,
       params.subjectRef,
       params.requesterId,
+      params.context ?? null,
       params.status,
       params.decidedBy,
       params.decidedAt,
@@ -133,6 +139,10 @@ export class ApprovalRequest {
   }
   public get getRequesterId(): string {
     return this.requesterId;
+  }
+  /** Immutable submit-time context a callback needs (e.g. `{ shelterId }`). */
+  public get getContext(): Record<string, unknown> | null {
+    return this.context;
   }
   public get getStatus(): ApprovalStatus {
     return this.status;
