@@ -18,9 +18,11 @@ import { OutboxEntity } from "src/hb-backend-api/outbox/domain/model/outbox.enti
 import { QuestionType } from "src/hb-backend-api/questionnaire/domain/enums/question-type.enum";
 import { QuestionnairePurpose } from "src/hb-backend-api/questionnaire/domain/enums/questionnaire-purpose.enum";
 import { DefineQuestionnaireUseCase } from "src/hb-backend-api/questionnaire/domain/ports/in/define-questionnaire.use-case";
-import { AdoptionApplicationStatus } from "src/hb-backend-api/adoption/domain/enums/adoption-application-status.enum";
-import { AdoptionApplicationEntity } from "src/hb-backend-api/adoption/domain/model/adoption-application.entity";
-import { SubmitAdoptionApplicationUseCase } from "src/hb-backend-api/adoption/domain/ports/in/submit-adoption-application.use-case";
+import { FosterApplicationStatus } from "src/hb-backend-api/foster/domain/enums/foster-application-status.enum";
+import { FosterEndReason } from "src/hb-backend-api/foster/domain/enums/foster-end-reason.enum";
+import { FosterApplicationEntity } from "src/hb-backend-api/foster/domain/model/foster-application.entity";
+import { SubmitFosterApplicationUseCase } from "src/hb-backend-api/foster/domain/ports/in/submit-foster-application.use-case";
+import { TerminateFosterUseCase } from "src/hb-backend-api/foster/domain/ports/in/terminate-foster.use-case";
 import { AddressVisibility } from "src/hb-backend-api/shelter/domain/enums/address-visibility.enum";
 import { ShelterStatus } from "src/hb-backend-api/shelter/domain/enums/shelter-status.enum";
 import { TrustTier } from "src/hb-backend-api/shelter/domain/enums/trust-tier.enum";
@@ -32,20 +34,21 @@ import { ShelterRole } from "src/hb-backend-api/user/domain/model/shelter-role";
 import { UserEntity } from "src/hb-backend-api/user/domain/model/user.entity";
 
 /**
- * End-to-end slice: an admin defines the adoption survey, a member applies (which
- * reserves the animal), and the decision adopts or releases. Proves the approval
- * engine's third consumer drives the Animal aggregate's transitions through the
- * real DI graph and a Mongo transaction.
+ * End-to-end slice: define the foster survey, apply (reserves the animal),
+ * approve (FOSTERED), then terminate (back to AVAILABLE + notification). Proves
+ * the approval engine's fourth consumer and the foster termination path through
+ * the real DI graph and Mongo transactions.
  */
-describe("Adoption procedure (flow)", () => {
+describe("Foster procedure (flow)", () => {
   let app: INestApplication;
   let mongo: MongoMemoryReplSet;
   let registerAnimal: RegisterAnimalUseCase;
   let defineQuestionnaire: DefineQuestionnaireUseCase;
-  let submitApplication: SubmitAdoptionApplicationUseCase;
+  let submitFoster: SubmitFosterApplicationUseCase;
+  let terminateFoster: TerminateFosterUseCase;
   let decideApproval: DecideApprovalUseCase;
   let animalModel: Model<AnimalEntity>;
-  let applicationModel: Model<AdoptionApplicationEntity>;
+  let applicationModel: Model<FosterApplicationEntity>;
   let shelterModel: Model<ShelterEntity>;
   let userModel: Model<UserEntity>;
   let outboxModel: Model<OutboxEntity>;
@@ -96,8 +99,6 @@ describe("Adoption procedure (flow)", () => {
     return id;
   };
 
-  /** A verified shelter with an admin, an applicant, an available animal, and a
-   *  one-question required survey. */
   const setup = async () => {
     const shelterId = await seedShelter();
     const adminId = await seedUser([
@@ -117,13 +118,14 @@ describe("Adoption procedure (flow)", () => {
 
     await defineQuestionnaire.invoke({
       shelterId: shelterId.toHexString(),
-      purpose: QuestionnairePurpose.ADOPTION,
+      purpose: QuestionnairePurpose.FOSTER,
       definedBy: adminId.toHexString(),
       questions: [
         {
-          id: "exp",
-          prompt: "반려 경험이 있나요?",
-          type: QuestionType.BOOLEAN,
+          id: "home",
+          prompt: "임시보호 가능한 주거 형태는?",
+          type: QuestionType.SINGLE_CHOICE,
+          options: ["apartment", "house"],
           required: true,
         },
       ],
@@ -132,7 +134,7 @@ describe("Adoption procedure (flow)", () => {
     return { shelterId, adminId, applicantId, animalId };
   };
 
-  const validAnswers = [{ questionId: "exp", values: ["true"] }];
+  const validAnswers = [{ questionId: "home", values: ["apartment"] }];
 
   beforeAll(async () => {
     mongo = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
@@ -156,12 +158,11 @@ describe("Adoption procedure (flow)", () => {
     defineQuestionnaire = app.get(
       DIToken.QuestionnaireModule.DefineQuestionnaireUseCase,
     );
-    submitApplication = app.get(
-      DIToken.AdoptionModule.SubmitAdoptionApplicationUseCase,
-    );
+    submitFoster = app.get(DIToken.FosterModule.SubmitFosterApplicationUseCase);
+    terminateFoster = app.get(DIToken.FosterModule.TerminateFosterUseCase);
     decideApproval = app.get(DIToken.ApprovalModule.DecideApprovalUseCase);
     animalModel = app.get(getModelToken(AnimalEntity.name));
-    applicationModel = app.get(getModelToken(AdoptionApplicationEntity.name));
+    applicationModel = app.get(getModelToken(FosterApplicationEntity.name));
     shelterModel = app.get(getModelToken(ShelterEntity.name));
     userModel = app.get(getModelToken(UserEntity.name));
     outboxModel = app.get(getModelToken(OutboxEntity.name));
@@ -172,60 +173,73 @@ describe("Adoption procedure (flow)", () => {
     await mongo?.stop();
   });
 
-  it("reserves the animal and opens a pending application on submit", async () => {
+  it("reserves the animal and opens a pending indefinite foster on submit", async () => {
     const { applicantId, animalId } = await setup();
 
-    const { applicationId } = await submitApplication.invoke({
+    const { fosterApplicationId } = await submitFoster.invoke({
       animalId,
       applicantId: applicantId.toHexString(),
       answers: validAnswers,
+      plannedEndDate: null,
     });
 
     const animal = await animalModel.findById(animalId).lean().exec();
     expect(animal?.status).toBe(AnimalStatus.RESERVED);
     const application = await applicationModel
-      .findById(applicationId)
+      .findById(fosterApplicationId)
       .lean()
       .exec();
-    expect(application?.status).toBe(AdoptionApplicationStatus.PENDING);
-    expect(application?.questionnaireVersion).toBe(1);
+    expect(application?.status).toBe(FosterApplicationStatus.PENDING);
+    expect(application?.plannedEndDate ?? null).toBeNull();
   });
 
-  it("adopts the animal and approves the application on approval", async () => {
-    const { applicantId, animalId } = await setup();
-    const { applicationId, approvalId } = await submitApplication.invoke({
+  it("fosters on approval, then terminating returns the animal and notifies", async () => {
+    const { adminId, applicantId, animalId } = await setup();
+    const { fosterApplicationId, approvalId } = await submitFoster.invoke({
       animalId,
       applicantId: applicantId.toHexString(),
       answers: validAnswers,
+      plannedEndDate: new Date("2026-09-01"),
     });
 
     await decideApproval.invoke({
       requestId: ApprovalId.fromString(approvalId),
-      actorId: "operator-1",
+      actorId: adminId.toHexString(),
       decision: ApprovalDecision.approve(),
     });
 
-    const animal = await animalModel.findById(animalId).lean().exec();
-    expect(animal?.status).toBe(AnimalStatus.ADOPTED);
+    let animal = await animalModel.findById(animalId).lean().exec();
+    expect(animal?.status).toBe(AnimalStatus.FOSTERED);
+
+    await terminateFoster.invoke({
+      fosterApplicationId,
+      terminatedBy: adminId.toHexString(),
+      reason: FosterEndReason.EARLY_TERMINATED,
+    });
+
+    animal = await animalModel.findById(animalId).lean().exec();
+    expect(animal?.status).toBe(AnimalStatus.AVAILABLE);
     const application = await applicationModel
-      .findById(applicationId)
+      .findById(fosterApplicationId)
       .lean()
       .exec();
-    expect(application?.status).toBe(AdoptionApplicationStatus.APPROVED);
+    expect(application?.endReason).toBe(FosterEndReason.EARLY_TERMINATED);
+    expect(application?.endedAt).toBeInstanceOf(Date);
 
     const events = await outboxModel
-      .find({ eventType: EventType.ADOPTION_APPROVED })
+      .find({ eventType: EventType.FOSTER_TERMINATED })
       .lean()
       .exec();
     const mine = events.filter(
-      (e) => e.payload.recipientUserId === applicantId.toHexString(),
+      (e) => e.payload.fosterProcessId === fosterApplicationId,
     );
     expect(mine).toHaveLength(1);
+    expect(mine[0].payload.reason).toBe("EARLY_TERMINATED");
   });
 
-  it("releases the animal and rejects the application on rejection", async () => {
-    const { applicantId, animalId } = await setup();
-    const { applicationId, approvalId } = await submitApplication.invoke({
+  it("releases the animal when the foster decision rejects", async () => {
+    const { adminId, applicantId, animalId } = await setup();
+    const { approvalId } = await submitFoster.invoke({
       animalId,
       applicantId: applicantId.toHexString(),
       answers: validAnswers,
@@ -233,51 +247,30 @@ describe("Adoption procedure (flow)", () => {
 
     await decideApproval.invoke({
       requestId: ApprovalId.fromString(approvalId),
-      actorId: "operator-1",
+      actorId: adminId.toHexString(),
       decision: ApprovalDecision.reject(),
-      reason: "조건이 맞지 않아요.",
+      reason: "여건이 맞지 않아요.",
     });
 
     const animal = await animalModel.findById(animalId).lean().exec();
     expect(animal?.status).toBe(AnimalStatus.AVAILABLE);
-    const application = await applicationModel
-      .findById(applicationId)
-      .lean()
-      .exec();
-    expect(application?.status).toBe(AdoptionApplicationStatus.REJECTED);
   });
 
-  it("rejects a submission that fails the required survey", async () => {
-    const { applicantId, animalId } = await setup();
-
-    await expect(
-      submitApplication.invoke({
-        animalId,
-        applicantId: applicantId.toHexString(),
-        answers: [],
-      }),
-    ).rejects.toThrow("필수");
-
-    // The animal was not reserved by the failed attempt.
-    const animal = await animalModel.findById(animalId).lean().exec();
-    expect(animal?.status).toBe(AnimalStatus.AVAILABLE);
-  });
-
-  it("refuses a second application while one is in progress", async () => {
-    const { applicantId, animalId } = await setup();
-    await submitApplication.invoke({
+  it("refuses to terminate a foster that is not active", async () => {
+    const { adminId, applicantId, animalId } = await setup();
+    const { fosterApplicationId } = await submitFoster.invoke({
       animalId,
       applicantId: applicantId.toHexString(),
       answers: validAnswers,
     });
 
-    const otherApplicant = await seedUser();
+    // Still PENDING (not approved) — nothing to terminate.
     await expect(
-      submitApplication.invoke({
-        animalId,
-        applicantId: otherApplicant.toHexString(),
-        answers: validAnswers,
+      terminateFoster.invoke({
+        fosterApplicationId,
+        terminatedBy: adminId.toHexString(),
+        reason: FosterEndReason.EARLY_TERMINATED,
       }),
-    ).rejects.toThrow("받을 수 없어요");
+    ).rejects.toThrow("진행 중인");
   });
 });
