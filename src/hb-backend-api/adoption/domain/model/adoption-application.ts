@@ -1,8 +1,8 @@
 import { AnimalId } from "src/hb-backend-api/animal/domain/model/vo/animal-id.vo";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
+import { Answer } from "src/hb-backend-api/questionnaire/domain/model/answer";
 import { AdoptionApplicationStatus } from "src/hb-backend-api/adoption/domain/enums/adoption-application-status.enum";
-import { Answer } from "src/hb-backend-api/adoption/domain/model/answer";
 import { ApplicationId } from "src/hb-backend-api/adoption/domain/model/vo/application-id.vo";
 
 /**

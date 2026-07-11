@@ -88,21 +88,24 @@ class AnimalModuleToken extends TokenRegistry {
   public readonly AnimalRepository = this.register("animal.repository");
 }
 
-class AdoptionModuleToken extends TokenRegistry {
-  public readonly DefineAdoptionQuestionnaireUseCase = this.register(
-    "adoption.define-questionnaire.use-case",
+class QuestionnaireModuleToken extends TokenRegistry {
+  public readonly DefineQuestionnaireUseCase = this.register(
+    "questionnaire.define.use-case",
   );
+  public readonly QuestionnairePersistencePort = this.register(
+    "questionnaire.persistence.port",
+  );
+  public readonly QuestionnaireQueryPort = this.register(
+    "questionnaire.query.port",
+  );
+  public readonly QuestionnaireRepository = this.register(
+    "questionnaire.repository",
+  );
+}
+
+class AdoptionModuleToken extends TokenRegistry {
   public readonly SubmitAdoptionApplicationUseCase = this.register(
     "adoption.submit-application.use-case",
-  );
-  public readonly AdoptionQuestionnairePersistencePort = this.register(
-    "adoption.questionnaire.persistence.port",
-  );
-  public readonly AdoptionQuestionnaireQueryPort = this.register(
-    "adoption.questionnaire.query.port",
-  );
-  public readonly AdoptionQuestionnaireRepository = this.register(
-    "adoption.questionnaire.repository",
   );
   public readonly AdoptionApplicationPersistencePort = this.register(
     "adoption.application.persistence.port",
@@ -115,6 +118,24 @@ class AdoptionModuleToken extends TokenRegistry {
   );
 }
 
+class FosterModuleToken extends TokenRegistry {
+  public readonly SubmitFosterApplicationUseCase = this.register(
+    "foster.submit-application.use-case",
+  );
+  public readonly TerminateFosterUseCase = this.register(
+    "foster.terminate.use-case",
+  );
+  public readonly FosterApplicationPersistencePort = this.register(
+    "foster.application.persistence.port",
+  );
+  public readonly FosterApplicationQueryPort = this.register(
+    "foster.application.query.port",
+  );
+  public readonly FosterApplicationRepository = this.register(
+    "foster.application.repository",
+  );
+}
+
 export const DIToken = {
   OutboxModule: new OutboxModuleToken(),
   UserModule: new UserModuleToken(),
@@ -124,5 +145,7 @@ export const DIToken = {
   ApprovalModule: new ApprovalModuleToken(),
   ShelterModule: new ShelterModuleToken(),
   AnimalModule: new AnimalModuleToken(),
+  QuestionnaireModule: new QuestionnaireModuleToken(),
   AdoptionModule: new AdoptionModuleToken(),
+  FosterModule: new FosterModuleToken(),
 } as const;
