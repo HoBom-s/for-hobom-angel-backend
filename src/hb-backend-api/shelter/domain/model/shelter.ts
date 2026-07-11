@@ -4,6 +4,7 @@ import { ShelterStatus } from "src/hb-backend-api/shelter/domain/enums/shelter-s
 import { TrustTier } from "src/hb-backend-api/shelter/domain/enums/trust-tier.enum";
 import { Address } from "src/hb-backend-api/shelter/domain/model/address";
 import { FacilityPhoto } from "src/hb-backend-api/shelter/domain/model/facility-photo";
+import { VerificationSignals } from "src/hb-backend-api/shelter/domain/model/verification-signals";
 import { BusinessNumber } from "src/hb-backend-api/shelter/domain/model/vo/business-number.vo";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { ShelterRegistrationNumber } from "src/hb-backend-api/shelter/domain/model/vo/shelter-registration-number.vo";
@@ -34,6 +35,7 @@ export class Shelter {
     private trustTier: TrustTier | null,
     private verifiedAt: Date | null,
     private rejectionReason: string | null,
+    private readonly verificationSignals: VerificationSignals | null,
     private readonly version: number,
   ) {}
 
@@ -47,6 +49,7 @@ export class Shelter {
     registrationNumber?: ShelterRegistrationNumber | null;
     businessNumber?: BusinessNumber | null;
     facilityPhotos?: FacilityPhoto[];
+    verificationSignals?: VerificationSignals | null;
   }): Shelter {
     if (!params.name?.trim()) {
       throw new Error("보호소 이름이 필요해요.");
@@ -75,6 +78,7 @@ export class Shelter {
       null,
       null,
       null,
+      params.verificationSignals ?? null,
       0,
     );
   }
@@ -92,6 +96,7 @@ export class Shelter {
     trustTier: TrustTier | null;
     verifiedAt: Date | null;
     rejectionReason: string | null;
+    verificationSignals: VerificationSignals | null;
     version: number;
   }): Shelter {
     return new Shelter(
@@ -107,6 +112,7 @@ export class Shelter {
       params.trustTier,
       params.verifiedAt,
       params.rejectionReason,
+      params.verificationSignals,
       params.version,
     );
   }
@@ -234,6 +240,10 @@ export class Shelter {
   }
   public get getRejectionReason(): string | null {
     return this.rejectionReason;
+  }
+  /** Automated cross-check evidence captured at registration (decision support). */
+  public get getVerificationSignals(): VerificationSignals | null {
+    return this.verificationSignals;
   }
   public get getAddressVisibility(): AddressVisibility {
     return this.address.getVisibility;

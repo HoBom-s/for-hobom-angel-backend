@@ -48,6 +48,7 @@ const reconstitute = (
     trustTier: null,
     verifiedAt: null,
     rejectionReason: null,
+    verificationSignals: null,
     version: 0,
     ...over,
   });

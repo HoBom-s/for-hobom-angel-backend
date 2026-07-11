@@ -21,6 +21,7 @@ import { AuthModule } from "src/hb-backend-api/auth/auth.module";
 import { HealthModule } from "src/hb-backend-api/health/health.module";
 import { IdempotencyModule } from "src/hb-backend-api/idempotency/idempotency.module";
 import { OutboxModule } from "src/hb-backend-api/outbox/outbox.module";
+import { ShelterModule } from "src/hb-backend-api/shelter/shelter.module";
 import { UserModule } from "src/hb-backend-api/user/user.module";
 
 @Module({
@@ -59,6 +60,7 @@ import { UserModule } from "src/hb-backend-api/user/user.module";
     AuditModule,
     IdempotencyModule,
     ApprovalModule,
+    ShelterModule,
   ],
   providers: [
     TraceContext,
