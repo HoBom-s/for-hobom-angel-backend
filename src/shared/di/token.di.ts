@@ -17,6 +17,12 @@ class UserModuleToken extends TokenRegistry {
   public readonly UserPersistencePort = this.register("user.persistence.port");
   public readonly UserQueryPort = this.register("user.query.port");
   public readonly UserRepository = this.register("user.repository");
+  public readonly ChangeNicknameUseCase = this.register(
+    "user.change-nickname.use-case",
+  );
+  public readonly WithdrawAccountUseCase = this.register(
+    "user.withdraw-account.use-case",
+  );
 }
 
 class AuthModuleToken extends TokenRegistry {

@@ -34,6 +34,7 @@ export class UserPersistenceAdapter implements UserPersistencePort {
 
   public async save(user: User): Promise<void> {
     await this.userRepository.update(user.getId.raw, user.getVersion, {
+      nickname: user.getNickname.raw,
       roles: user.getRoles,
       shelterRoles: user.getShelterRoles.map((grant) => ({
         shelterId: grant.getShelterId.raw,

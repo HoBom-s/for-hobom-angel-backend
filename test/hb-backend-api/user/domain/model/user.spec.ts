@@ -167,6 +167,17 @@ describe("User aggregate", () => {
       user.withdraw(new Date(), new Date());
       expect(() => user.withdraw(new Date(), new Date())).toThrow();
     });
+
+    it("changeNickname replaces the display name", () => {
+      const user = User.register(registration());
+      user.changeNickname(Nickname.of("newname"));
+      expect(user.getNickname.raw).toBe("newname");
+    });
+
+    it("changeNickname is rejected when withdrawn", () => {
+      const user = reconstitute({ status: UserStatus.WITHDRAWN });
+      expect(() => user.changeNickname(Nickname.of("newname"))).toThrow();
+    });
   });
 
   it("getRoles / getShelterRoles return defensive copies", () => {
