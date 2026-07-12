@@ -107,15 +107,20 @@ export class AuthController {
 
   private cookieOrBody(
     req: Request,
-    body: RefreshTokenDto,
+    body: RefreshTokenDto | undefined,
   ): string | undefined {
+    // Guests hit /auth/refresh with no cookie and (often) no body at all — read
+    // both defensively so a missing token is a clean 401, never a 500.
     return (
       (req.cookies as Record<string, string> | undefined)?.[REFRESH_COOKIE] ??
-      body.refreshToken
+      body?.refreshToken
     );
   }
 
-  private readRefreshToken(req: Request, body: RefreshTokenDto): string {
+  private readRefreshToken(
+    req: Request,
+    body: RefreshTokenDto | undefined,
+  ): string {
     const token = this.cookieOrBody(req, body);
     if (!token) {
       throw new UnauthorizedException("refresh token이 없어요.");

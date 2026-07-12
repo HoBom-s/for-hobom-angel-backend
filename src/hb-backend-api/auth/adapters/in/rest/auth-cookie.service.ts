@@ -22,7 +22,9 @@ function durationToMs(value: string): number {
  * (XSS-safe). The gateway forwards these Set-Cookie headers to the browser, and
  * on later requests turns the `accessToken` cookie into a Bearer header for us.
  *
- * `secure` is on in production (HTTPS only); no `domain` is set so the cookie is
+ * `secure` (HTTPS-only cookie) defaults to on in production but is overridable
+ * with `COOKIE_SECURE` — a dev backend on http://localhost must set it false, or
+ * the browser drops the Secure cookie. No `domain` is set, so the cookie is
  * host-only, bound to the gateway's public domain (keep FE + API same-site so
  * webviews don't drop it). `SameSite=Lax` blocks the common CSRF vectors.
  */
@@ -33,7 +35,12 @@ export class AuthCookieService {
   private readonly refreshMaxAge: number;
 
   constructor(config: ConfigService) {
-    this.secure = config.get<string>("NODE_ENV") === "production";
+    // COOKIE_SECURE overrides the NODE_ENV default so dev-over-http can force it off.
+    const explicit = config.get<string>("COOKIE_SECURE");
+    this.secure =
+      explicit != null
+        ? explicit === "true"
+        : config.get<string>("NODE_ENV") === "production";
     this.accessMaxAge = durationToMs(
       config.getOrThrow<string>("HOBOM_JWT_ACCESS_TOKEN_EXPIRED"),
     );
