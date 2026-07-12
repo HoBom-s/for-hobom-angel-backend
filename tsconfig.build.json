@@ -1,7 +1,12 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "rootDir": "./src"
+    "rootDir": "./src",
+    // Keep the incremental build-info inside dist so nest's `deleteOutDir` clears
+    // it in lockstep. Otherwise a stale root tsbuildinfo makes tsc think the
+    // (already-deleted) output is up to date and emit nothing → empty dist, so
+    // `nest start`/`start:prod` fail with "Cannot find module dist/main".
+    "tsBuildInfoFile": "./dist/tsconfig.build.tsbuildinfo"
   },
   "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
 }
