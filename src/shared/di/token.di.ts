@@ -89,6 +89,7 @@ class AnimalModuleToken extends TokenRegistry {
   public readonly UpdateAnimalProfileUseCase = this.register(
     "animal.update-profile.use-case",
   );
+  public readonly RelistAnimalUseCase = this.register("animal.relist.use-case");
   public readonly AnimalPersistencePort = this.register(
     "animal.persistence.port",
   );
@@ -114,6 +115,9 @@ class QuestionnaireModuleToken extends TokenRegistry {
 class AdoptionModuleToken extends TokenRegistry {
   public readonly SubmitAdoptionApplicationUseCase = this.register(
     "adoption.submit-application.use-case",
+  );
+  public readonly ReturnAdoptionUseCase = this.register(
+    "adoption.return.use-case",
   );
   public readonly AdoptionApplicationPersistencePort = this.register(
     "adoption.application.persistence.port",

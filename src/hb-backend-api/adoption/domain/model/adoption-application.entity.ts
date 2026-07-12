@@ -36,6 +36,12 @@ export class AdoptionApplicationEntity extends BaseEntity {
   @Prop({ type: String })
   public decidedReason?: string;
 
+  @Prop({ type: Date })
+  public returnedAt?: Date;
+
+  @Prop({ type: String })
+  public returnReason?: string;
+
   @Prop({ required: true, default: 0 })
   public version: number;
 }

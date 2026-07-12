@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Inject,
   NotFoundException,
   Param,
@@ -28,6 +30,7 @@ import {
   RegisterAnimalUseCase,
 } from "src/hb-backend-api/animal/domain/ports/in/register-animal.use-case";
 import { UpdateAnimalProfileUseCase } from "src/hb-backend-api/animal/domain/ports/in/update-animal-profile.use-case";
+import { RelistAnimalUseCase } from "src/hb-backend-api/animal/domain/ports/in/relist-animal.use-case";
 import { AnimalQueryPort } from "src/hb-backend-api/animal/domain/ports/out/animal-query.port";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { RegisterAnimalDto } from "src/hb-backend-api/animal/adapters/in/dto/register-animal.dto";
@@ -45,6 +48,8 @@ export class AnimalController {
     private readonly registerAnimalUseCase: RegisterAnimalUseCase,
     @Inject(DIToken.AnimalModule.UpdateAnimalProfileUseCase)
     private readonly updateAnimalProfileUseCase: UpdateAnimalProfileUseCase,
+    @Inject(DIToken.AnimalModule.RelistAnimalUseCase)
+    private readonly relistAnimalUseCase: RelistAnimalUseCase,
     @Inject(DIToken.AnimalModule.AnimalQueryPort)
     private readonly animalQueryPort: AnimalQueryPort,
   ) {}
@@ -119,5 +124,18 @@ export class AnimalController {
       ShelterId.fromString(shelterId),
     );
     return animals.map((animal) => AnimalResponse.from(animal));
+  }
+
+  @ApiOperation({ summary: "반환된 동물 재등록 (스태프) — 다시 입양 가능으로" })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post("animals/:animalId/relist")
+  public async relist(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("animalId") animalId: string,
+  ): Promise<void> {
+    await this.relistAnimalUseCase.invoke({
+      animalId,
+      actorId: user.userId,
+    });
   }
 }

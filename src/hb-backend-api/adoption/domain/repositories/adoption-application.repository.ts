@@ -2,7 +2,10 @@ import { Types } from "mongoose";
 import { AdoptionApplicationEntity } from "src/hb-backend-api/adoption/domain/model/adoption-application.entity";
 
 export type ApplicationMutablePatch = Partial<
-  Pick<AdoptionApplicationEntity, "status" | "decidedReason">
+  Pick<
+    AdoptionApplicationEntity,
+    "status" | "decidedReason" | "returnedAt" | "returnReason"
+  >
 >;
 
 export interface AdoptionApplicationRepository {

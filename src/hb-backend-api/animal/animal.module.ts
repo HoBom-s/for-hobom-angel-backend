@@ -10,6 +10,7 @@ import { AnimalQueryAdapter } from "src/hb-backend-api/animal/adapters/out/anima
 import { AnimalRepositoryImpl } from "src/hb-backend-api/animal/infra/repositories/animal.repository.impl";
 import { RegisterAnimalService } from "src/hb-backend-api/animal/application/use-cases/register-animal.service";
 import { UpdateAnimalProfileService } from "src/hb-backend-api/animal/application/use-cases/update-animal-profile.service";
+import { RelistAnimalService } from "src/hb-backend-api/animal/application/use-cases/relist-animal.service";
 import { AnimalController } from "src/hb-backend-api/animal/adapters/in/animal.controller";
 
 /**
@@ -35,6 +36,10 @@ import { AnimalController } from "src/hb-backend-api/animal/adapters/in/animal.c
     {
       provide: DIToken.AnimalModule.UpdateAnimalProfileUseCase,
       useClass: UpdateAnimalProfileService,
+    },
+    {
+      provide: DIToken.AnimalModule.RelistAnimalUseCase,
+      useClass: RelistAnimalService,
     },
     {
       provide: DIToken.AnimalModule.AnimalRepository,
