@@ -24,7 +24,7 @@ import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 export class User {
   private constructor(
     private readonly id: UserId,
-    private readonly nickname: Nickname,
+    private nickname: Nickname,
     private readonly email: Email,
     private readonly ci: Ci,
     private readonly verifiedChannel: VerifiedChannel,
@@ -152,6 +152,12 @@ export class User {
     this.shelterRoles.push(
       ShelterRoleGrant.of(shelterId, UserRole.SHELTER_ADMIN),
     );
+  }
+
+  /** Rename the public display name. Uniqueness is enforced by the service + index. */
+  public changeNickname(nickname: Nickname): void {
+    this.assertActive();
+    this.nickname = nickname;
   }
 
   /** Soft-withdraw. `at` = now, `purgeAfter` = end of the deletion grace period. */

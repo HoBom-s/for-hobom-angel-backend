@@ -1,11 +1,16 @@
 import { Types } from "mongoose";
 import { UserEntity } from "src/hb-backend-api/user/domain/model/user.entity";
 
-/** Mutable authz/lifecycle fields the aggregate can change after creation. */
+/** Mutable profile/authz/lifecycle fields the aggregate can change after creation. */
 export type UserAuthzPatch = Partial<
   Pick<
     UserEntity,
-    "roles" | "shelterRoles" | "status" | "withdrawnAt" | "purgeAfter"
+    | "nickname"
+    | "roles"
+    | "shelterRoles"
+    | "status"
+    | "withdrawnAt"
+    | "purgeAfter"
   >
 >;
 
