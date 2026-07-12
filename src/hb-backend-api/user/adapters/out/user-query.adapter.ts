@@ -23,8 +23,8 @@ export class UserQueryAdapter implements UserQueryPort {
     return doc ? toDomain(doc) : null;
   }
 
-  public async findByCi(ci: string): Promise<User | null> {
-    const doc = await this.userRepository.findByCi(ci);
+  public async findByEmail(email: string): Promise<User | null> {
+    const doc = await this.userRepository.findByEmail(email);
     return doc ? toDomain(doc) : null;
   }
 }

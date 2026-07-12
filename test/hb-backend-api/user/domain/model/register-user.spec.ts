@@ -4,11 +4,10 @@ import { RegisterUser } from "src/hb-backend-api/user/domain/model/register-user
 
 const validParams = {
   nickname: "hobom",
-  realName: "홍길동",
-  ci: "ci-value",
-  phone: "010-1234-5678",
   email: "hobom@example.com",
-  verifiedChannel: VerifiedChannel.PHONE,
+  passwordHash: "hashed",
+  realName: "홍길동",
+  phone: "010-1234-5678",
 };
 
 describe("RegisterUser", () => {
@@ -17,8 +16,9 @@ describe("RegisterUser", () => {
     expect(reg.getNickname.raw).toBe("hobom");
     expect(reg.getPhone.raw).toBe("01012345678");
     expect(reg.getEmail.raw).toBe("hobom@example.com");
+    expect(reg.getPasswordHash).toBe("hashed");
+    expect(reg.getVerifiedChannel).toBe(VerifiedChannel.EMAIL); // default
     expect(reg.getRoles).toEqual([UserRole.USER]);
-    expect(reg.getDi).toBeNull();
   });
 
   it("cannot be built with an invalid field", () => {

@@ -13,7 +13,7 @@ const doc = (over: Partial<UserEntity> = {}): UserEntity =>
     _id: new Types.ObjectId(),
     nickname: "hobom",
     email: "hobom@example.com",
-    ci: "ci-value",
+    passwordHash: "hashed",
     verifiedChannel: VerifiedChannel.PHONE,
     roles: [UserRole.USER],
     shelterRoles: [],
@@ -37,7 +37,7 @@ describe("UserQueryAdapter", () => {
   it("maps a found document, returns null when missing", async () => {
     const repo = {
       findByNickname: jest.fn().mockResolvedValue(doc()),
-      findByCi: jest.fn().mockResolvedValue(null),
+      findByEmail: jest.fn().mockResolvedValue(null),
       findById: jest.fn(),
     };
     const adapter = await makeAdapter(repo);
@@ -45,7 +45,7 @@ describe("UserQueryAdapter", () => {
     expect((await adapter.findByNickname("hobom"))?.getNickname.raw).toBe(
       "hobom",
     );
-    expect(await adapter.findByCi("missing")).toBeNull();
+    expect(await adapter.findByEmail("missing")).toBeNull();
   });
 
   it("findById passes the raw ObjectId to the repository", async () => {
@@ -53,7 +53,7 @@ describe("UserQueryAdapter", () => {
     const repo = {
       findById: jest.fn().mockResolvedValue(doc({ _id: id })),
       findByNickname: jest.fn(),
-      findByCi: jest.fn(),
+      findByEmail: jest.fn(),
     };
     const adapter = await makeAdapter(repo);
 

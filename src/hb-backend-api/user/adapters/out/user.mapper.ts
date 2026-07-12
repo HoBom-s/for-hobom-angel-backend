@@ -2,7 +2,6 @@ import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id
 import { UserEntity } from "src/hb-backend-api/user/domain/model/user.entity";
 import { User } from "src/hb-backend-api/user/domain/model/user";
 import { ShelterRoleGrant } from "src/hb-backend-api/user/domain/model/shelter-role-grant";
-import { Ci } from "src/hb-backend-api/user/domain/model/vo/ci.vo";
 import { Email } from "src/hb-backend-api/user/domain/model/vo/email.vo";
 import { Nickname } from "src/hb-backend-api/user/domain/model/vo/nickname.vo";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
@@ -13,7 +12,7 @@ export function toDomain(doc: UserEntity): User {
     id: UserId.fromString(String(doc._id)),
     nickname: Nickname.of(doc.nickname),
     email: Email.of(doc.email),
-    ci: Ci.of(doc.ci),
+    passwordHash: doc.passwordHash,
     verifiedChannel: doc.verifiedChannel,
     roles: doc.roles,
     shelterRoles: (doc.shelterRoles ?? []).map((grant) =>

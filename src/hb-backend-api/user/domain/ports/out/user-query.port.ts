@@ -5,5 +5,5 @@ import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 export interface UserQueryPort {
   findById(id: UserId): Promise<User | null>;
   findByNickname(nickname: string): Promise<User | null>;
-  findByCi(ci: string): Promise<User | null>;
+  findByEmail(email: string): Promise<User | null>;
 }

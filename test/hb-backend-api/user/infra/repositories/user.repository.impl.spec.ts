@@ -22,7 +22,7 @@ describe("UserRepositoryImpl", () => {
   const sampleDoc = (over: Partial<UserEntity> = {}): Partial<UserEntity> => ({
     nickname: "hobom",
     realNameEnc: "enc-name",
-    ci: "ci-value",
+    passwordHash: "hashed",
     phoneEnc: "enc-phone",
     email: "hobom@example.com",
     verifiedChannel: VerifiedChannel.PHONE,
@@ -54,24 +54,28 @@ describe("UserRepositoryImpl", () => {
     await mongo?.stop();
   });
 
-  it("inserts and finds by id / nickname / ci", async () => {
+  it("inserts and finds by id / nickname / email", async () => {
     const created = await repository.insert(
-      sampleDoc({ nickname: "finder", ci: "ci-finder" }),
+      sampleDoc({ nickname: "finder", email: "finder@example.com" }),
     );
 
     expect((await repository.findById(created._id))?.nickname).toBe("finder");
-    expect((await repository.findByNickname("finder"))?.ci).toBe("ci-finder");
-    expect((await repository.findByCi("ci-finder"))?.nickname).toBe("finder");
+    expect((await repository.findByNickname("finder"))?.email).toBe(
+      "finder@example.com",
+    );
+    expect((await repository.findByEmail("finder@example.com"))?.nickname).toBe(
+      "finder",
+    );
   });
 
   it("returns null when nothing matches", async () => {
     expect(await repository.findByNickname("ghost")).toBeNull();
-    expect(await repository.findByCi("ghost")).toBeNull();
+    expect(await repository.findByEmail("ghost@example.com")).toBeNull();
   });
 
   it("updates the authz patch and bumps the version at the expected version", async () => {
     const created = await repository.insert(
-      sampleDoc({ nickname: "patcher", ci: "ci-patch" }),
+      sampleDoc({ nickname: "patcher", email: "patcher@example.com" }),
     );
     expect(created.version).toBe(0);
 
@@ -84,12 +88,12 @@ describe("UserRepositoryImpl", () => {
     expect(reloaded?.roles).toEqual([UserRole.USER, UserRole.SYSTEM_ADMIN]);
     expect(reloaded?.status).toBe(UserStatus.WITHDRAWN);
     expect(reloaded?.version).toBe(1); // bumped
-    expect(reloaded?.email).toBe("hobom@example.com"); // untouched fields survive
+    expect(reloaded?.email).toBe("patcher@example.com"); // untouched fields survive
   });
 
   it("rejects a stale update (optimistic lock)", async () => {
     const created = await repository.insert(
-      sampleDoc({ nickname: "racer", ci: "ci-race" }),
+      sampleDoc({ nickname: "racer", email: "racer@example.com" }),
     );
 
     // first writer wins (version 0 -> 1)

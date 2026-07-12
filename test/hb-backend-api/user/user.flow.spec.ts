@@ -34,7 +34,7 @@ describe("User profile (flow)", () => {
       _id: id,
       nickname,
       realNameEnc: "enc",
-      ci: `ci-${id.toHexString()}`,
+      passwordHash: "hashed",
       phoneEnc: "enc",
       email: `u${seq}@example.com`,
       verifiedChannel: VerifiedChannel.EMAIL,

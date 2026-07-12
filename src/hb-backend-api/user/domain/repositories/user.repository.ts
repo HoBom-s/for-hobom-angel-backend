@@ -32,5 +32,5 @@ export interface UserRepository {
   ): Promise<void>;
   findById(id: Types.ObjectId): Promise<UserEntity | null>;
   findByNickname(nickname: string): Promise<UserEntity | null>;
-  findByCi(ci: string): Promise<UserEntity | null>;
+  findByEmail(email: string): Promise<UserEntity | null>;
 }

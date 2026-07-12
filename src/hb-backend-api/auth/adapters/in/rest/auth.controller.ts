@@ -20,7 +20,7 @@ import { TokenPairResponse } from "src/hb-backend-api/auth/adapters/in/rest/dto/
 
 /**
  * Session entry points. All are unauthenticated (they mint or rotate the very
- * tokens the guard would require). Signup/login exchange a 본인확인 receipt for a
+ * tokens the guard would require). Signup/login exchange email+password for a
  * token pair; refresh rotates with reuse detection; logout revokes the family.
  */
 @ApiTags("Auth")
@@ -34,24 +34,27 @@ export class AuthController {
     private readonly refreshTokenService: RefreshTokenService,
   ) {}
 
-  @ApiOperation({ summary: "회원가입 (본인확인 후 계정 생성 + 세션 발급)" })
+  @ApiOperation({ summary: "회원가입 (이메일+비밀번호 + 세션 발급)" })
   @ApiResponse({ type: SignUpResponse })
   @Post("signup")
   public async signup(@Body() body: SignUpDto): Promise<SignUpResponse> {
     const result = await this.signUpUseCase.invoke({
-      verificationToken: body.verificationToken,
-      nickname: body.nickname,
       email: body.email,
+      password: body.password,
+      nickname: body.nickname,
+      realName: body.realName,
+      phone: body.phone,
     });
     return SignUpResponse.from(result);
   }
 
-  @ApiOperation({ summary: "로그인 (본인확인 후 세션 발급)" })
+  @ApiOperation({ summary: "로그인 (이메일+비밀번호)" })
   @ApiResponse({ type: TokenPairResponse })
   @Post("login")
   public async login(@Body() body: LoginDto): Promise<TokenPairResponse> {
     const tokens = await this.loginUseCase.invoke({
-      verificationToken: body.verificationToken,
+      email: body.email,
+      password: body.password,
     });
     return TokenPairResponse.from(tokens);
   }

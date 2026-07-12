@@ -6,7 +6,6 @@ import { VerifiedChannel } from "src/hb-backend-api/user/domain/enums/verified-c
 import { RegisterUser } from "src/hb-backend-api/user/domain/model/register-user";
 import { ShelterRoleGrant } from "src/hb-backend-api/user/domain/model/shelter-role-grant";
 import { User } from "src/hb-backend-api/user/domain/model/user";
-import { Ci } from "src/hb-backend-api/user/domain/model/vo/ci.vo";
 import { Email } from "src/hb-backend-api/user/domain/model/vo/email.vo";
 import { Nickname } from "src/hb-backend-api/user/domain/model/vo/nickname.vo";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
@@ -15,7 +14,7 @@ const registration = (roles?: UserRole[]) =>
   RegisterUser.of({
     nickname: "hobom",
     realName: "홍길동",
-    ci: "ci-value",
+    passwordHash: "hashed",
     phone: "01012345678",
     email: "hobom@example.com",
     verifiedChannel: VerifiedChannel.PHONE,
@@ -31,7 +30,7 @@ const reconstitute = (
     id: UserId.generate(),
     nickname: Nickname.of("hobom"),
     email: Email.of("hobom@example.com"),
-    ci: Ci.of("ci-value"),
+    passwordHash: "hashed",
     verifiedChannel: VerifiedChannel.PHONE,
     roles: [UserRole.USER],
     shelterRoles: [],

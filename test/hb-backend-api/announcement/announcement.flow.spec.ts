@@ -45,7 +45,7 @@ describe("Announcement (flow)", () => {
       _id: id,
       nickname: `u-${seq}`,
       realNameEnc: "enc",
-      ci: `ci-${id.toHexString()}`,
+      passwordHash: "hashed",
       phoneEnc: "enc",
       email: `u${seq}@example.com`,
       verifiedChannel: VerifiedChannel.EMAIL,

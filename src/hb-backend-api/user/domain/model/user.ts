@@ -5,7 +5,6 @@ import { UserStatus } from "src/hb-backend-api/user/domain/enums/user-status.enu
 import { VerifiedChannel } from "src/hb-backend-api/user/domain/enums/verified-channel.enum";
 import { RegisterUser } from "src/hb-backend-api/user/domain/model/register-user";
 import { ShelterRoleGrant } from "src/hb-backend-api/user/domain/model/shelter-role-grant";
-import { Ci } from "src/hb-backend-api/user/domain/model/vo/ci.vo";
 import { Email } from "src/hb-backend-api/user/domain/model/vo/email.vo";
 import { Nickname } from "src/hb-backend-api/user/domain/model/vo/nickname.vo";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
@@ -26,7 +25,7 @@ export class User {
     private readonly id: UserId,
     private nickname: Nickname,
     private readonly email: Email,
-    private readonly ci: Ci,
+    private readonly passwordHash: string,
     private readonly verifiedChannel: VerifiedChannel,
     private readonly roles: UserRole[],
     private readonly shelterRoles: ShelterRoleGrant[],
@@ -45,7 +44,7 @@ export class User {
       UserId.generate(),
       registration.getNickname,
       registration.getEmail,
-      registration.getCi,
+      registration.getPasswordHash,
       registration.getVerifiedChannel,
       roles,
       [],
@@ -60,7 +59,7 @@ export class User {
     id: UserId;
     nickname: Nickname;
     email: Email;
-    ci: Ci;
+    passwordHash: string;
     verifiedChannel: VerifiedChannel;
     roles: UserRole[];
     shelterRoles: ShelterRoleGrant[];
@@ -73,7 +72,7 @@ export class User {
       params.id,
       params.nickname,
       params.email,
-      params.ci,
+      params.passwordHash,
       params.verifiedChannel,
       params.roles,
       params.shelterRoles,
@@ -184,8 +183,8 @@ export class User {
   public get getEmail(): Email {
     return this.email;
   }
-  public get getCi(): Ci {
-    return this.ci;
+  public get getPasswordHash(): string {
+    return this.passwordHash;
   }
   public get getVerifiedChannel(): VerifiedChannel {
     return this.verifiedChannel;

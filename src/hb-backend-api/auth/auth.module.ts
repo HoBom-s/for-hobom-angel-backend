@@ -5,7 +5,6 @@ import { MongooseModule } from "@nestjs/mongoose";
 import { PassportModule } from "@nestjs/passport";
 import { DIToken } from "src/shared/di/token.di";
 import { JwtAuthAdapter } from "src/infra/adapters/jwt/jwt-auth.adapter";
-import { IdentityModule } from "src/hb-backend-api/identity/identity.module";
 import { UserModule } from "src/hb-backend-api/user/user.module";
 import { RefreshTokenService } from "src/hb-backend-api/auth/application/use-cases/refresh-token.service";
 import { SignUpService } from "src/hb-backend-api/auth/application/use-cases/sign-up.service";
@@ -39,7 +38,6 @@ import { RolesGuard } from "src/hb-backend-api/auth/adapters/in/rest/guard/roles
       { name: RefreshTokenEntity.name, schema: RefreshTokenSchema },
     ]),
     UserModule,
-    IdentityModule,
   ],
   controllers: [AuthController],
   providers: [
