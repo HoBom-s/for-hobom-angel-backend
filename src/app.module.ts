@@ -19,6 +19,7 @@ import { AdoptionModule } from "src/hb-backend-api/adoption/adoption.module";
 import { AnimalModule } from "src/hb-backend-api/animal/animal.module";
 import { ApprovalModule } from "src/hb-backend-api/approval/approval.module";
 import { AuditModule } from "src/hb-backend-api/audit/audit.module";
+import { FavoriteModule } from "src/hb-backend-api/favorite/favorite.module";
 import { FosterModule } from "src/hb-backend-api/foster/foster.module";
 import { AuthModule } from "src/hb-backend-api/auth/auth.module";
 import { HealthModule } from "src/hb-backend-api/health/health.module";
@@ -73,6 +74,7 @@ import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
     AdoptionModule,
     FosterModule,
     VolunteerModule,
+    FavoriteModule,
   ],
   providers: [
     TraceContext,

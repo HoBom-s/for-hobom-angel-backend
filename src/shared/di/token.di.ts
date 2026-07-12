@@ -183,6 +183,21 @@ class MessagingModuleToken extends TokenRegistry {
   public readonly MessageRepository = this.register("messaging.repository");
 }
 
+class FavoriteModuleToken extends TokenRegistry {
+  public readonly AddFavoriteUseCase = this.register("favorite.add.use-case");
+  public readonly RemoveFavoriteUseCase = this.register(
+    "favorite.remove.use-case",
+  );
+  public readonly ListFavoritesUseCase = this.register(
+    "favorite.list.use-case",
+  );
+  public readonly FavoritePersistencePort = this.register(
+    "favorite.persistence.port",
+  );
+  public readonly FavoriteQueryPort = this.register("favorite.query.port");
+  public readonly FavoriteRepository = this.register("favorite.repository");
+}
+
 export const DIToken = {
   OutboxModule: new OutboxModuleToken(),
   UserModule: new UserModuleToken(),
@@ -197,4 +212,5 @@ export const DIToken = {
   FosterModule: new FosterModuleToken(),
   VolunteerModule: new VolunteerModuleToken(),
   MessagingModule: new MessagingModuleToken(),
+  FavoriteModule: new FavoriteModuleToken(),
 } as const;
