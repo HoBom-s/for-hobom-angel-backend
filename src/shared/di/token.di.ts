@@ -242,6 +242,15 @@ class AnnouncementModuleToken extends TokenRegistry {
   );
 }
 
+class FaqModuleToken extends TokenRegistry {
+  public readonly PostFaqUseCase = this.register("faq.post.use-case");
+  public readonly EditFaqUseCase = this.register("faq.edit.use-case");
+  public readonly DeleteFaqUseCase = this.register("faq.delete.use-case");
+  public readonly FaqPersistencePort = this.register("faq.persistence.port");
+  public readonly FaqQueryPort = this.register("faq.query.port");
+  public readonly FaqRepository = this.register("faq.repository");
+}
+
 class ReviewModuleToken extends TokenRegistry {
   public readonly SubmitReviewUseCase = this.register("review.submit.use-case");
   public readonly ReviseReviewUseCase = this.register("review.revise.use-case");
@@ -274,4 +283,5 @@ export const DIToken = {
   ReportModule: new ReportModuleToken(),
   ReviewModule: new ReviewModuleToken(),
   AnnouncementModule: new AnnouncementModuleToken(),
+  FaqModule: new FaqModuleToken(),
 } as const;
