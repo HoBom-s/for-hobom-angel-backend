@@ -47,4 +47,23 @@ describe("AdoptionApplication", () => {
     expect(() => app.reject("too late")).toThrow("이미 처리된");
     expect(() => app.withdraw()).toThrow("이미 처리된");
   });
+
+  it("returns an approved adoption, recording reason and time", () => {
+    const app = submit();
+    app.approve();
+    const at = new Date("2026-07-01T00:00:00Z");
+    app.markReturned("이사로 인해 파양", at);
+    expect(app.getStatus).toBe(AdoptionApplicationStatus.RETURNED);
+    expect(app.getReturnReason).toBe("이사로 인해 파양");
+    expect(app.getReturnedAt).toEqual(at);
+  });
+
+  it("only an approved adoption can be returned, and a reason is required", () => {
+    expect(() => submit().markReturned("사유", new Date())).toThrow(
+      "완료된 입양",
+    );
+    const app = submit();
+    app.approve();
+    expect(() => app.markReturned("  ", new Date())).toThrow("반환 사유");
+  });
 });

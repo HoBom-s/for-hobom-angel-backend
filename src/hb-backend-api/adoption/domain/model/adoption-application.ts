@@ -22,6 +22,8 @@ export class AdoptionApplication {
     private readonly answers: Answer[],
     private status: AdoptionApplicationStatus,
     private decidedReason: string | null,
+    private returnedAt: Date | null,
+    private returnReason: string | null,
     private readonly version: number,
   ) {}
 
@@ -41,6 +43,8 @@ export class AdoptionApplication {
       params.answers,
       AdoptionApplicationStatus.PENDING,
       null,
+      null,
+      null,
       0,
     );
   }
@@ -54,6 +58,8 @@ export class AdoptionApplication {
     answers: Answer[];
     status: AdoptionApplicationStatus;
     decidedReason: string | null;
+    returnedAt: Date | null;
+    returnReason: string | null;
     version: number;
   }): AdoptionApplication {
     return new AdoptionApplication(
@@ -65,6 +71,8 @@ export class AdoptionApplication {
       params.answers,
       params.status,
       params.decidedReason,
+      params.returnedAt,
+      params.returnReason,
       params.version,
     );
   }
@@ -86,6 +94,19 @@ export class AdoptionApplication {
   public withdraw(): void {
     this.assertPending("철회");
     this.status = AdoptionApplicationStatus.WITHDRAWN;
+  }
+
+  /** The animal came back after an approved adoption (파양/반환). */
+  public markReturned(reason: string, at: Date): void {
+    if (this.status !== AdoptionApplicationStatus.APPROVED) {
+      throw new Error("완료된 입양만 반환 처리할 수 있어요.");
+    }
+    if (!reason?.trim()) {
+      throw new Error("반환 사유가 필요해요.");
+    }
+    this.status = AdoptionApplicationStatus.RETURNED;
+    this.returnedAt = at;
+    this.returnReason = reason.trim();
   }
 
   public isPending(): boolean {
@@ -123,6 +144,12 @@ export class AdoptionApplication {
   }
   public get getDecidedReason(): string | null {
     return this.decidedReason;
+  }
+  public get getReturnedAt(): Date | null {
+    return this.returnedAt;
+  }
+  public get getReturnReason(): string | null {
+    return this.returnReason;
   }
   public get getVersion(): number {
     return this.version;
