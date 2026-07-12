@@ -62,7 +62,10 @@ import { AdoptionController } from "src/hb-backend-api/adoption/adapters/in/adop
     AdoptionApprovalCallback,
     AdoptionMessageSubjectResolver,
   ],
-  exports: [DIToken.AdoptionModule.SubmitAdoptionApplicationUseCase],
+  exports: [
+    DIToken.AdoptionModule.SubmitAdoptionApplicationUseCase,
+    DIToken.AdoptionModule.AdoptionApplicationQueryPort,
+  ],
 })
 export class AdoptionModule implements OnModuleInit {
   constructor(

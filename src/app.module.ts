@@ -29,6 +29,7 @@ import { MessagingModule } from "src/hb-backend-api/messaging/messaging.module";
 import { OutboxModule } from "src/hb-backend-api/outbox/outbox.module";
 import { QuestionnaireModule } from "src/hb-backend-api/questionnaire/questionnaire.module";
 import { ReportModule } from "src/hb-backend-api/report/report.module";
+import { ReviewModule } from "src/hb-backend-api/review/review.module";
 import { ShelterModule } from "src/hb-backend-api/shelter/shelter.module";
 import { UserModule } from "src/hb-backend-api/user/user.module";
 import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
@@ -79,6 +80,7 @@ import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
     VolunteerModule,
     FavoriteModule,
     ReportModule,
+    ReviewModule,
   ],
   providers: [
     TraceContext,

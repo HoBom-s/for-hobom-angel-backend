@@ -67,6 +67,7 @@ import { FosterController } from "src/hb-backend-api/foster/adapters/in/foster.c
   exports: [
     DIToken.FosterModule.SubmitFosterApplicationUseCase,
     DIToken.FosterModule.TerminateFosterUseCase,
+    DIToken.FosterModule.FosterApplicationQueryPort,
   ],
 })
 export class FosterModule implements OnModuleInit {
