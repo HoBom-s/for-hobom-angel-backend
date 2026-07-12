@@ -4,6 +4,8 @@ import { DIToken } from "src/shared/di/token.di";
 import { AnimalModule } from "src/hb-backend-api/animal/animal.module";
 import { ApprovalModule } from "src/hb-backend-api/approval/approval.module";
 import { ApprovalCallbackRegistry } from "src/hb-backend-api/approval/application/approval-callback.registry";
+import { MessagingModule } from "src/hb-backend-api/messaging/messaging.module";
+import { MessageSubjectResolverRegistry } from "src/hb-backend-api/messaging/application/message-subject-resolver.registry";
 import { OutboxModule } from "src/hb-backend-api/outbox/outbox.module";
 import { QuestionnaireModule } from "src/hb-backend-api/questionnaire/questionnaire.module";
 import { UserModule } from "src/hb-backend-api/user/user.module";
@@ -14,6 +16,7 @@ import { AdoptionApplicationQueryAdapter } from "src/hb-backend-api/adoption/ada
 import { AdoptionApplicationRepositoryImpl } from "src/hb-backend-api/adoption/infra/repositories/adoption-application.repository.impl";
 import { SubmitAdoptionApplicationService } from "src/hb-backend-api/adoption/application/use-cases/submit-adoption-application.service";
 import { AdoptionApprovalCallback } from "src/hb-backend-api/adoption/application/adoption-approval.callback";
+import { AdoptionMessageSubjectResolver } from "src/hb-backend-api/adoption/application/adoption-message-subject.resolver";
 import { AdoptionController } from "src/hb-backend-api/adoption/adapters/in/adoption.controller";
 
 /**
@@ -36,6 +39,7 @@ import { AdoptionController } from "src/hb-backend-api/adoption/adapters/in/adop
     UserModule,
     OutboxModule,
     QuestionnaireModule,
+    MessagingModule,
   ],
   controllers: [AdoptionController],
   providers: [
@@ -56,6 +60,7 @@ import { AdoptionController } from "src/hb-backend-api/adoption/adapters/in/adop
       useClass: AdoptionApplicationQueryAdapter,
     },
     AdoptionApprovalCallback,
+    AdoptionMessageSubjectResolver,
   ],
   exports: [DIToken.AdoptionModule.SubmitAdoptionApplicationUseCase],
 })
@@ -63,9 +68,12 @@ export class AdoptionModule implements OnModuleInit {
   constructor(
     private readonly callbackRegistry: ApprovalCallbackRegistry,
     private readonly adoptionApprovalCallback: AdoptionApprovalCallback,
+    private readonly resolverRegistry: MessageSubjectResolverRegistry,
+    private readonly adoptionMessageSubjectResolver: AdoptionMessageSubjectResolver,
   ) {}
 
   public onModuleInit(): void {
     this.callbackRegistry.register(this.adoptionApprovalCallback);
+    this.resolverRegistry.register(this.adoptionMessageSubjectResolver);
   }
 }
