@@ -1,0 +1,52 @@
+name: DB Migrate
+
+# Reconciles the database with the code: runs data migrations (migrate-mongo)
+# then syncs every schema's indexes (drops orphaned, creates missing). Keeps the
+# schema as the single source of truth — no hand-typed `migrate:up && indexes:sync`.
+#
+# MANUAL ONLY — it never runs on push/merge. You trigger it from the Actions tab
+# (Run workflow) when you decide to reconcile, so nothing touches the live DB
+# without an explicit click. It is also pinned to the `production` environment,
+# so if you add required reviewers there, the run pauses for approval first.
+#
+# What it does: migrate:up applies only PENDING, reviewed migration files;
+# indexes:sync only creates/drops INDEXES to match the schema — it never writes
+# document data. Requires these secrets on the `production` environment:
+#   HOBOM_SYSTEM_ANGEL_BACKEND_TIGER_DB, HOBOM_JWT_SECRET,
+#   HOBOM_JWT_REFRESH_SECRET, FIELD_ENCRYPTION_KEY
+# (Atlas Network Access must allow the GitHub runner — 0.0.0.0/0 or the GH IP
+# ranges.)
+
+on:
+  workflow_dispatch: {}
+
+# Never let two migration runs overlap.
+concurrency:
+  group: db-migrate
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      HOBOM_SYSTEM_ANGEL_BACKEND_TIGER_DB: ${{ secrets.HOBOM_SYSTEM_ANGEL_BACKEND_TIGER_DB }}
+      HOBOM_JWT_SECRET: ${{ secrets.HOBOM_JWT_SECRET }}
+      HOBOM_JWT_REFRESH_SECRET: ${{ secrets.HOBOM_JWT_REFRESH_SECRET }}
+      FIELD_ENCRYPTION_KEY: ${{ secrets.FIELD_ENCRYPTION_KEY }}
+      HOBOM_JWT_ACCESS_TOKEN_EXPIRED: "15m"
+      HOBOM_JWT_REFRESH_TOKEN_EXPIRED: "30d"
+      NODE_ENV: production
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Migration status (before)
+        run: npm run migrate:status
+      - name: Migrate + sync indexes
+        run: npm run db:deploy

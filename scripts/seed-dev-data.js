@@ -80,7 +80,11 @@ const shelter = (id, name, slug, address, rep, registrationNumber, businessNumbe
   registrationNumber,
   businessNumber,
   facilityPhotos: [
-    { objectKey: `shelters/${slug}-exterior.jpg`, kind: "EXTERIOR", caption: "정문" },
+    {
+      objectKey: `https://loremflickr.com/640/480/animal,shelter?lock=${slug.length}`,
+      kind: "EXTERIOR",
+      caption: "정문",
+    },
   ],
   status: "VERIFIED",
   trustTier: "A",
@@ -101,21 +105,32 @@ const shelters = [
   }, U.hopeAdmin, "제2024-1002호", "2223344556"),
 ];
 
-const animal = (id, shelterId, name, species, status, traits, story) => ({
-  _id: id,
-  shelterId,
-  name,
-  species,
-  description: story,
-  traits,
-  health: { neutered: true, vaccinated: true, microchipId: null, notes: "건강 양호" },
-  intake: { intakeDate: new Date("2026-05-01T00:00:00Z"), rescueStory: story, noticeNumber: null },
-  photos: [{ objectKey: `animals/${id.toHexString()}-1.jpg`, caption: name }],
-  status,
-  version: 0,
-  createdAt: now,
-  updatedAt: now,
-});
+// Real photos so responses show actual cute animals. `objectKey` is normally an
+// object-storage key (the image server is deferred), but a full public URL works
+// for browsing — a frontend that renders objectKey as-is shows the image.
+const petImg = (species, lock) => {
+  const kw =
+    species === "CAT" ? "cat,kitten" : species === "DOG" ? "dog,puppy" : "rabbit,pet";
+  return `https://loremflickr.com/640/480/${kw}?lock=${lock}`;
+};
+const animal = (id, shelterId, name, species, status, traits, story) => {
+  const lock = parseInt(id.toHexString().slice(-3), 16);
+  return {
+    _id: id,
+    shelterId,
+    name,
+    species,
+    description: story,
+    traits,
+    health: { neutered: true, vaccinated: true, microchipId: null, notes: "건강 양호" },
+    intake: { intakeDate: new Date("2026-05-01T00:00:00Z"), rescueStory: story, noticeNumber: null },
+    photos: [{ objectKey: petImg(species, lock), caption: name }],
+    status,
+    version: 0,
+    createdAt: now,
+    updatedAt: now,
+  };
+};
 const traits = (sex, size, ageMonths, breed, color, personality) => ({
   sex, size, ageMonths, breed, color, personality,
 });
