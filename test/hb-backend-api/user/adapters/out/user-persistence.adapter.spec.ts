@@ -31,7 +31,7 @@ const registration = () =>
   RegisterUser.of({
     nickname: "hobom",
     realName: "홍길동",
-    ci: "ci-value",
+    passwordHash: "hashed",
     phone: "01012345678",
     email: "hobom@example.com",
     verifiedChannel: VerifiedChannel.PHONE,

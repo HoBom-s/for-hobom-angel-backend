@@ -1,10 +1,11 @@
 import { TokenPair } from "src/hb-backend-api/auth/domain/model/token-pair";
 
 export interface SignUpCommand {
-  /** 본인확인 vendor receipt — yields the verified real name / CI / phone. */
-  verificationToken: string;
-  nickname: string;
   email: string;
+  password: string;
+  nickname: string;
+  realName: string;
+  phone: string;
 }
 
 export interface SignUpResult {
@@ -13,7 +14,7 @@ export interface SignUpResult {
   tokens: TokenPair;
 }
 
-/** Registers a new member from a verified identity and opens a session. */
+/** Registers a new member from the signup funnel and opens a session. */
 export interface SignUpUseCase {
   invoke(command: SignUpCommand): Promise<SignUpResult>;
 }

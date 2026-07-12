@@ -34,12 +34,6 @@ class AuthModuleToken extends TokenRegistry {
   public readonly LoginUseCase = this.register("auth.login.use-case");
 }
 
-class IdentityModuleToken extends TokenRegistry {
-  public readonly IdentityVerificationPort = this.register(
-    "identity.verification.port",
-  );
-}
-
 class AuditModuleToken extends TokenRegistry {
   public readonly AuditPersistencePort = this.register(
     "audit.persistence.port",
@@ -266,7 +260,6 @@ export const DIToken = {
   OutboxModule: new OutboxModuleToken(),
   UserModule: new UserModuleToken(),
   AuthModule: new AuthModuleToken(),
-  IdentityModule: new IdentityModuleToken(),
   AuditModule: new AuditModuleToken(),
   IdempotencyModule: new IdempotencyModuleToken(),
   ApprovalModule: new ApprovalModuleToken(),

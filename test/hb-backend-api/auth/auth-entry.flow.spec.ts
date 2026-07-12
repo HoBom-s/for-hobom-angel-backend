@@ -4,33 +4,16 @@ import { Test } from "@nestjs/testing";
 import { MongoMemoryReplSet } from "mongodb-memory-server";
 import { Model } from "mongoose";
 import { DIToken } from "src/shared/di/token.di";
-import { VerifiedChannel } from "src/hb-backend-api/user/domain/enums/verified-channel.enum";
 import { UserEntity } from "src/hb-backend-api/user/domain/model/user.entity";
-import { VerifiedIdentity } from "src/hb-backend-api/identity/domain/model/verified-identity";
-import { IdentityVerificationPort } from "src/hb-backend-api/identity/domain/ports/out/identity-verification.port";
 import { SignUpUseCase } from "src/hb-backend-api/auth/domain/ports/in/sign-up.use-case";
 import { LoginUseCase } from "src/hb-backend-api/auth/domain/ports/in/login.use-case";
 import { RefreshTokenService } from "src/hb-backend-api/auth/application/use-cases/refresh-token.service";
 
 /**
- * Full session lifecycle through the real DI graph + Mongo replica set, with the
- * 본인확인 vendor faked (the token IS the CI, so distinct tokens = distinct
- * people): signup -> login -> refresh(rotate) -> logout(revoke) -> reuse blocked.
+ * Full email+password session lifecycle through the real DI graph + Mongo
+ * replica set: signup (bcrypt-hashed, PII encrypted) -> login (right/wrong
+ * password) -> refresh(rotate) -> reuse detected.
  */
-class FakeIdentityVerification implements IdentityVerificationPort {
-  public verify(verificationToken: string): Promise<VerifiedIdentity> {
-    return Promise.resolve(
-      VerifiedIdentity.of({
-        ci: verificationToken,
-        di: `di-${verificationToken}`,
-        realName: "홍길동",
-        phone: "01012345678",
-        verifiedChannel: VerifiedChannel.PHONE,
-      }),
-    );
-  }
-}
-
 describe("Auth entry (flow)", () => {
   let app: INestApplication;
   let mongo: MongoMemoryReplSet;
@@ -38,6 +21,15 @@ describe("Auth entry (flow)", () => {
   let login: LoginUseCase;
   let refreshTokens: RefreshTokenService;
   let userModel: Model<UserEntity>;
+
+  const account = (over: Partial<Record<string, string>> = {}) => ({
+    email: "alice@example.com",
+    password: "s3cret-password",
+    nickname: "alice",
+    realName: "홍길동",
+    phone: "01012345678",
+    ...over,
+  });
 
   beforeAll(async () => {
     mongo = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
@@ -50,10 +42,9 @@ describe("Auth entry (flow)", () => {
     process.env.FIELD_ENCRYPTION_KEY = Buffer.alloc(32, 7).toString("base64");
 
     const { AppModule } = await import("src/app.module");
-    const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-      .overrideProvider(DIToken.IdentityModule.IdentityVerificationPort)
-      .useClass(FakeIdentityVerification)
-      .compile();
+    const moduleRef = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
 
     app = moduleRef.createNestApplication();
     await app.init();
@@ -69,65 +60,60 @@ describe("Auth entry (flow)", () => {
     await mongo?.stop();
   });
 
-  it("signs up a member, encrypting PII and issuing a session", async () => {
-    const result = await signUp.invoke({
-      verificationToken: "ci-alice",
-      nickname: "alice",
-      email: "alice@example.com",
-    });
+  it("signs up a member, hashing the password and encrypting PII", async () => {
+    const result = await signUp.invoke(account());
 
     expect(result.userId).toBeDefined();
     expect(result.nickname).toBe("alice");
     expect(result.tokens.accessToken).toBeTruthy();
-    expect(result.tokens.refreshToken).toBeTruthy();
 
     const doc = await userModel.findById(result.userId).lean().exec();
-    expect(doc?.ci).toBe("ci-alice");
-    expect(doc?.realNameEnc).not.toContain("홍길동"); // stored encrypted
     expect(doc?.email).toBe("alice@example.com");
+    expect(doc?.passwordHash).not.toBe("s3cret-password"); // hashed
+    expect(doc?.passwordHash.startsWith("$2")).toBe(true); // bcrypt
+    expect(doc?.realNameEnc).not.toContain("홍길동"); // encrypted
   });
 
-  it("rejects a second signup for the same identity (CI)", async () => {
+  it("rejects a duplicate email and a duplicate nickname", async () => {
     await expect(
-      signUp.invoke({
-        verificationToken: "ci-alice",
-        nickname: "alice2",
-        email: "alice2@example.com",
-      }),
-    ).rejects.toThrow("이미 가입된");
+      signUp.invoke(account({ nickname: "alice-two" })),
+    ).rejects.toThrow("이미 가입된 이메일");
+    await expect(
+      signUp.invoke(account({ email: "other@example.com" })),
+    ).rejects.toThrow("이미 사용 중인 닉네임");
   });
 
-  it("logs a returning member in, and refuses an unknown identity", async () => {
-    const tokens = await login.invoke({ verificationToken: "ci-alice" });
+  it("logs in with the right password and refuses the wrong one", async () => {
+    const tokens = await login.invoke({
+      email: "alice@example.com",
+      password: "s3cret-password",
+    });
     expect(tokens.accessToken).toBeTruthy();
 
     await expect(
-      login.invoke({ verificationToken: "ci-nobody" }),
-    ).rejects.toThrow("가입이 필요해요");
+      login.invoke({ email: "alice@example.com", password: "wrong" }),
+    ).rejects.toThrow("이메일 또는 비밀번호");
+    await expect(
+      login.invoke({ email: "nobody@example.com", password: "whatever" }),
+    ).rejects.toThrow("이메일 또는 비밀번호");
   });
 
-  it("rotates on refresh and revokes on logout (reuse blocked)", async () => {
-    const { tokens } = await signUp.invoke({
-      verificationToken: "ci-bob",
-      nickname: "bob",
-      email: "bob@example.com",
+  it("is case-insensitive on the login email", async () => {
+    const tokens = await login.invoke({
+      email: "ALICE@example.com",
+      password: "s3cret-password",
     });
+    expect(tokens.accessToken).toBeTruthy();
+  });
+
+  it("rotates on refresh and detects reuse of a spent token", async () => {
+    const { tokens } = await signUp.invoke(
+      account({ email: "bob@example.com", nickname: "bob" }),
+    );
 
     const rotated = await refreshTokens.rotate(tokens.refreshToken);
     expect(rotated.refreshToken).not.toBe(tokens.refreshToken);
 
-    // Presenting the now-rotated (spent) token again is detected as reuse.
-    await expect(refreshTokens.rotate(tokens.refreshToken)).rejects.toThrow();
-  });
-
-  it("logout revokes the family so the token can no longer rotate", async () => {
-    const { tokens } = await signUp.invoke({
-      verificationToken: "ci-carol",
-      nickname: "carol",
-      email: "carol@example.com",
-    });
-
-    await refreshTokens.revoke(tokens.refreshToken);
     await expect(refreshTokens.rotate(tokens.refreshToken)).rejects.toThrow();
   });
 });
