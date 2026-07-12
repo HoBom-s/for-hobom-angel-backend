@@ -253,6 +253,12 @@ class AnnouncementModuleToken extends TokenRegistry {
   );
 }
 
+class AdopterHistoryModuleToken extends TokenRegistry {
+  public readonly GetAdopterHistoryUseCase = this.register(
+    "adopter-history.get.use-case",
+  );
+}
+
 class FaqModuleToken extends TokenRegistry {
   public readonly PostFaqUseCase = this.register("faq.post.use-case");
   public readonly EditFaqUseCase = this.register("faq.edit.use-case");
@@ -295,4 +301,5 @@ export const DIToken = {
   ReviewModule: new ReviewModuleToken(),
   AnnouncementModule: new AnnouncementModuleToken(),
   FaqModule: new FaqModuleToken(),
+  AdopterHistoryModule: new AdopterHistoryModuleToken(),
 } as const;

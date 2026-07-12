@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { FosterApplicationStatus } from "src/hb-backend-api/foster/domain/enums/foster-application-status.enum";
 import { FosterApplicationEntity } from "src/hb-backend-api/foster/domain/model/foster-application.entity";
 
 export type FosterApplicationMutablePatch = Partial<
@@ -17,4 +18,8 @@ export interface FosterApplicationRepository {
     patch: FosterApplicationMutablePatch,
   ): Promise<void>;
   findById(id: Types.ObjectId): Promise<FosterApplicationEntity | null>;
+  countByApplicantAndStatus(
+    applicantId: Types.ObjectId,
+    status: FosterApplicationStatus,
+  ): Promise<number>;
 }
