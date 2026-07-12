@@ -227,6 +227,27 @@ class ReportModuleToken extends TokenRegistry {
   public readonly ReportRepository = this.register("report.repository");
 }
 
+class AnnouncementModuleToken extends TokenRegistry {
+  public readonly PostAnnouncementUseCase = this.register(
+    "announcement.post.use-case",
+  );
+  public readonly EditAnnouncementUseCase = this.register(
+    "announcement.edit.use-case",
+  );
+  public readonly DeleteAnnouncementUseCase = this.register(
+    "announcement.delete.use-case",
+  );
+  public readonly AnnouncementPersistencePort = this.register(
+    "announcement.persistence.port",
+  );
+  public readonly AnnouncementQueryPort = this.register(
+    "announcement.query.port",
+  );
+  public readonly AnnouncementRepository = this.register(
+    "announcement.repository",
+  );
+}
+
 class ReviewModuleToken extends TokenRegistry {
   public readonly SubmitReviewUseCase = this.register("review.submit.use-case");
   public readonly ReviseReviewUseCase = this.register("review.revise.use-case");
@@ -259,4 +280,5 @@ export const DIToken = {
   FavoriteModule: new FavoriteModuleToken(),
   ReportModule: new ReportModuleToken(),
   ReviewModule: new ReviewModuleToken(),
+  AnnouncementModule: new AnnouncementModuleToken(),
 } as const;
