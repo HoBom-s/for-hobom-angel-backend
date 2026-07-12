@@ -27,6 +27,7 @@ import { OutboxModule } from "src/hb-backend-api/outbox/outbox.module";
 import { QuestionnaireModule } from "src/hb-backend-api/questionnaire/questionnaire.module";
 import { ShelterModule } from "src/hb-backend-api/shelter/shelter.module";
 import { UserModule } from "src/hb-backend-api/user/user.module";
+import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
 
 @Module({
   imports: [
@@ -69,6 +70,7 @@ import { UserModule } from "src/hb-backend-api/user/user.module";
     QuestionnaireModule,
     AdoptionModule,
     FosterModule,
+    VolunteerModule,
   ],
   providers: [
     TraceContext,

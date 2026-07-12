@@ -136,6 +136,39 @@ class FosterModuleToken extends TokenRegistry {
   );
 }
 
+class VolunteerModuleToken extends TokenRegistry {
+  public readonly CreateVolunteerEventUseCase = this.register(
+    "volunteer.create-event.use-case",
+  );
+  public readonly SignUpForVolunteerUseCase = this.register(
+    "volunteer.sign-up.use-case",
+  );
+  public readonly WithdrawVolunteerSignupUseCase = this.register(
+    "volunteer.withdraw-signup.use-case",
+  );
+  public readonly CancelVolunteerEventUseCase = this.register(
+    "volunteer.cancel-event.use-case",
+  );
+  public readonly VolunteerEventPersistencePort = this.register(
+    "volunteer.event.persistence.port",
+  );
+  public readonly VolunteerEventQueryPort = this.register(
+    "volunteer.event.query.port",
+  );
+  public readonly VolunteerEventRepository = this.register(
+    "volunteer.event.repository",
+  );
+  public readonly VolunteerSignupPersistencePort = this.register(
+    "volunteer.signup.persistence.port",
+  );
+  public readonly VolunteerSignupQueryPort = this.register(
+    "volunteer.signup.query.port",
+  );
+  public readonly VolunteerSignupRepository = this.register(
+    "volunteer.signup.repository",
+  );
+}
+
 export const DIToken = {
   OutboxModule: new OutboxModuleToken(),
   UserModule: new UserModuleToken(),
@@ -148,4 +181,5 @@ export const DIToken = {
   QuestionnaireModule: new QuestionnaireModuleToken(),
   AdoptionModule: new AdoptionModuleToken(),
   FosterModule: new FosterModuleToken(),
+  VolunteerModule: new VolunteerModuleToken(),
 } as const;
