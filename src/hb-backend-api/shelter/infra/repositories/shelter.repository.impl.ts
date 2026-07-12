@@ -3,6 +3,8 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { MongoSessionContext } from "src/infra/mongo/transaction/transaction.context";
 import { OptimisticLockException } from "src/shared/exception/optimistic-lock.exception";
+import { AddressVisibility } from "src/hb-backend-api/shelter/domain/enums/address-visibility.enum";
+import { ShelterStatus } from "src/hb-backend-api/shelter/domain/enums/shelter-status.enum";
 import { ShelterEntity } from "src/hb-backend-api/shelter/domain/model/shelter.entity";
 import {
   ShelterMutablePatch,
@@ -44,5 +46,18 @@ export class ShelterRepositoryImpl implements ShelterRepository {
 
   public findBySlug(slug: string): Promise<ShelterEntity | null> {
     return this.shelterModel.findOne({ slug }).exec();
+  }
+
+  public findMappable(region?: string): Promise<ShelterEntity[]> {
+    const query: Record<string, unknown> = {
+      status: ShelterStatus.VERIFIED,
+      "address.visibility": { $ne: AddressVisibility.HIDDEN },
+      "address.lat": { $ne: null },
+      "address.lng": { $ne: null },
+    };
+    if (region) {
+      query["address.region"] = region;
+    }
+    return this.shelterModel.find(query).exec();
   }
 }

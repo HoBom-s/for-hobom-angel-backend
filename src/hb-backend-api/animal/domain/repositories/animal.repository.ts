@@ -1,5 +1,19 @@
 import { Types } from "mongoose";
+import { AnimalSex } from "src/hb-backend-api/animal/domain/enums/animal-sex.enum";
+import { AnimalSize } from "src/hb-backend-api/animal/domain/enums/animal-size.enum";
+import { AnimalSpecies } from "src/hb-backend-api/animal/domain/enums/animal-species.enum";
+import { AnimalStatus } from "src/hb-backend-api/animal/domain/enums/animal-status.enum";
 import { AnimalEntity } from "src/hb-backend-api/animal/domain/model/animal.entity";
+
+/** Discovery filters. Absent fields are unconstrained. */
+export interface AnimalSearchFilter {
+  species?: AnimalSpecies;
+  size?: AnimalSize;
+  sex?: AnimalSex;
+  status?: AnimalStatus;
+  /** Matched against name/description. */
+  keyword?: string;
+}
 
 /** Mutable fields the aggregate can change after registration. */
 export type AnimalMutablePatch = Partial<
@@ -26,4 +40,14 @@ export interface AnimalRepository {
   ): Promise<void>;
   findById(id: Types.ObjectId): Promise<AnimalEntity | null>;
   findByShelterId(shelterId: Types.ObjectId): Promise<AnimalEntity[]>;
+  /**
+   * Cursor search, newest-first by id. Returns up to `limit + 1` documents so the
+   * caller can tell whether another page exists; `cursorId` is the id of the last
+   * item from the previous page (exclusive), or null for the first page.
+   */
+  search(
+    filter: AnimalSearchFilter,
+    cursorId: Types.ObjectId | null,
+    limit: number,
+  ): Promise<AnimalEntity[]>;
 }

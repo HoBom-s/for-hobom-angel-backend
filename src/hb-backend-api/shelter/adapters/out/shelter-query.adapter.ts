@@ -23,4 +23,10 @@ export class ShelterQueryAdapter implements ShelterQueryPort {
     const doc = await this.shelterRepository.findBySlug(slug.raw);
     return doc ? toDomain(doc) : null;
   }
+
+  public async findMappable(region?: string): Promise<Shelter[]> {
+    const docs = await this.shelterRepository.findMappable(region);
+    // Defensive: the aggregate's own rule is the final arbiter of mappability.
+    return docs.map(toDomain).filter((shelter) => shelter.isMappable());
+  }
 }

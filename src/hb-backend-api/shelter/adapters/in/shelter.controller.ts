@@ -6,11 +6,13 @@ import {
   NotFoundException,
   Param,
   Post,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
@@ -32,6 +34,7 @@ import { ShelterQueryPort } from "src/hb-backend-api/shelter/domain/ports/out/sh
 import { RegisterShelterDto } from "src/hb-backend-api/shelter/adapters/in/dto/register-shelter.dto";
 import { RequestStaffPromotionDto } from "src/hb-backend-api/shelter/adapters/in/dto/request-staff-promotion.dto";
 import { ShelterResponse } from "src/hb-backend-api/shelter/adapters/in/dto/shelter.response";
+import { ShelterMarkerResponse } from "src/hb-backend-api/shelter/adapters/in/dto/shelter-marker.response";
 
 @ApiTags("Shelters")
 @ApiBearerAuth()
@@ -73,6 +76,17 @@ export class ShelterController {
       candidateUserId: body.candidateUserId,
       requestedBy: user.userId,
     });
+  }
+
+  @ApiOperation({ summary: "지도 탐색 — 위치 공개 보호소 마커 (지역 필터)" })
+  @ApiQuery({ name: "region", required: false, type: String })
+  @ApiResponse({ type: [ShelterMarkerResponse] })
+  @Get("map")
+  public async map(
+    @Query("region") region?: string,
+  ): Promise<ShelterMarkerResponse[]> {
+    const shelters = await this.shelterQueryPort.findMappable(region);
+    return shelters.map((shelter) => ShelterMarkerResponse.from(shelter));
   }
 
   @ApiOperation({ summary: "보호소 단건 조회 (슬러그)" })

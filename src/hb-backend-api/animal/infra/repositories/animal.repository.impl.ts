@@ -7,6 +7,7 @@ import { AnimalEntity } from "src/hb-backend-api/animal/domain/model/animal.enti
 import {
   AnimalMutablePatch,
   AnimalRepository,
+  AnimalSearchFilter,
 } from "src/hb-backend-api/animal/domain/repositories/animal.repository";
 
 @Injectable()
@@ -44,5 +45,40 @@ export class AnimalRepositoryImpl implements AnimalRepository {
 
   public findByShelterId(shelterId: Types.ObjectId): Promise<AnimalEntity[]> {
     return this.animalModel.find({ shelterId }).sort({ createdAt: -1 }).exec();
+  }
+
+  public search(
+    filter: AnimalSearchFilter,
+    cursorId: Types.ObjectId | null,
+    limit: number,
+  ): Promise<AnimalEntity[]> {
+    const query: Record<string, unknown> = {};
+    if (filter.species) {
+      query.species = filter.species;
+    }
+    if (filter.status) {
+      query.status = filter.status;
+    }
+    if (filter.size) {
+      query["traits.size"] = filter.size;
+    }
+    if (filter.sex) {
+      query["traits.sex"] = filter.sex;
+    }
+    if (filter.keyword) {
+      const escaped = filter.keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const rx = new RegExp(escaped, "i");
+      query.$or = [{ name: rx }, { description: rx }];
+    }
+    if (cursorId) {
+      query._id = { $lt: cursorId };
+    }
+    // Newest-first by id (ObjectId encodes creation time); fetch one extra to
+    // detect whether a further page exists.
+    return this.animalModel
+      .find(query)
+      .sort({ _id: -1 })
+      .limit(limit + 1)
+      .exec();
   }
 }
