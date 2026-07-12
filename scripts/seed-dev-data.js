@@ -71,14 +71,14 @@ const users = [
   user(U.member3, "봉사왕", "member3@hobom.dev", ["USER"]),
 ];
 
-const shelter = (id, name, slug, address, rep) => ({
+const shelter = (id, name, slug, address, rep, registrationNumber, businessNumber) => ({
   _id: id,
   name,
   slug,
   address,
   representatives: [rep],
-  registrationNumber: "제2024-1호",
-  businessNumber: null,
+  registrationNumber,
+  businessNumber,
   facilityPhotos: [
     { objectKey: `shelters/${slug}-exterior.jpg`, kind: "EXTERIOR", caption: "정문" },
   ],
@@ -94,11 +94,11 @@ const shelters = [
   shelter(S.happy, "행복한 보호소", "haengbok-shelter", {
     region: "서울", city: "강남구", roadAddress: "테헤란로 123",
     lat: 37.5013, lng: 127.0396, visibility: "FULL",
-  }, U.happyAdmin),
+  }, U.happyAdmin, "제2024-1001호", "1112233445"),
   shelter(S.hope, "희망 쉼터", "huimang-shelter", {
     region: "부산", city: "해운대구", roadAddress: "해운대로 456",
     lat: 35.1631, lng: 129.1637, visibility: "FULL",
-  }, U.hopeAdmin),
+  }, U.hopeAdmin, "제2024-1002호", "2223344556"),
 ];
 
 const animal = (id, shelterId, name, species, status, traits, story) => ({
@@ -200,9 +200,18 @@ const review = (id, authorId, rating, body) => ({
 const reviews = [review(oid("801"), U.member1, 5, "상담이 친절하고 아이 상태도 투명하게 알려주셨어요.")];
 
 // ── run ──────────────────────────────────────────────────────────
-async function upsertAll(db, name, docs) {
+// `uniqueKeys` are business keys with a unique index (e.g. email, slug). Any
+// pre-existing doc holding one of our seed values under a DIFFERENT _id (say,
+// left over from earlier manual testing) is removed first, so the seed stays
+// authoritative and re-runnable.
+async function upsertAll(db, name, docs, uniqueKeys = []) {
   const col = db.collection(name);
   for (const doc of docs) {
+    for (const key of uniqueKeys) {
+      if (doc[key] !== undefined) {
+        await col.deleteMany({ [key]: doc[key], _id: { $ne: doc._id } });
+      }
+    }
     await col.replaceOne({ _id: doc._id }, doc, { upsert: true });
   }
   return docs.length;
@@ -219,8 +228,8 @@ async function main() {
   const db = client.db();
 
   const sets = [
-    ["users", users],
-    ["shelters", shelters],
+    ["users", users, ["email", "nickname"]],
+    ["shelters", shelters, ["slug"]],
     ["animals", animals],
     ["questionnaires", questionnaires],
     ["shelter_announcements", announcements],
@@ -229,8 +238,8 @@ async function main() {
     ["adoption_applications", [adoptionApp]],
     ["reviews", reviews],
   ];
-  for (const [name, docs] of sets) {
-    const n = await upsertAll(db, name, docs);
+  for (const [name, docs, uniqueKeys] of sets) {
+    const n = await upsertAll(db, name, docs, uniqueKeys);
     console.log(`  ${name.padEnd(22)} ${n}`);
   }
 
