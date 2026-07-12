@@ -31,6 +31,8 @@ const activeCandidate = () =>
     status: UserStatus.ACTIVE,
     withdrawnAt: null,
     purgeAfter: null,
+    suspendedAt: null,
+    sanctionReason: null,
     version: 0,
   });
 

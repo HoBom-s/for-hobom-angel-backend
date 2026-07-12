@@ -32,6 +32,8 @@ export class User {
     private status: UserStatus,
     private withdrawnAt: Date | null,
     private purgeAfter: Date | null,
+    private suspendedAt: Date | null,
+    private sanctionReason: string | null,
     private readonly version: number,
   ) {}
 
@@ -51,6 +53,8 @@ export class User {
       UserStatus.ACTIVE,
       null,
       null,
+      null,
+      null,
       0,
     );
   }
@@ -66,6 +70,8 @@ export class User {
     status: UserStatus;
     withdrawnAt: Date | null;
     purgeAfter: Date | null;
+    suspendedAt: Date | null;
+    sanctionReason: string | null;
     version: number;
   }): User {
     return new User(
@@ -79,6 +85,8 @@ export class User {
       params.status,
       params.withdrawnAt,
       params.purgeAfter,
+      params.suspendedAt,
+      params.sanctionReason,
       params.version,
     );
   }
@@ -167,6 +175,33 @@ export class User {
     this.purgeAfter = purgeAfter;
   }
 
+  /** Operator sanction: suspend an active member (blocks all actions). */
+  public suspend(reason: string, at: Date): void {
+    if (!reason?.trim()) {
+      throw new Error("제재 사유가 필요해요.");
+    }
+    if (this.status !== UserStatus.ACTIVE) {
+      throw new Error("활성 상태의 회원만 제재할 수 있어요.");
+    }
+    this.status = UserStatus.SUSPENDED;
+    this.suspendedAt = at;
+    this.sanctionReason = reason.trim();
+  }
+
+  /** Lift a sanction, returning the member to ACTIVE. */
+  public reinstate(): void {
+    if (this.status !== UserStatus.SUSPENDED) {
+      throw new Error("제재 중인 회원만 해제할 수 있어요.");
+    }
+    this.status = UserStatus.ACTIVE;
+    this.suspendedAt = null;
+    this.sanctionReason = null;
+  }
+
+  public isSuspended(): boolean {
+    return this.status === UserStatus.SUSPENDED;
+  }
+
   private assertActive(): void {
     if (!this.isActive()) {
       throw new Error("활성 상태의 회원만 처리할 수 있어요.");
@@ -203,6 +238,12 @@ export class User {
   }
   public get getPurgeAfter(): Date | null {
     return this.purgeAfter;
+  }
+  public get getSuspendedAt(): Date | null {
+    return this.suspendedAt;
+  }
+  public get getSanctionReason(): string | null {
+    return this.sanctionReason;
   }
   /** Loaded version, used as the optimistic-lock guard on the next save. */
   public get getVersion(): number {

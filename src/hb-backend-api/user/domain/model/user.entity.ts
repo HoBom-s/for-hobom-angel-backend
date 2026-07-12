@@ -51,6 +51,12 @@ export class UserEntity extends BaseEntity {
   @Prop({ type: Date })
   public purgeAfter?: Date;
 
+  @Prop({ type: Date })
+  public suspendedAt?: Date;
+
+  @Prop({ type: String })
+  public sanctionReason?: string;
+
   // Optimistic-concurrency version; guarded and bumped on every authz update.
   @Prop({ required: true, default: 0 })
   public version: number;

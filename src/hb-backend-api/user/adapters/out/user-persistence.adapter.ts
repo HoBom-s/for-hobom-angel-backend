@@ -42,6 +42,8 @@ export class UserPersistenceAdapter implements UserPersistencePort {
       status: user.getStatus,
       withdrawnAt: user.getWithdrawnAt ?? undefined,
       purgeAfter: user.getPurgeAfter ?? undefined,
+      suspendedAt: user.getSuspendedAt,
+      sanctionReason: user.getSanctionReason,
     });
   }
 }
