@@ -4,20 +4,26 @@ name: DB Migrate
 # then syncs every schema's indexes (drops orphaned, creates missing). Keeps the
 # schema as the single source of truth — no hand-typed `migrate:up && indexes:sync`.
 #
-# MANUAL ONLY — it never runs on push/merge. You trigger it from the Actions tab
-# (Run workflow) when you decide to reconcile, so nothing touches the live DB
-# without an explicit click. It is also pinned to the `production` environment,
-# so if you add required reviewers there, the run pauses for approval first.
+# Runs automatically after a merge to main that touches migrations or persistence
+# shapes (entity/schema files), and on demand from the Actions tab. Pinned to the
+# `production` environment, so adding required reviewers there gates each run.
 #
-# What it does: migrate:up applies only PENDING, reviewed migration files;
-# indexes:sync only creates/drops INDEXES to match the schema — it never writes
-# document data. Requires these secrets on the `production` environment:
+# Safe by design — it never inserts document data: migrate:up applies only
+# PENDING, PR-reviewed migration files (already-applied ones are skipped via the
+# changelog); indexes:sync only creates/drops INDEXES to match the schema.
+# Requires these secrets on the `production` environment:
 #   HOBOM_SYSTEM_ANGEL_BACKEND_TIGER_DB, HOBOM_JWT_SECRET,
 #   HOBOM_JWT_REFRESH_SECRET, FIELD_ENCRYPTION_KEY
 # (Atlas Network Access must allow the GitHub runner — 0.0.0.0/0 or the GH IP
 # ranges.)
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "migrations/**"
+      - "src/**/*.entity.ts"
+      - "src/**/*.schema.ts"
   workflow_dispatch: {}
 
 # Never let two migration runs overlap.
