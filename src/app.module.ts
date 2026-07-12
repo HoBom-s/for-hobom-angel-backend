@@ -20,6 +20,7 @@ import { AnimalModule } from "src/hb-backend-api/animal/animal.module";
 import { AnnouncementModule } from "src/hb-backend-api/announcement/announcement.module";
 import { ApprovalModule } from "src/hb-backend-api/approval/approval.module";
 import { AuditModule } from "src/hb-backend-api/audit/audit.module";
+import { FaqModule } from "src/hb-backend-api/faq/faq.module";
 import { FavoriteModule } from "src/hb-backend-api/favorite/favorite.module";
 import { FosterModule } from "src/hb-backend-api/foster/foster.module";
 import { AuthModule } from "src/hb-backend-api/auth/auth.module";
@@ -81,6 +82,7 @@ import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
     ReportModule,
     ReviewModule,
     AnnouncementModule,
+    FaqModule,
   ],
   providers: [
     TraceContext,
