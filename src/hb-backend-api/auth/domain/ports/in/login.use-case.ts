@@ -5,7 +5,12 @@ export interface LoginCommand {
   password: string;
 }
 
+export interface LoginResult {
+  userId: string;
+  tokens: TokenPair;
+}
+
 /** Authenticates a member by email + password and opens a session. */
 export interface LoginUseCase {
-  invoke(command: LoginCommand): Promise<TokenPair>;
+  invoke(command: LoginCommand): Promise<LoginResult>;
 }

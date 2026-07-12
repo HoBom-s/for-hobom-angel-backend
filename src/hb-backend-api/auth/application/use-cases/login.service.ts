@@ -11,9 +11,9 @@ import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-que
 import { RefreshTokenService } from "src/hb-backend-api/auth/application/use-cases/refresh-token.service";
 import {
   LoginCommand,
+  LoginResult,
   LoginUseCase,
 } from "src/hb-backend-api/auth/domain/ports/in/login.use-case";
-import { TokenPair } from "src/hb-backend-api/auth/domain/model/token-pair";
 
 /**
  * Authenticates by email + password. A wrong email and a wrong password return
@@ -30,7 +30,7 @@ export class LoginService implements LoginUseCase {
     private readonly refreshTokenService: RefreshTokenService,
   ) {}
 
-  public async invoke(command: LoginCommand): Promise<TokenPair> {
+  public async invoke(command: LoginCommand): Promise<LoginResult> {
     // Normalize the same way signup stored it (Email VO lowercases/trims).
     const user = await this.userQueryPort.findByEmail(
       Email.of(command.email).raw,
@@ -50,9 +50,10 @@ export class LoginService implements LoginUseCase {
       throw new ForbiddenException("이용할 수 없는 계정이에요.");
     }
 
-    return this.refreshTokenService.issue(
+    const tokens = await this.refreshTokenService.issue(
       user.getId.toString(),
       user.getNickname.raw,
     );
+    return { userId: user.getId.toString(), tokens };
   }
 }
