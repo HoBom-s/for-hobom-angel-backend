@@ -44,6 +44,20 @@ describe("FosterApplication", () => {
     expect(app.getEndReason).toBe(FosterEndReason.EARLY_TERMINATED);
   });
 
+  it("converts an active foster to adoption (successful end)", () => {
+    const app = submit();
+    app.approve();
+    const at = new Date("2026-08-10");
+    app.convertToAdoption(at);
+    expect(app.isActiveFoster()).toBe(false);
+    expect(app.getEndedAt).toEqual(at);
+    expect(app.getEndReason).toBe(FosterEndReason.CONVERTED_TO_ADOPTION);
+  });
+
+  it("refuses to convert a foster that isn't active", () => {
+    expect(() => submit().convertToAdoption(new Date())).toThrow("진행 중인");
+  });
+
   it("refuses to terminate a foster that isn't active", () => {
     const pending = submit();
     expect(() =>

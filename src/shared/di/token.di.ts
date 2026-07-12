@@ -137,6 +137,9 @@ class FosterModuleToken extends TokenRegistry {
   public readonly TerminateFosterUseCase = this.register(
     "foster.terminate.use-case",
   );
+  public readonly ConvertFosterToAdoptionUseCase = this.register(
+    "foster.convert-to-adoption.use-case",
+  );
   public readonly FosterApplicationPersistencePort = this.register(
     "foster.application.persistence.port",
   );

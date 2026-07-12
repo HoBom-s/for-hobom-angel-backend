@@ -49,6 +49,31 @@ export class AdoptionApplication {
     );
   }
 
+  /**
+   * A foster that converts to adoption yields an already-APPROVED application —
+   * the fosterer has been living with the animal, so there is no review step.
+   * No questionnaire is captured (version 0, empty answers).
+   */
+  public static convertedFromFoster(params: {
+    animalId: AnimalId;
+    shelterId: ShelterId;
+    applicantId: UserId;
+  }): AdoptionApplication {
+    return new AdoptionApplication(
+      ApplicationId.generate(),
+      params.animalId,
+      params.shelterId,
+      params.applicantId,
+      0,
+      [],
+      AdoptionApplicationStatus.APPROVED,
+      null,
+      null,
+      null,
+      0,
+    );
+  }
+
   public static reconstitute(params: {
     id: ApplicationId;
     animalId: AnimalId;

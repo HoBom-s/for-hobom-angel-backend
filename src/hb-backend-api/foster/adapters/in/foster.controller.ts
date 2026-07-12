@@ -17,6 +17,10 @@ import {
   SubmitFosterApplicationUseCase,
 } from "src/hb-backend-api/foster/domain/ports/in/submit-foster-application.use-case";
 import { TerminateFosterUseCase } from "src/hb-backend-api/foster/domain/ports/in/terminate-foster.use-case";
+import {
+  ConvertFosterToAdoptionResult,
+  ConvertFosterToAdoptionUseCase,
+} from "src/hb-backend-api/foster/domain/ports/in/convert-foster-to-adoption.use-case";
 import { SubmitFosterApplicationDto } from "src/hb-backend-api/foster/adapters/in/dto/submit-foster-application.dto";
 import { TerminateFosterDto } from "src/hb-backend-api/foster/adapters/in/dto/terminate-foster.dto";
 
@@ -30,6 +34,8 @@ export class FosterController {
     private readonly submitFosterApplicationUseCase: SubmitFosterApplicationUseCase,
     @Inject(DIToken.FosterModule.TerminateFosterUseCase)
     private readonly terminateFosterUseCase: TerminateFosterUseCase,
+    @Inject(DIToken.FosterModule.ConvertFosterToAdoptionUseCase)
+    private readonly convertFosterToAdoptionUseCase: ConvertFosterToAdoptionUseCase,
   ) {}
 
   @ApiOperation({ summary: "임시보호 신청 (동물이 예약되고 심사가 열림)" })
@@ -58,6 +64,18 @@ export class FosterController {
       fosterApplicationId,
       terminatedBy: user.userId,
       reason: body.reason,
+    });
+  }
+
+  @ApiOperation({ summary: "임시보호 → 입양 전환 (보호소 담당자)" })
+  @Post("foster-applications/:fosterApplicationId/adoption-conversion")
+  public convertToAdoption(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("fosterApplicationId") fosterApplicationId: string,
+  ): Promise<ConvertFosterToAdoptionResult> {
+    return this.convertFosterToAdoptionUseCase.invoke({
+      fosterApplicationId,
+      actorId: user.userId,
     });
   }
 }
