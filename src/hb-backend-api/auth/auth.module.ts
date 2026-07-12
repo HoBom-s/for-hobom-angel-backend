@@ -5,8 +5,12 @@ import { MongooseModule } from "@nestjs/mongoose";
 import { PassportModule } from "@nestjs/passport";
 import { DIToken } from "src/shared/di/token.di";
 import { JwtAuthAdapter } from "src/infra/adapters/jwt/jwt-auth.adapter";
+import { IdentityModule } from "src/hb-backend-api/identity/identity.module";
 import { UserModule } from "src/hb-backend-api/user/user.module";
 import { RefreshTokenService } from "src/hb-backend-api/auth/application/use-cases/refresh-token.service";
+import { SignUpService } from "src/hb-backend-api/auth/application/use-cases/sign-up.service";
+import { LoginService } from "src/hb-backend-api/auth/application/use-cases/login.service";
+import { AuthController } from "src/hb-backend-api/auth/adapters/in/rest/auth.controller";
 import { RefreshTokenEntity } from "src/hb-backend-api/auth/domain/model/refresh-token.entity";
 import { RefreshTokenSchema } from "src/hb-backend-api/auth/domain/model/refresh-token.schema";
 import { RefreshTokenRepositoryImpl } from "src/hb-backend-api/auth/infra/repositories/refresh-token.repository.impl";
@@ -35,11 +39,21 @@ import { RolesGuard } from "src/hb-backend-api/auth/adapters/in/rest/guard/roles
       { name: RefreshTokenEntity.name, schema: RefreshTokenSchema },
     ]),
     UserModule,
+    IdentityModule,
   ],
+  controllers: [AuthController],
   providers: [
     JwtStrategy,
     RolesGuard,
     RefreshTokenService,
+    {
+      provide: DIToken.AuthModule.SignUpUseCase,
+      useClass: SignUpService,
+    },
+    {
+      provide: DIToken.AuthModule.LoginUseCase,
+      useClass: LoginService,
+    },
     {
       provide: DIToken.AuthModule.JwtAuthPort,
       useClass: JwtAuthAdapter,
