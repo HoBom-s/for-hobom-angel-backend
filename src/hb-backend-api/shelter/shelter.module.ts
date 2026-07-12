@@ -16,6 +16,7 @@ import { RegisterShelterService } from "src/hb-backend-api/shelter/application/u
 import { RequestStaffPromotionService } from "src/hb-backend-api/shelter/application/use-cases/request-staff-promotion.service";
 import { ShelterVerificationCallback } from "src/hb-backend-api/shelter/application/shelter-verification.callback";
 import { StaffPromotionCallback } from "src/hb-backend-api/shelter/application/staff-promotion.callback";
+import { ShelterController } from "src/hb-backend-api/shelter/adapters/in/shelter.controller";
 
 /**
  * Shelter store and the approval engine's first consumers. Registering a shelter
@@ -34,6 +35,7 @@ import { StaffPromotionCallback } from "src/hb-backend-api/shelter/application/s
     UserModule,
     OutboxModule,
   ],
+  controllers: [ShelterController],
   providers: [
     {
       provide: DIToken.ShelterModule.RegisterShelterUseCase,

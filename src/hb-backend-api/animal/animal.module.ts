@@ -10,6 +10,7 @@ import { AnimalQueryAdapter } from "src/hb-backend-api/animal/adapters/out/anima
 import { AnimalRepositoryImpl } from "src/hb-backend-api/animal/infra/repositories/animal.repository.impl";
 import { RegisterAnimalService } from "src/hb-backend-api/animal/application/use-cases/register-animal.service";
 import { UpdateAnimalProfileService } from "src/hb-backend-api/animal/application/use-cases/update-animal-profile.service";
+import { AnimalController } from "src/hb-backend-api/animal/adapters/in/animal.controller";
 
 /**
  * Animal store. Owns the adoptable-animal roster and its lifecycle. Registration
@@ -25,6 +26,7 @@ import { UpdateAnimalProfileService } from "src/hb-backend-api/animal/applicatio
     ShelterModule,
     UserModule,
   ],
+  controllers: [AnimalController],
   providers: [
     {
       provide: DIToken.AnimalModule.RegisterAnimalUseCase,
