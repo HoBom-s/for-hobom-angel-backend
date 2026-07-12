@@ -29,6 +29,8 @@
     "migrate:status": "migrate-mongo status",
     "migrate:create": "migrate-mongo create",
     "indexes:sync": "node dist/scripts/sync-indexes.js",
+    "db:deploy": "migrate-mongo up && node dist/scripts/sync-indexes.js",
+    "seed:dev": "node scripts/seed-dev-data.js",
     "prepare": "husky"
   },
   "dependencies": {
