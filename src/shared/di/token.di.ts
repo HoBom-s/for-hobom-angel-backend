@@ -169,6 +169,20 @@ class VolunteerModuleToken extends TokenRegistry {
   );
 }
 
+class MessagingModuleToken extends TokenRegistry {
+  public readonly PostMessageUseCase = this.register(
+    "messaging.post-message.use-case",
+  );
+  public readonly ListConversationMessagesUseCase = this.register(
+    "messaging.list-conversation-messages.use-case",
+  );
+  public readonly MessagePersistencePort = this.register(
+    "messaging.persistence.port",
+  );
+  public readonly MessageQueryPort = this.register("messaging.query.port");
+  public readonly MessageRepository = this.register("messaging.repository");
+}
+
 export const DIToken = {
   OutboxModule: new OutboxModuleToken(),
   UserModule: new UserModuleToken(),
@@ -182,4 +196,5 @@ export const DIToken = {
   AdoptionModule: new AdoptionModuleToken(),
   FosterModule: new FosterModuleToken(),
   VolunteerModule: new VolunteerModuleToken(),
+  MessagingModule: new MessagingModuleToken(),
 } as const;

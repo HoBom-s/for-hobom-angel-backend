@@ -4,6 +4,8 @@ import { DIToken } from "src/shared/di/token.di";
 import { AnimalModule } from "src/hb-backend-api/animal/animal.module";
 import { ApprovalModule } from "src/hb-backend-api/approval/approval.module";
 import { ApprovalCallbackRegistry } from "src/hb-backend-api/approval/application/approval-callback.registry";
+import { MessagingModule } from "src/hb-backend-api/messaging/messaging.module";
+import { MessageSubjectResolverRegistry } from "src/hb-backend-api/messaging/application/message-subject-resolver.registry";
 import { OutboxModule } from "src/hb-backend-api/outbox/outbox.module";
 import { QuestionnaireModule } from "src/hb-backend-api/questionnaire/questionnaire.module";
 import { UserModule } from "src/hb-backend-api/user/user.module";
@@ -15,6 +17,7 @@ import { FosterApplicationRepositoryImpl } from "src/hb-backend-api/foster/infra
 import { SubmitFosterApplicationService } from "src/hb-backend-api/foster/application/use-cases/submit-foster-application.service";
 import { TerminateFosterService } from "src/hb-backend-api/foster/application/use-cases/terminate-foster.service";
 import { FosterApprovalCallback } from "src/hb-backend-api/foster/application/foster-approval.callback";
+import { FosterMessageSubjectResolver } from "src/hb-backend-api/foster/application/foster-message-subject.resolver";
 import { FosterController } from "src/hb-backend-api/foster/adapters/in/foster.controller";
 
 /**
@@ -34,6 +37,7 @@ import { FosterController } from "src/hb-backend-api/foster/adapters/in/foster.c
     UserModule,
     OutboxModule,
     QuestionnaireModule,
+    MessagingModule,
   ],
   controllers: [FosterController],
   providers: [
@@ -58,6 +62,7 @@ import { FosterController } from "src/hb-backend-api/foster/adapters/in/foster.c
       useClass: FosterApplicationQueryAdapter,
     },
     FosterApprovalCallback,
+    FosterMessageSubjectResolver,
   ],
   exports: [
     DIToken.FosterModule.SubmitFosterApplicationUseCase,
@@ -68,9 +73,12 @@ export class FosterModule implements OnModuleInit {
   constructor(
     private readonly callbackRegistry: ApprovalCallbackRegistry,
     private readonly fosterApprovalCallback: FosterApprovalCallback,
+    private readonly resolverRegistry: MessageSubjectResolverRegistry,
+    private readonly fosterMessageSubjectResolver: FosterMessageSubjectResolver,
   ) {}
 
   public onModuleInit(): void {
     this.callbackRegistry.register(this.fosterApprovalCallback);
+    this.resolverRegistry.register(this.fosterMessageSubjectResolver);
   }
 }
