@@ -13,5 +13,7 @@ hobomPipeline(
   envPath:        '/etc/hobom-dev/dev-for-hobom-angel-backend/.env',
   addHost:        true,
   extraVolumes:   ['/home/infra-admin/certs:/etc/grpc-tls:ro'],
-  smokeCheckPath: '/'
+  smokeCheckPath: '/',
+  liveHostPort:   '18084',
+  liveEnvPath:    '/etc/hobom-live/live-for-hobom-angel-backend/.env'
 )
