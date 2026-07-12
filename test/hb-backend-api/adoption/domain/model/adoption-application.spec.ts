@@ -18,6 +18,17 @@ describe("AdoptionApplication", () => {
     expect(submit().getStatus).toBe(AdoptionApplicationStatus.PENDING);
   });
 
+  it("convertedFromFoster is already APPROVED with no questionnaire", () => {
+    const app = AdoptionApplication.convertedFromFoster({
+      animalId: AnimalId.generate(),
+      shelterId: ShelterId.generate(),
+      applicantId: UserId.generate(),
+    });
+    expect(app.getStatus).toBe(AdoptionApplicationStatus.APPROVED);
+    expect(app.getQuestionnaireVersion).toBe(0);
+    expect(app.getAnswers).toEqual([]);
+  });
+
   it("approves a pending application", () => {
     const app = submit();
     app.approve();

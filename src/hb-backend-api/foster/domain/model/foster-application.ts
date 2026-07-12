@@ -118,6 +118,15 @@ export class FosterApplication {
     this.endReason = reason;
   }
 
+  /** The fosterer adopts the animal — ends the foster as a successful outcome. */
+  public convertToAdoption(at: Date): void {
+    if (!this.isActiveFoster()) {
+      throw new Error("진행 중인 임시보호가 아니에요.");
+    }
+    this.endedAt = at;
+    this.endReason = FosterEndReason.CONVERTED_TO_ADOPTION;
+  }
+
   public isPending(): boolean {
     return this.status === FosterApplicationStatus.PENDING;
   }

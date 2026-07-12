@@ -70,6 +70,7 @@ import { AdoptionController } from "src/hb-backend-api/adoption/adapters/in/adop
   exports: [
     DIToken.AdoptionModule.SubmitAdoptionApplicationUseCase,
     DIToken.AdoptionModule.AdoptionApplicationQueryPort,
+    DIToken.AdoptionModule.AdoptionApplicationPersistencePort,
   ],
 })
 export class AdoptionModule implements OnModuleInit {
