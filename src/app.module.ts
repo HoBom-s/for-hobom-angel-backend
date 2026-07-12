@@ -17,6 +17,7 @@ import { TraceContext } from "src/shared/trace/trace.context";
 import { TraceInterceptor } from "src/shared/trace/trace.interceptor";
 import { AdoptionModule } from "src/hb-backend-api/adoption/adoption.module";
 import { AnimalModule } from "src/hb-backend-api/animal/animal.module";
+import { AnnouncementModule } from "src/hb-backend-api/announcement/announcement.module";
 import { ApprovalModule } from "src/hb-backend-api/approval/approval.module";
 import { AuditModule } from "src/hb-backend-api/audit/audit.module";
 import { FavoriteModule } from "src/hb-backend-api/favorite/favorite.module";
@@ -81,6 +82,7 @@ import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
     FavoriteModule,
     ReportModule,
     ReviewModule,
+    AnnouncementModule,
   ],
   providers: [
     TraceContext,
