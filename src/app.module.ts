@@ -23,6 +23,7 @@ import { FavoriteModule } from "src/hb-backend-api/favorite/favorite.module";
 import { FosterModule } from "src/hb-backend-api/foster/foster.module";
 import { AuthModule } from "src/hb-backend-api/auth/auth.module";
 import { HealthModule } from "src/hb-backend-api/health/health.module";
+import { IdentityModule } from "src/hb-backend-api/identity/identity.module";
 import { IdempotencyModule } from "src/hb-backend-api/idempotency/idempotency.module";
 import { MessagingModule } from "src/hb-backend-api/messaging/messaging.module";
 import { OutboxModule } from "src/hb-backend-api/outbox/outbox.module";
@@ -64,6 +65,7 @@ import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
     HealthModule,
     OutboxModule,
     UserModule,
+    IdentityModule,
     AuthModule,
     AuditModule,
     IdempotencyModule,
