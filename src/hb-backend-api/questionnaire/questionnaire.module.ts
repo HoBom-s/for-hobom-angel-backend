@@ -8,6 +8,7 @@ import { QuestionnairePersistenceAdapter } from "src/hb-backend-api/questionnair
 import { QuestionnaireQueryAdapter } from "src/hb-backend-api/questionnaire/adapters/out/questionnaire-query.adapter";
 import { QuestionnaireRepositoryImpl } from "src/hb-backend-api/questionnaire/infra/repositories/questionnaire.repository.impl";
 import { DefineQuestionnaireService } from "src/hb-backend-api/questionnaire/application/use-cases/define-questionnaire.service";
+import { QuestionnaireController } from "src/hb-backend-api/questionnaire/adapters/in/questionnaire.controller";
 
 /**
  * Shared survey store. A shelter defines one questionnaire per purpose (adoption,
@@ -21,6 +22,7 @@ import { DefineQuestionnaireService } from "src/hb-backend-api/questionnaire/app
     ]),
     UserModule,
   ],
+  controllers: [QuestionnaireController],
   providers: [
     {
       provide: DIToken.QuestionnaireModule.DefineQuestionnaireUseCase,

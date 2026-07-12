@@ -15,6 +15,7 @@ import { FosterApplicationRepositoryImpl } from "src/hb-backend-api/foster/infra
 import { SubmitFosterApplicationService } from "src/hb-backend-api/foster/application/use-cases/submit-foster-application.service";
 import { TerminateFosterService } from "src/hb-backend-api/foster/application/use-cases/terminate-foster.service";
 import { FosterApprovalCallback } from "src/hb-backend-api/foster/application/foster-approval.callback";
+import { FosterController } from "src/hb-backend-api/foster/adapters/in/foster.controller";
 
 /**
  * Foster procedure — the approval engine's fourth consumer. Applying reserves the
@@ -34,6 +35,7 @@ import { FosterApprovalCallback } from "src/hb-backend-api/foster/application/fo
     OutboxModule,
     QuestionnaireModule,
   ],
+  controllers: [FosterController],
   providers: [
     {
       provide: DIToken.FosterModule.SubmitFosterApplicationUseCase,

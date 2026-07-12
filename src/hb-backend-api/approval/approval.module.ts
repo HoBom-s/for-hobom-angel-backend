@@ -11,6 +11,7 @@ import { ApprovalRepositoryImpl } from "src/hb-backend-api/approval/infra/reposi
 import { ApprovalCallbackRegistry } from "src/hb-backend-api/approval/application/approval-callback.registry";
 import { SubmitApprovalService } from "src/hb-backend-api/approval/application/use-cases/submit-approval.service";
 import { DecideApprovalService } from "src/hb-backend-api/approval/application/use-cases/decide-approval.service";
+import { ApprovalController } from "src/hb-backend-api/approval/adapters/in/approval.controller";
 
 /**
  * The one approval engine. Domain modules consume it by submitting requests
@@ -24,6 +25,7 @@ import { DecideApprovalService } from "src/hb-backend-api/approval/application/u
       { name: ApprovalActionEntity.name, schema: ApprovalActionSchema },
     ]),
   ],
+  controllers: [ApprovalController],
   providers: [
     ApprovalCallbackRegistry,
     {

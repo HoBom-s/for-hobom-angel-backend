@@ -14,6 +14,7 @@ import { AdoptionApplicationQueryAdapter } from "src/hb-backend-api/adoption/ada
 import { AdoptionApplicationRepositoryImpl } from "src/hb-backend-api/adoption/infra/repositories/adoption-application.repository.impl";
 import { SubmitAdoptionApplicationService } from "src/hb-backend-api/adoption/application/use-cases/submit-adoption-application.service";
 import { AdoptionApprovalCallback } from "src/hb-backend-api/adoption/application/adoption-approval.callback";
+import { AdoptionController } from "src/hb-backend-api/adoption/adapters/in/adoption.controller";
 
 /**
  * Adoption procedure — the approval engine's third consumer. Applying reserves
@@ -36,6 +37,7 @@ import { AdoptionApprovalCallback } from "src/hb-backend-api/adoption/applicatio
     OutboxModule,
     QuestionnaireModule,
   ],
+  controllers: [AdoptionController],
   providers: [
     {
       provide: DIToken.AdoptionModule.SubmitAdoptionApplicationUseCase,
