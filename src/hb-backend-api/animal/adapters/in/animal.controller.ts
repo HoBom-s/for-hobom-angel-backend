@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 import {
@@ -17,6 +18,7 @@ import {
 } from "@nestjs/swagger";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
+import { CursorPageResponse } from "src/shared/pagination/cursor-page.response";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
 import { JwtAuthGuard } from "src/hb-backend-api/auth/adapters/in/rest/guard/jwt-auth.guard";
 import { AuthenticatedUser } from "src/hb-backend-api/auth/domain/model/token-pair";
@@ -30,6 +32,7 @@ import { AnimalQueryPort } from "src/hb-backend-api/animal/domain/ports/out/anim
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { RegisterAnimalDto } from "src/hb-backend-api/animal/adapters/in/dto/register-animal.dto";
 import { UpdateAnimalProfileDto } from "src/hb-backend-api/animal/adapters/in/dto/update-animal-profile.dto";
+import { SearchAnimalsQueryDto } from "src/hb-backend-api/animal/adapters/in/dto/search-animals.query.dto";
 import { AnimalResponse } from "src/hb-backend-api/animal/adapters/in/dto/animal.response";
 
 @ApiTags("Animals")
@@ -72,6 +75,23 @@ export class AnimalController {
       editedBy: user.userId,
       ...body,
     });
+  }
+
+  @ApiOperation({ summary: "동물 탐색/검색 (필터 + 커서 페이지네이션)" })
+  @Get("animals")
+  public async search(
+    @Query() query: SearchAnimalsQueryDto,
+  ): Promise<CursorPageResponse<AnimalResponse>> {
+    const page = await this.animalQueryPort.search({
+      species: query.species,
+      size: query.size,
+      sex: query.sex,
+      status: query.status,
+      keyword: query.keyword,
+      cursor: query.cursor,
+      limit: query.limit ?? 20,
+    });
+    return CursorPageResponse.of(page, (animal) => AnimalResponse.from(animal));
   }
 
   @ApiOperation({ summary: "동물 단건 조회" })

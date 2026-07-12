@@ -55,6 +55,9 @@ describe("REST API (e2e)", () => {
 
   const auth = (token: string) => ({ Authorization: `Bearer ${token}` });
 
+  let bizSeq = 0;
+  const uniqueBiz = (): string => String(1000000000 + ++bizSeq);
+
   const registerShelterBody = (slug: string) => ({
     name: "행복한 발자국",
     slug,
@@ -64,7 +67,7 @@ describe("REST API (e2e)", () => {
       roadAddress: "테헤란로 1",
       visibility: AddressVisibility.PARTIAL,
     },
-    businessNumber: "1234567890",
+    businessNumber: uniqueBiz(),
   });
 
   beforeAll(async () => {
@@ -182,5 +185,95 @@ describe("REST API (e2e)", () => {
         intake: { intakeDate: "2026-01-02T00:00:00.000Z" },
       })
       .expect(404); // shelter doesn't exist
+  });
+
+  const registerAndApproveShelter = async (
+    token: string,
+    slug: string,
+    address?: Record<string, unknown>,
+  ): Promise<string> => {
+    const reg = await request(app.getHttpServer())
+      .post(`${PREFIX}/shelters`)
+      .set(auth(token))
+      .send({
+        name: "행복한 발자국",
+        slug,
+        address: address ?? {
+          region: "서울",
+          city: "강남구",
+          roadAddress: "테헤란로 1",
+          visibility: AddressVisibility.PARTIAL,
+        },
+        businessNumber: uniqueBiz(),
+      })
+      .expect(201);
+    const { shelterId, approvalId } = reg.body.items;
+    await request(app.getHttpServer())
+      .post(`${PREFIX}/approvals/${approvalId}/decision`)
+      .set(auth(token))
+      .send({ decision: "APPROVE", metadata: { trustTier: "A" } })
+      .expect(201);
+    return shelterId as string;
+  };
+
+  it("searches animals by keyword, respecting filters", async () => {
+    const admin = await seedUser();
+    const shelterId = await registerAndApproveShelter(
+      admin.token,
+      `disc-${Date.now()}`,
+    );
+    const uniqueName = `초코-${Date.now()}`;
+    await request(app.getHttpServer())
+      .post(`${PREFIX}/shelters/${shelterId}/animals`)
+      .set(auth(admin.token))
+      .send({
+        name: uniqueName,
+        species: AnimalSpecies.DOG,
+        traits: { sex: AnimalSex.FEMALE, size: AnimalSize.SMALL },
+        health: { neutered: true, vaccinated: true },
+        intake: { intakeDate: "2026-01-02T00:00:00.000Z" },
+      })
+      .expect(201);
+
+    const hit = await request(app.getHttpServer())
+      .get(`${PREFIX}/animals`)
+      .query({ keyword: uniqueName, limit: 10 })
+      .set(auth(admin.token))
+      .expect(200);
+    expect(hit.body.items.items).toHaveLength(1);
+    expect(hit.body.items.items[0].name).toBe(uniqueName);
+    expect(hit.body.items.hasNext).toBe(false);
+
+    // a mismatching species filter returns nothing
+    const miss = await request(app.getHttpServer())
+      .get(`${PREFIX}/animals`)
+      .query({ keyword: uniqueName, species: AnimalSpecies.CAT })
+      .set(auth(admin.token))
+      .expect(200);
+    expect(miss.body.items.items).toHaveLength(0);
+  });
+
+  it("returns map markers only for shelters with disclosed coordinates", async () => {
+    const admin = await seedUser();
+    const slug = `map-${Date.now()}`;
+    await registerAndApproveShelter(admin.token, slug, {
+      region: "부산",
+      city: "해운대구",
+      roadAddress: "센텀로 1",
+      lat: 35.16,
+      lng: 129.16,
+      visibility: AddressVisibility.FULL,
+    });
+
+    const res = await request(app.getHttpServer())
+      .get(`${PREFIX}/shelters/map`)
+      .query({ region: "부산" })
+      .set(auth(admin.token))
+      .expect(200);
+    const marker = (res.body.items as { slug: string; lat: number }[]).find(
+      (m) => m.slug === slug,
+    );
+    expect(marker).toBeDefined();
+    expect(marker?.lat).toBe(35.16);
   });
 });

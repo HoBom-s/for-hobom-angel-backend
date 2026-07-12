@@ -30,4 +30,6 @@ export interface ShelterRepository {
   ): Promise<void>;
   findById(id: Types.ObjectId): Promise<ShelterEntity | null>;
   findBySlug(slug: string): Promise<ShelterEntity | null>;
+  /** Verified, non-hidden shelters with coordinates; optionally by region. */
+  findMappable(region?: string): Promise<ShelterEntity[]>;
 }
