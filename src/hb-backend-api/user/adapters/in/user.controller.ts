@@ -26,7 +26,10 @@ import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-query.port";
 import { ChangeNicknameUseCase } from "src/hb-backend-api/user/domain/ports/in/change-nickname.use-case";
 import { WithdrawAccountUseCase } from "src/hb-backend-api/user/domain/ports/in/withdraw-account.use-case";
+import { SanctionUserUseCase } from "src/hb-backend-api/user/domain/ports/in/sanction-user.use-case";
+import { ReinstateUserUseCase } from "src/hb-backend-api/user/domain/ports/in/reinstate-user.use-case";
 import { ChangeNicknameDto } from "src/hb-backend-api/user/adapters/in/dto/change-nickname.dto";
+import { SanctionUserDto } from "src/hb-backend-api/user/adapters/in/dto/sanction-user.dto";
 import { MyProfileResponse } from "src/hb-backend-api/user/adapters/in/dto/my-profile.response";
 import { PublicProfileResponse } from "src/hb-backend-api/user/adapters/in/dto/public-profile.response";
 
@@ -42,6 +45,10 @@ export class UserController {
     private readonly changeNicknameUseCase: ChangeNicknameUseCase,
     @Inject(DIToken.UserModule.WithdrawAccountUseCase)
     private readonly withdrawAccountUseCase: WithdrawAccountUseCase,
+    @Inject(DIToken.UserModule.SanctionUserUseCase)
+    private readonly sanctionUserUseCase: SanctionUserUseCase,
+    @Inject(DIToken.UserModule.ReinstateUserUseCase)
+    private readonly reinstateUserUseCase: ReinstateUserUseCase,
   ) {}
 
   @ApiOperation({ summary: "내 프로필 조회" })
@@ -77,6 +84,34 @@ export class UserController {
   @Post("me/withdrawal")
   public async withdraw(@CurrentUser() user: AuthenticatedUser): Promise<void> {
     await this.withdrawAccountUseCase.invoke({ userId: user.userId });
+  }
+
+  @ApiOperation({ summary: "계정 제재 (운영자)" })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post(":userId/sanction")
+  public async sanction(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("userId") userId: string,
+    @Body() body: SanctionUserDto,
+  ): Promise<void> {
+    await this.sanctionUserUseCase.invoke({
+      userId,
+      actorId: user.userId,
+      reason: body.reason,
+    });
+  }
+
+  @ApiOperation({ summary: "계정 제재 해제 (운영자)" })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post(":userId/reinstatement")
+  public async reinstate(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("userId") userId: string,
+  ): Promise<void> {
+    await this.reinstateUserUseCase.invoke({
+      userId,
+      actorId: user.userId,
+    });
   }
 
   @ApiOperation({ summary: "공개 프로필 조회 (닉네임만)" })

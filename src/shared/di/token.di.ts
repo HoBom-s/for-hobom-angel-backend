@@ -23,6 +23,10 @@ class UserModuleToken extends TokenRegistry {
   public readonly WithdrawAccountUseCase = this.register(
     "user.withdraw-account.use-case",
   );
+  public readonly SanctionUserUseCase = this.register("user.sanction.use-case");
+  public readonly ReinstateUserUseCase = this.register(
+    "user.reinstate.use-case",
+  );
 }
 
 class AuthModuleToken extends TokenRegistry {
