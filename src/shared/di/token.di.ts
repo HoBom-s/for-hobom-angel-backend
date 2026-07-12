@@ -198,6 +198,21 @@ class FavoriteModuleToken extends TokenRegistry {
   public readonly FavoriteRepository = this.register("favorite.repository");
 }
 
+class ReportModuleToken extends TokenRegistry {
+  public readonly SubmitReportUseCase = this.register("report.submit.use-case");
+  public readonly ResolveReportUseCase = this.register(
+    "report.resolve.use-case",
+  );
+  public readonly ListPendingReportsUseCase = this.register(
+    "report.list-pending.use-case",
+  );
+  public readonly ReportPersistencePort = this.register(
+    "report.persistence.port",
+  );
+  public readonly ReportQueryPort = this.register("report.query.port");
+  public readonly ReportRepository = this.register("report.repository");
+}
+
 export const DIToken = {
   OutboxModule: new OutboxModuleToken(),
   UserModule: new UserModuleToken(),
@@ -213,4 +228,5 @@ export const DIToken = {
   VolunteerModule: new VolunteerModuleToken(),
   MessagingModule: new MessagingModuleToken(),
   FavoriteModule: new FavoriteModuleToken(),
+  ReportModule: new ReportModuleToken(),
 } as const;
