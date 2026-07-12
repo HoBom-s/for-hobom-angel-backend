@@ -227,6 +227,20 @@ class ReportModuleToken extends TokenRegistry {
   public readonly ReportRepository = this.register("report.repository");
 }
 
+class ReviewModuleToken extends TokenRegistry {
+  public readonly SubmitReviewUseCase = this.register("review.submit.use-case");
+  public readonly ReviseReviewUseCase = this.register("review.revise.use-case");
+  public readonly DeleteReviewUseCase = this.register("review.delete.use-case");
+  public readonly ReviewPersistencePort = this.register(
+    "review.persistence.port",
+  );
+  public readonly ReviewQueryPort = this.register("review.query.port");
+  public readonly ReviewRepository = this.register("review.repository");
+  public readonly PlacementEligibilityPort = this.register(
+    "review.placement-eligibility.port",
+  );
+}
+
 export const DIToken = {
   OutboxModule: new OutboxModuleToken(),
   UserModule: new UserModuleToken(),
@@ -244,4 +258,5 @@ export const DIToken = {
   MessagingModule: new MessagingModuleToken(),
   FavoriteModule: new FavoriteModuleToken(),
   ReportModule: new ReportModuleToken(),
+  ReviewModule: new ReviewModuleToken(),
 } as const;
