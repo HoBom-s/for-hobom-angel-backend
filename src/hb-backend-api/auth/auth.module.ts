@@ -10,6 +10,7 @@ import { RefreshTokenService } from "src/hb-backend-api/auth/application/use-cas
 import { SignUpService } from "src/hb-backend-api/auth/application/use-cases/sign-up.service";
 import { LoginService } from "src/hb-backend-api/auth/application/use-cases/login.service";
 import { AuthController } from "src/hb-backend-api/auth/adapters/in/rest/auth.controller";
+import { AuthCookieService } from "src/hb-backend-api/auth/adapters/in/rest/auth-cookie.service";
 import { RefreshTokenEntity } from "src/hb-backend-api/auth/domain/model/refresh-token.entity";
 import { RefreshTokenSchema } from "src/hb-backend-api/auth/domain/model/refresh-token.schema";
 import { RefreshTokenRepositoryImpl } from "src/hb-backend-api/auth/infra/repositories/refresh-token.repository.impl";
@@ -44,6 +45,7 @@ import { RolesGuard } from "src/hb-backend-api/auth/adapters/in/rest/guard/roles
     JwtStrategy,
     RolesGuard,
     RefreshTokenService,
+    AuthCookieService,
     {
       provide: DIToken.AuthModule.SignUpUseCase,
       useClass: SignUpService,

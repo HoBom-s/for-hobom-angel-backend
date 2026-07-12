@@ -84,10 +84,11 @@ describe("Auth entry (flow)", () => {
   });
 
   it("logs in with the right password and refuses the wrong one", async () => {
-    const tokens = await login.invoke({
+    const { userId, tokens } = await login.invoke({
       email: "alice@example.com",
       password: "s3cret-password",
     });
+    expect(userId).toBeDefined();
     expect(tokens.accessToken).toBeTruthy();
 
     await expect(
@@ -99,7 +100,7 @@ describe("Auth entry (flow)", () => {
   });
 
   it("is case-insensitive on the login email", async () => {
-    const tokens = await login.invoke({
+    const { tokens } = await login.invoke({
       email: "ALICE@example.com",
       password: "s3cret-password",
     });

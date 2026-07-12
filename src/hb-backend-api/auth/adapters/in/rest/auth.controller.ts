@@ -5,23 +5,32 @@ import {
   HttpStatus,
   Inject,
   Post,
+  Req,
+  Res,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { Request, Response } from "express";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
 import { RefreshTokenService } from "src/hb-backend-api/auth/application/use-cases/refresh-token.service";
 import { SignUpUseCase } from "src/hb-backend-api/auth/domain/ports/in/sign-up.use-case";
 import { LoginUseCase } from "src/hb-backend-api/auth/domain/ports/in/login.use-case";
+import {
+  AuthCookieService,
+  REFRESH_COOKIE,
+} from "src/hb-backend-api/auth/adapters/in/rest/auth-cookie.service";
 import { SignUpDto } from "src/hb-backend-api/auth/adapters/in/rest/dto/sign-up.dto";
 import { LoginDto } from "src/hb-backend-api/auth/adapters/in/rest/dto/login.dto";
 import { RefreshTokenDto } from "src/hb-backend-api/auth/adapters/in/rest/dto/refresh-token.dto";
-import { SignUpResponse } from "src/hb-backend-api/auth/adapters/in/rest/dto/sign-up.response";
-import { TokenPairResponse } from "src/hb-backend-api/auth/adapters/in/rest/dto/token-pair.response";
+import { SessionResponse } from "src/hb-backend-api/auth/adapters/in/rest/dto/session.response";
 
 /**
  * Session entry points. All are unauthenticated (they mint or rotate the very
- * tokens the guard would require). Signup/login exchange email+password for a
- * token pair; refresh rotates with reuse detection; logout revokes the family.
+ * tokens the guard would require). Tokens are delivered as httpOnly cookies —
+ * never in the response body — so JavaScript (and any XSS) can't read them; the
+ * body carries only `userId`. Signup/login open a session, refresh rotates with
+ * reuse detection, logout revokes the family and clears the cookies.
  */
 @ApiTags("Auth")
 @Controller(`${EndPointPrefixConstant}/auth`)
@@ -32,12 +41,16 @@ export class AuthController {
     @Inject(DIToken.AuthModule.LoginUseCase)
     private readonly loginUseCase: LoginUseCase,
     private readonly refreshTokenService: RefreshTokenService,
+    private readonly authCookieService: AuthCookieService,
   ) {}
 
-  @ApiOperation({ summary: "회원가입 (이메일+비밀번호 + 세션 발급)" })
-  @ApiResponse({ type: SignUpResponse })
+  @ApiOperation({ summary: "회원가입 (이메일+비밀번호 + 세션 쿠키 발급)" })
+  @ApiResponse({ type: SessionResponse })
   @Post("signup")
-  public async signup(@Body() body: SignUpDto): Promise<SignUpResponse> {
+  public async signup(
+    @Body() body: SignUpDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<SessionResponse> {
     const result = await this.signUpUseCase.invoke({
       email: body.email,
       password: body.password,
@@ -45,34 +58,68 @@ export class AuthController {
       realName: body.realName,
       phone: body.phone,
     });
-    return SignUpResponse.from(result);
+    this.authCookieService.set(res, result.tokens);
+    return SessionResponse.of(result.userId);
   }
 
-  @ApiOperation({ summary: "로그인 (이메일+비밀번호)" })
-  @ApiResponse({ type: TokenPairResponse })
+  @ApiOperation({ summary: "로그인 (이메일+비밀번호 + 세션 쿠키 발급)" })
+  @ApiResponse({ type: SessionResponse })
   @Post("login")
-  public async login(@Body() body: LoginDto): Promise<TokenPairResponse> {
-    const tokens = await this.loginUseCase.invoke({
+  public async login(
+    @Body() body: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<SessionResponse> {
+    const result = await this.loginUseCase.invoke({
       email: body.email,
       password: body.password,
     });
-    return TokenPairResponse.from(tokens);
+    this.authCookieService.set(res, result.tokens);
+    return SessionResponse.of(result.userId);
   }
 
-  @ApiOperation({ summary: "토큰 재발급 (회전 + 재사용 탐지)" })
-  @ApiResponse({ type: TokenPairResponse })
+  @ApiOperation({ summary: "토큰 재발급 (쿠키의 refresh 회전 + 재사용 탐지)" })
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Post("refresh")
   public async refresh(
+    @Req() req: Request,
     @Body() body: RefreshTokenDto,
-  ): Promise<TokenPairResponse> {
-    const tokens = await this.refreshTokenService.rotate(body.refreshToken);
-    return TokenPairResponse.from(tokens);
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    const presented = this.readRefreshToken(req, body);
+    const tokens = await this.refreshTokenService.rotate(presented);
+    this.authCookieService.set(res, tokens);
   }
 
-  @ApiOperation({ summary: "로그아웃 (토큰 패밀리 폐기)" })
+  @ApiOperation({ summary: "로그아웃 (토큰 패밀리 폐기 + 쿠키 삭제)" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @Post("logout")
-  public async logout(@Body() body: RefreshTokenDto): Promise<void> {
-    await this.refreshTokenService.revoke(body.refreshToken);
+  public async logout(
+    @Req() req: Request,
+    @Body() body: RefreshTokenDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    const presented = this.cookieOrBody(req, body);
+    if (presented) {
+      await this.refreshTokenService.revoke(presented);
+    }
+    this.authCookieService.clear(res);
+  }
+
+  private cookieOrBody(
+    req: Request,
+    body: RefreshTokenDto,
+  ): string | undefined {
+    return (
+      (req.cookies as Record<string, string> | undefined)?.[REFRESH_COOKIE] ??
+      body.refreshToken
+    );
+  }
+
+  private readRefreshToken(req: Request, body: RefreshTokenDto): string {
+    const token = this.cookieOrBody(req, body);
+    if (!token) {
+      throw new UnauthorizedException("refresh token이 없어요.");
+    }
+    return token;
   }
 }
