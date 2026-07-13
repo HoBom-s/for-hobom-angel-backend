@@ -17,7 +17,9 @@ import { CreateVolunteerEventService } from "src/hb-backend-api/volunteer/applic
 import { SignUpForVolunteerService } from "src/hb-backend-api/volunteer/application/use-cases/sign-up-for-volunteer.service";
 import { WithdrawVolunteerSignupService } from "src/hb-backend-api/volunteer/application/use-cases/withdraw-volunteer-signup.service";
 import { CancelVolunteerEventService } from "src/hb-backend-api/volunteer/application/use-cases/cancel-volunteer-event.service";
+import { CloseExpiredVolunteerEventsService } from "src/hb-backend-api/volunteer/application/use-cases/close-expired-volunteer-events.service";
 import { VolunteerController } from "src/hb-backend-api/volunteer/adapters/in/volunteer.controller";
+import { VolunteerExpirySchedule } from "src/hb-backend-api/volunteer/adapters/in/schedule/volunteer-expiry.schedule";
 
 /**
  * Volunteer domain — a shelter's scheduled volunteering with a capacity-capped
@@ -51,6 +53,11 @@ import { VolunteerController } from "src/hb-backend-api/volunteer/adapters/in/vo
       provide: DIToken.VolunteerModule.CancelVolunteerEventUseCase,
       useClass: CancelVolunteerEventService,
     },
+    {
+      provide: DIToken.VolunteerModule.CloseExpiredVolunteerEventsUseCase,
+      useClass: CloseExpiredVolunteerEventsService,
+    },
+    VolunteerExpirySchedule,
     {
       provide: DIToken.VolunteerModule.VolunteerEventRepository,
       useClass: VolunteerEventRepositoryImpl,

@@ -20,4 +20,6 @@ export interface VolunteerEventRepository {
   findByShelterId(shelterId: Types.ObjectId): Promise<VolunteerEventEntity[]>;
   /** OPEN events starting after `now`, soonest first (discovery). */
   findUpcoming(now: Date, limit: number): Promise<VolunteerEventEntity[]>;
+  /** OPEN events whose end time has passed — candidates for auto-close. */
+  findExpiredOpen(now: Date, limit: number): Promise<VolunteerEventEntity[]>;
 }

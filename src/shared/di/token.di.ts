@@ -168,6 +168,9 @@ class VolunteerModuleToken extends TokenRegistry {
   public readonly CancelVolunteerEventUseCase = this.register(
     "volunteer.cancel-event.use-case",
   );
+  public readonly CloseExpiredVolunteerEventsUseCase = this.register(
+    "volunteer.close-expired-events.use-case",
+  );
   public readonly VolunteerEventPersistencePort = this.register(
     "volunteer.event.persistence.port",
   );
