@@ -26,6 +26,7 @@ export type AnimalMutablePatch = Partial<
     | "health"
     | "photos"
     | "status"
+    | "blinded"
   >
 >;
 

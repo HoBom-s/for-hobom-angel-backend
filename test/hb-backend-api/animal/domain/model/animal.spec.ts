@@ -104,6 +104,17 @@ describe("Animal aggregate", () => {
       adopted.markAdopted();
       expect(() => adopted.reserve()).toThrow("예약");
     });
+
+    it("blind/unblind toggles visibility without touching status", () => {
+      const animal = register();
+      expect(animal.isBlinded()).toBe(false);
+      animal.reserve();
+      animal.blind();
+      expect(animal.isBlinded()).toBe(true);
+      expect(animal.getStatus).toBe(AnimalStatus.RESERVED); // orthogonal
+      animal.unblind();
+      expect(animal.isBlinded()).toBe(false);
+    });
   });
 
   describe("profile edits", () => {
