@@ -31,4 +31,12 @@ export class VolunteerEventQueryAdapter implements VolunteerEventQueryPort {
     const docs = await this.repository.findUpcoming(now, limit);
     return docs.map(toDomain);
   }
+
+  public async findExpiredOpen(
+    now: Date,
+    limit: number,
+  ): Promise<VolunteerEvent[]> {
+    const docs = await this.repository.findExpiredOpen(now, limit);
+    return docs.map(toDomain);
+  }
 }

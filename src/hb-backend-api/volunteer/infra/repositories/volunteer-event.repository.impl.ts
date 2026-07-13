@@ -61,4 +61,15 @@ export class VolunteerEventRepositoryImpl implements VolunteerEventRepository {
       .limit(limit)
       .exec();
   }
+
+  public findExpiredOpen(
+    now: Date,
+    limit: number,
+  ): Promise<VolunteerEventEntity[]> {
+    return this.model
+      .find({ status: VolunteerEventStatus.OPEN, endAt: { $lt: now } })
+      .sort({ endAt: 1 })
+      .limit(limit)
+      .exec();
+  }
 }
