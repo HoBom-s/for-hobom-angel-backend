@@ -32,6 +32,7 @@ import {
 import { UpdateAnimalProfileUseCase } from "src/hb-backend-api/animal/domain/ports/in/update-animal-profile.use-case";
 import { RelistAnimalUseCase } from "src/hb-backend-api/animal/domain/ports/in/relist-animal.use-case";
 import { SetAnimalBlindUseCase } from "src/hb-backend-api/animal/domain/ports/in/set-animal-blind.use-case";
+import { AnimalSort } from "src/hb-backend-api/animal/domain/enums/animal-sort.enum";
 import { AnimalQueryPort } from "src/hb-backend-api/animal/domain/ports/out/animal-query.port";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { RegisterAnimalDto } from "src/hb-backend-api/animal/adapters/in/dto/register-animal.dto";
@@ -98,6 +99,7 @@ export class AnimalController {
       keyword: query.keyword,
       cursor: query.cursor,
       limit: query.limit ?? 20,
+      sort: query.sort ?? AnimalSort.LATEST,
     });
     return CursorPageResponse.of(page, (animal) => AnimalResponse.from(animal));
   }
