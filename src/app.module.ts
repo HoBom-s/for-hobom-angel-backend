@@ -15,6 +15,7 @@ import { DiscordModule } from "src/shared/discord/discord.module";
 import { HttpLogInterceptor } from "src/shared/observability/http-log.interceptor";
 import { TraceContext } from "src/shared/trace/trace.context";
 import { TraceInterceptor } from "src/shared/trace/trace.interceptor";
+import { AdopterHistoryModule } from "src/hb-backend-api/adopter-history/adopter-history.module";
 import { AdoptionModule } from "src/hb-backend-api/adoption/adoption.module";
 import { AnimalModule } from "src/hb-backend-api/animal/animal.module";
 import { AnnouncementModule } from "src/hb-backend-api/announcement/announcement.module";
@@ -83,6 +84,7 @@ import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
     ReviewModule,
     AnnouncementModule,
     FaqModule,
+    AdopterHistoryModule,
   ],
   providers: [
     TraceContext,

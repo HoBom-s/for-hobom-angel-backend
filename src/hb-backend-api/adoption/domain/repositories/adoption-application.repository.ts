@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { AdoptionApplicationStatus } from "src/hb-backend-api/adoption/domain/enums/adoption-application-status.enum";
 import { AdoptionApplicationEntity } from "src/hb-backend-api/adoption/domain/model/adoption-application.entity";
 
 export type ApplicationMutablePatch = Partial<
@@ -17,4 +18,8 @@ export interface AdoptionApplicationRepository {
     patch: ApplicationMutablePatch,
   ): Promise<void>;
   findById(id: Types.ObjectId): Promise<AdoptionApplicationEntity | null>;
+  countByApplicantAndStatus(
+    applicantId: Types.ObjectId,
+    status: AdoptionApplicationStatus,
+  ): Promise<number>;
 }

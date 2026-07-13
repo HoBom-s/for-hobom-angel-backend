@@ -1,5 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { DIToken } from "src/shared/di/token.di";
+import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
+import { AdoptionApplicationStatus } from "src/hb-backend-api/adoption/domain/enums/adoption-application-status.enum";
 import { AdoptionApplication } from "src/hb-backend-api/adoption/domain/model/adoption-application";
 import { ApplicationId } from "src/hb-backend-api/adoption/domain/model/vo/application-id.vo";
 import { AdoptionApplicationQueryPort } from "src/hb-backend-api/adoption/domain/ports/out/adoption-application-query.port";
@@ -18,5 +20,12 @@ export class AdoptionApplicationQueryAdapter implements AdoptionApplicationQuery
   ): Promise<AdoptionApplication | null> {
     const doc = await this.repository.findById(id.raw);
     return doc ? toDomain(doc) : null;
+  }
+
+  public countByApplicantAndStatus(
+    applicantId: UserId,
+    status: AdoptionApplicationStatus,
+  ): Promise<number> {
+    return this.repository.countByApplicantAndStatus(applicantId.raw, status);
   }
 }
