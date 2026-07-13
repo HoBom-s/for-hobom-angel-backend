@@ -29,6 +29,7 @@ export class Animal {
     private readonly intake: IntakeRecord,
     private photos: AnimalPhoto[],
     private status: AnimalStatus,
+    private blinded: boolean,
     private readonly version: number,
   ) {}
 
@@ -62,6 +63,7 @@ export class Animal {
       params.intake,
       photos,
       AnimalStatus.AVAILABLE,
+      false,
       0,
     );
   }
@@ -77,6 +79,7 @@ export class Animal {
     intake: IntakeRecord;
     photos: AnimalPhoto[];
     status: AnimalStatus;
+    blinded: boolean;
     version: number;
   }): Animal {
     return new Animal(
@@ -90,6 +93,7 @@ export class Animal {
       params.intake,
       params.photos,
       params.status,
+      params.blinded,
       params.version,
     );
   }
@@ -172,7 +176,23 @@ export class Animal {
     this.status = AnimalStatus.AVAILABLE;
   }
 
+  /**
+   * Operator moderation: hide/reveal the listing from public discovery. Blinding
+   * is orthogonal to status (a RESERVED animal can be blinded) and reversible.
+   */
+  public blind(): void {
+    this.blinded = true;
+  }
+
+  public unblind(): void {
+    this.blinded = false;
+  }
+
   // ── predicates ──────────────────────────────────────────────────
+  public isBlinded(): boolean {
+    return this.blinded;
+  }
+
   public isAvailable(): boolean {
     return this.status === AnimalStatus.AVAILABLE;
   }

@@ -92,6 +92,10 @@ export class AnimalEntity extends BaseEntity {
   })
   public status: AnimalStatus;
 
+  // Operator moderation: hidden from public discovery when true.
+  @Prop({ required: true, default: false })
+  public blinded: boolean;
+
   @Prop({ required: true, default: 0 })
   public version: number;
 }

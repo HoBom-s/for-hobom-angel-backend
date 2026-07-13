@@ -23,6 +23,9 @@ export class AnimalResponse {
   @ApiProperty({ enum: AnimalStatus })
   status: AnimalStatus;
 
+  @ApiProperty({ description: "운영자 블라인드 여부 (탐색 노출 제외)" })
+  blinded: boolean;
+
   @ApiProperty({ type: Object })
   traits: Record<string, unknown>;
 
@@ -47,6 +50,7 @@ export class AnimalResponse {
     dto.species = animal.getSpecies;
     dto.description = animal.getDescription;
     dto.status = animal.getStatus;
+    dto.blinded = animal.isBlinded();
     dto.traits = {
       sex: traits.getSex,
       size: traits.getSize,

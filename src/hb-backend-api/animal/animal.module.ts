@@ -11,6 +11,7 @@ import { AnimalRepositoryImpl } from "src/hb-backend-api/animal/infra/repositori
 import { RegisterAnimalService } from "src/hb-backend-api/animal/application/use-cases/register-animal.service";
 import { UpdateAnimalProfileService } from "src/hb-backend-api/animal/application/use-cases/update-animal-profile.service";
 import { RelistAnimalService } from "src/hb-backend-api/animal/application/use-cases/relist-animal.service";
+import { SetAnimalBlindService } from "src/hb-backend-api/animal/application/use-cases/set-animal-blind.service";
 import { AnimalController } from "src/hb-backend-api/animal/adapters/in/animal.controller";
 
 /**
@@ -40,6 +41,10 @@ import { AnimalController } from "src/hb-backend-api/animal/adapters/in/animal.c
     {
       provide: DIToken.AnimalModule.RelistAnimalUseCase,
       useClass: RelistAnimalService,
+    },
+    {
+      provide: DIToken.AnimalModule.SetAnimalBlindUseCase,
+      useClass: SetAnimalBlindService,
     },
     {
       provide: DIToken.AnimalModule.AnimalRepository,

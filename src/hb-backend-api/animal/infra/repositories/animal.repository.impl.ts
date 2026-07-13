@@ -52,7 +52,8 @@ export class AnimalRepositoryImpl implements AnimalRepository {
     cursorId: Types.ObjectId | null,
     limit: number,
   ): Promise<AnimalEntity[]> {
-    const query: Record<string, unknown> = {};
+    // Blinded (operator-hidden) listings never surface in public discovery.
+    const query: Record<string, unknown> = { blinded: { $ne: true } };
     if (filter.species) {
       query.species = filter.species;
     }
