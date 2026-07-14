@@ -7,6 +7,7 @@ import {
   IsEnum,
   IsInt,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   MaxLength,
@@ -31,6 +32,12 @@ export class TraitsDto {
   @IsInt()
   @Min(0)
   ageMonths?: number;
+
+  @ApiPropertyOptional({ description: "몸무게(kg), 소수 허용" })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  weightKg?: number;
 
   @ApiPropertyOptional()
   @IsOptional()

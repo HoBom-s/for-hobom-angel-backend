@@ -23,6 +23,7 @@ export function toDomain(doc: AnimalEntity): Animal {
       breed: doc.traits.breed,
       color: doc.traits.color,
       personality: doc.traits.personality,
+      weightKg: doc.traits.weightKg,
     }),
     health: HealthProfile.of({
       neutered: doc.health.neutered,
@@ -89,6 +90,7 @@ function toTraitsDoc(animal: Animal) {
     breed: t.getBreed,
     color: t.getColor,
     personality: t.getPersonality,
+    weightKg: t.getWeightKg,
   };
 }
 

@@ -13,6 +13,7 @@ export interface TraitsDoc {
   breed?: string | null;
   color?: string | null;
   personality?: string | null;
+  weightKg?: number | null;
 }
 
 export interface HealthDoc {
@@ -56,6 +57,7 @@ export class AnimalEntity extends BaseEntity {
       breed: { type: String, default: null },
       color: { type: String, default: null },
       personality: { type: String, default: null },
+      weightKg: { type: Number, default: null },
     },
   })
   public traits: TraitsDoc;
