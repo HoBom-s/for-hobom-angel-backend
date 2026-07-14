@@ -35,6 +35,18 @@ const A = {
   yaong: oid("206"),
   dubu: oid("207"),
   gamja: oid("208"),
+  bori: oid("209"),
+  gureum: oid("210"),
+  hodu: oid("211"),
+  samsaek: oid("212"),
+  kong: oid("213"),
+  naong: oid("214"),
+  bboppi: oid("215"),
+  cheese: oid("216"),
+  heukmi: oid("217"),
+  hayang: oid("218"),
+  danchu: oid("219"),
+  meokbo: oid("220"),
 };
 
 const passwordHash = hashSync(PASSWORD, 12);
@@ -81,7 +93,7 @@ const shelter = (id, name, slug, address, rep, registrationNumber, businessNumbe
   businessNumber,
   facilityPhotos: [
     {
-      objectKey: `https://loremflickr.com/640/480/animal,shelter?lock=${slug.length}`,
+      objectKey: `https://placedog.net/640/480?id=${slug.length + 30}`,
       kind: "EXTERIOR",
       caption: "정문",
     },
@@ -105,45 +117,70 @@ const shelters = [
   }, U.hopeAdmin, "제2024-1002호", "2223344556"),
 ];
 
-// Real photos so responses show actual cute animals. `objectKey` is normally an
+// Verified real cat photo ids from cataas.com — deterministic `/cat/:id` URLs.
+const CAT_IMG_IDS = [
+  "04eEQhDfAL8l5nt3", "05Xd4JtN14983pns", "09wFxpacQzvf9jfM", "0B2g7aTANObiqPJJ",
+  "0BTTVEVWXNyOgXYd", "0C2bQ39x8kuhx31p", "0DVs2d6bIVIt3ehk", "0EsIYDG0at0TPpPD",
+  "0F0IKAPOdWiE755P", "0GC9MRUAqxhBzPyA", "0M0Lo3dsYft79xNd", "0mstmOIucwiN80jb",
+  "0mxliw1UgtFdDkU8", "0nnJxjVoMK6GVmRS",
+];
+// Reliable, cute, species-correct photos. `objectKey` normally holds an
 // object-storage key (the image server is deferred), but a full public URL works
-// for browsing — a frontend that renders objectKey as-is shows the image.
-const petImg = (species, lock) => {
-  const kw =
-    species === "CAT" ? "cat,kitten" : species === "DOG" ? "dog,puppy" : "rabbit,pet";
-  return `https://loremflickr.com/640/480/${kw}?lock=${lock}`;
-};
-const animal = (id, shelterId, name, species, status, traits, story) => {
-  const lock = parseInt(id.toHexString().slice(-3), 16);
-  return {
-    _id: id,
-    shelterId,
-    name,
-    species,
-    description: story,
-    traits,
-    health: { neutered: true, vaccinated: true, microchipId: null, notes: "건강 양호" },
-    intake: { intakeDate: new Date("2026-05-01T00:00:00Z"), rescueStory: story, noticeNumber: null },
-    photos: [{ objectKey: petImg(species, lock), caption: name }],
-    status,
-    version: 0,
-    createdAt: now,
-    updatedAt: now,
-  };
-};
-const traits = (sex, size, ageMonths, breed, color, personality) => ({
-  sex, size, ageMonths, breed, color, personality,
+// for browsing — a frontend that renders objectKey as-is shows the image. Dogs
+// come from placedog.net (distinct id per dog), cats from cataas.com (distinct
+// verified id per cat); both sources were verified to return real images. A
+// per-species counter guarantees every animal gets a different photo.
+let dogSeq = 0;
+let catSeq = 0;
+const nextPhoto = (species) =>
+  species === "CAT"
+    ? `https://cataas.com/cat/${CAT_IMG_IDS[catSeq++ % CAT_IMG_IDS.length]}?width=640&height=640`
+    : `https://placedog.net/640/480?id=${(dogSeq++ * 9 + 5) % 200}`;
+
+const animal = (id, shelterId, name, species, status, traits, story) => ({
+  _id: id,
+  shelterId,
+  name,
+  species,
+  description: story,
+  traits,
+  health: { neutered: true, vaccinated: true, microchipId: null, notes: "건강 양호" },
+  intake: { intakeDate: new Date("2026-05-01T00:00:00Z"), rescueStory: story, noticeNumber: null },
+  photos: [{ objectKey: nextPhoto(species), caption: name }],
+  status,
+  version: 0,
+  createdAt: now,
+  updatedAt: now,
+});
+// traits carries weightKg (kg, fractional, nullable) alongside the descriptors.
+const traits = (sex, size, ageMonths, weightKg, breed, color, personality) => ({
+  sex, size, ageMonths, weightKg, breed, color, personality,
 });
 
+// Only dogs and cats, every one with a verified cute photo.
 const animals = [
-  animal(A.choco, S.happy, "초코", "DOG", "AVAILABLE", traits("MALE", "MEDIUM", 18, "믹스", "갈색", "활발하고 사람을 좋아해요"), "길에서 구조된 순한 아이"),
-  animal(A.nabi, S.happy, "나비", "CAT", "AVAILABLE", traits("FEMALE", "SMALL", 24, "코리안숏헤어", "삼색", "얌전하고 애교가 많아요"), "묘연을 기다리는 고양이"),
-  animal(A.mungchi, S.happy, "뭉치", "DOG", "RESERVED", traits("MALE", "LARGE", 36, "진돗개 믹스", "흰색", "충성심이 강해요"), "입양 심사가 진행 중"),
-  animal(A.coco, S.happy, "코코", "CAT", "ADOPTED", traits("FEMALE", "SMALL", 12, "러시안블루", "회색", "조용하고 독립적이에요"), "행복한 가정을 찾았어요"),
-  animal(A.baduk, S.hope, "바둑이", "DOG", "AVAILABLE", traits("MALE", "MEDIUM", 30, "믹스", "검정흰색", "산책을 좋아해요"), "밝고 건강한 강아지"),
-  animal(A.yaong, S.hope, "야옹", "CAT", "AVAILABLE", traits("MALE", "SMALL", 8, "코리안숏헤어", "치즈", "장난기가 많아요"), "사교성 좋은 아깽이"),
-  animal(A.dubu, S.hope, "두부", "DOG", "AVAILABLE", traits("FEMALE", "SMALL", 60, "말티즈", "흰색", "차분한 노령견이에요"), "따뜻한 여생을 함께할 가족을 찾아요"),
-  animal(A.gamja, S.hope, "감자", "OTHER", "FOSTERED", traits("UNKNOWN", "SMALL", 6, "토끼", "갈색", "온순해요"), "임시보호 중"),
+  // ── 행복한 보호소 ──
+  animal(A.choco, S.happy, "초코", "DOG", "AVAILABLE", traits("MALE", "MEDIUM", 18, 12.5, "믹스", "갈색", "활발하고 사람을 좋아해요"), "길에서 구조된 순한 아이"),
+  animal(A.nabi, S.happy, "나비", "CAT", "AVAILABLE", traits("FEMALE", "SMALL", 24, 4.0, "코리안숏헤어", "삼색", "얌전하고 애교가 많아요"), "묘연을 기다리는 고양이"),
+  animal(A.mungchi, S.happy, "뭉치", "DOG", "RESERVED", traits("MALE", "LARGE", 36, 26.0, "진돗개 믹스", "흰색", "충성심이 강해요"), "입양 심사가 진행 중"),
+  animal(A.coco, S.happy, "코코", "CAT", "ADOPTED", traits("FEMALE", "SMALL", 12, 3.8, "러시안블루", "회색", "조용하고 독립적이에요"), "행복한 가정을 찾았어요"),
+  animal(A.bori, S.happy, "보리", "DOG", "AVAILABLE", traits("FEMALE", "SMALL", 10, 4.5, "포메라니안", "갈색", "복슬복슬 애교쟁이"), "작고 사랑스러운 강아지"),
+  animal(A.gureum, S.happy, "구름", "CAT", "AVAILABLE", traits("FEMALE", "SMALL", 14, 4.1, "코리안숏헤어", "흰색", "포근하고 조용해요"), "무릎냥이가 될 아이"),
+  animal(A.hodu, S.happy, "호두", "DOG", "AVAILABLE", traits("MALE", "MEDIUM", 20, 11.0, "비글", "삼색", "냄새 맡기를 좋아해요"), "호기심 많은 활발한 강아지"),
+  animal(A.samsaek, S.happy, "삼색이", "CAT", "RESERVED", traits("FEMALE", "SMALL", 30, 4.3, "코리안숏헤어", "삼색", "새침하지만 다정해요"), "입양 심사가 진행 중"),
+  animal(A.kong, S.happy, "콩이", "DOG", "AVAILABLE", traits("MALE", "SMALL", 7, 2.8, "치와와", "검정", "작지만 씩씩해요"), "겁 없는 막내"),
+  animal(A.naong, S.happy, "나옹", "CAT", "AVAILABLE", traits("MALE", "SMALL", 16, 3.9, "코리안숏헤어", "턱시도", "사람을 잘 따라요"), "붙임성 좋은 고양이"),
+  // ── 희망 쉼터 ──
+  animal(A.baduk, S.hope, "바둑이", "DOG", "AVAILABLE", traits("MALE", "MEDIUM", 30, 14.0, "믹스", "검정흰색", "산책을 좋아해요"), "밝고 건강한 강아지"),
+  animal(A.yaong, S.hope, "야옹", "CAT", "AVAILABLE", traits("MALE", "SMALL", 8, 3.2, "코리안숏헤어", "치즈", "장난기가 많아요"), "사교성 좋은 아깽이"),
+  animal(A.dubu, S.hope, "두부", "DOG", "AVAILABLE", traits("FEMALE", "SMALL", 60, 3.5, "말티즈", "흰색", "차분한 노령견이에요"), "따뜻한 여생을 함께할 가족을 찾아요"),
+  animal(A.gamja, S.hope, "감자", "CAT", "FOSTERED", traits("MALE", "SMALL", 6, 2.4, "코리안숏헤어", "고등어", "온순하고 잘 먹어요"), "임시보호 중인 아깽이"),
+  animal(A.bboppi, S.hope, "뽀삐", "DOG", "AVAILABLE", traits("FEMALE", "MEDIUM", 22, 13.0, "코커스패니얼", "갈색", "온순하고 밝아요"), "누구와도 잘 지내는 강아지"),
+  animal(A.cheese, S.hope, "치즈", "CAT", "AVAILABLE", traits("MALE", "SMALL", 11, 3.6, "코리안숏헤어", "치즈", "간식을 좋아해요"), "먹성 좋은 노랑둥이"),
+  animal(A.heukmi, S.hope, "흑미", "DOG", "AVAILABLE", traits("MALE", "LARGE", 40, 24.0, "리트리버 믹스", "검정", "듬직하고 순해요"), "든든한 대형견"),
+  animal(A.hayang, S.hope, "하양", "CAT", "AVAILABLE", traits("FEMALE", "SMALL", 9, 3.1, "코리안숏헤어", "흰색", "겁이 조금 많아요"), "천천히 마음을 여는 아이"),
+  animal(A.danchu, S.hope, "단추", "DOG", "RESERVED", traits("FEMALE", "SMALL", 15, 3.4, "푸들", "갈색", "곱슬곱슬 귀요미"), "입양 심사가 진행 중"),
+  animal(A.meokbo, S.hope, "먹보", "CAT", "FOSTERED", traits("MALE", "SMALL", 20, 4.6, "코리안숏헤어", "고등어", "잘 먹고 잘 자요"), "임시보호 중인 고양이"),
 ];
 
 const questionnaire = (id, shelterId, purpose, questions) => ({
