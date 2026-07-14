@@ -144,3 +144,16 @@ describe("Animal aggregate", () => {
     });
   });
 });
+
+describe("Traits", () => {
+  const base = { sex: AnimalSex.FEMALE, size: AnimalSize.SMALL };
+
+  it("keeps a fractional weight and defaults it to null when omitted", () => {
+    expect(Traits.of({ ...base, weightKg: 4.2 }).getWeightKg).toBe(4.2);
+    expect(Traits.of(base).getWeightKg).toBeNull();
+  });
+
+  it("rejects a negative weight", () => {
+    expect(() => Traits.of({ ...base, weightKg: -1 })).toThrow("몸무게");
+  });
+});

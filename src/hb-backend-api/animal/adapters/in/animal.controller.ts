@@ -42,6 +42,7 @@ import { SetAnimalBlindUseCase } from "src/hb-backend-api/animal/domain/ports/in
 import { AnimalSort } from "src/hb-backend-api/animal/domain/enums/animal-sort.enum";
 import { AnimalQueryPort } from "src/hb-backend-api/animal/domain/ports/out/animal-query.port";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
+import { ShelterQueryPort } from "src/hb-backend-api/shelter/domain/ports/out/shelter-query.port";
 import { RegisterAnimalDto } from "src/hb-backend-api/animal/adapters/in/dto/register-animal.dto";
 import { UpdateAnimalProfileDto } from "src/hb-backend-api/animal/adapters/in/dto/update-animal-profile.dto";
 import { SearchAnimalsQueryDto } from "src/hb-backend-api/animal/adapters/in/dto/search-animals.query.dto";
@@ -63,6 +64,8 @@ export class AnimalController {
     private readonly setAnimalBlindUseCase: SetAnimalBlindUseCase,
     @Inject(DIToken.AnimalModule.AnimalQueryPort)
     private readonly animalQueryPort: AnimalQueryPort,
+    @Inject(DIToken.ShelterModule.ShelterQueryPort)
+    private readonly shelterQueryPort: ShelterQueryPort,
   ) {}
 
   @ApiOperation({ summary: "동물 등록 (검증된 보호소의 스태프)" })
@@ -127,7 +130,8 @@ export class AnimalController {
     if (!animal) {
       throw new NotFoundException("동물을 찾을 수 없어요.");
     }
-    return AnimalResponse.from(animal);
+    const shelter = await this.shelterQueryPort.findById(animal.getShelterId);
+    return AnimalResponse.withShelter(animal, shelter);
   }
 
   @ApiOperation({ summary: "보호소 동물 목록" })
