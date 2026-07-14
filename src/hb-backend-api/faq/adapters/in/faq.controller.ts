@@ -14,10 +14,14 @@ import {
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
+  ApiNoContentResponse,
   ApiOperation,
-  ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import {
+  ApiCreatedEnvelope,
+  ApiEnvelopeArray,
+} from "src/shared/response/api-envelope.decorator";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
@@ -35,6 +39,7 @@ import { PostFaqDto } from "src/hb-backend-api/faq/adapters/in/dto/post-faq.dto"
 import { EditFaqDto } from "src/hb-backend-api/faq/adapters/in/dto/edit-faq.dto";
 import { ListFaqsQueryDto } from "src/hb-backend-api/faq/adapters/in/dto/list-faqs.query.dto";
 import { FaqResponse } from "src/hb-backend-api/faq/adapters/in/dto/faq.response";
+import { PostFaqResponse } from "src/hb-backend-api/faq/adapters/in/dto/post-faq.response";
 
 @ApiTags("FAQ")
 @ApiBearerAuth()
@@ -53,6 +58,7 @@ export class FaqController {
   ) {}
 
   @ApiOperation({ summary: "FAQ 등록 (보호소 담당자)" })
+  @ApiCreatedEnvelope(PostFaqResponse)
   @Post("shelters/:shelterId/faqs")
   public post(
     @CurrentUser() user: AuthenticatedUser,
@@ -69,7 +75,7 @@ export class FaqController {
   }
 
   @ApiOperation({ summary: "보호소 FAQ 목록 (정렬 순서)" })
-  @ApiResponse({ type: [FaqResponse] })
+  @ApiEnvelopeArray(FaqResponse)
   @Get("shelters/:shelterId/faqs")
   public async list(
     @Param("shelterId") shelterId: string,
@@ -83,6 +89,7 @@ export class FaqController {
   }
 
   @ApiOperation({ summary: "FAQ 수정 (보호소 담당자)" })
+  @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Patch("faqs/:faqId")
   public async edit(
@@ -100,6 +107,7 @@ export class FaqController {
   }
 
   @ApiOperation({ summary: "FAQ 삭제 (보호소 담당자 또는 운영자)" })
+  @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete("faqs/:faqId")
   public async remove(

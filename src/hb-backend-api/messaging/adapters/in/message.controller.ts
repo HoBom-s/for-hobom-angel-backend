@@ -12,9 +12,13 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
-  ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import {
+  ApiCreatedEnvelope,
+  ApiEnvelopeArray,
+} from "src/shared/response/api-envelope.decorator";
+import { PostMessageResponse } from "src/hb-backend-api/messaging/adapters/in/dto/post-message.response";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
@@ -45,6 +49,7 @@ export class MessageController {
   ) {}
 
   @ApiOperation({ summary: "문의 메시지 전송 (신청자 또는 보호소 담당자)" })
+  @ApiCreatedEnvelope(PostMessageResponse)
   @Post()
   public post(
     @CurrentUser() user: AuthenticatedUser,
@@ -62,7 +67,7 @@ export class MessageController {
   }
 
   @ApiOperation({ summary: "문의 대화 조회 (참여자)" })
-  @ApiResponse({ type: [MessageResponse] })
+  @ApiEnvelopeArray(MessageResponse)
   @Get()
   public async list(
     @CurrentUser() user: AuthenticatedUser,

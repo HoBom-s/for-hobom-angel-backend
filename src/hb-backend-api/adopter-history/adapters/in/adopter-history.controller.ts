@@ -1,10 +1,6 @@
 import { Controller, Get, Inject, Param, UseGuards } from "@nestjs/common";
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiEnvelope } from "src/shared/response/api-envelope.decorator";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
@@ -26,7 +22,7 @@ export class AdopterHistoryController {
   @ApiOperation({
     summary: "신청자 입양/파양 이력 조회 (보호소 담당자 또는 운영자)",
   })
-  @ApiResponse({ type: AdopterHistoryResponse })
+  @ApiEnvelope(AdopterHistoryResponse)
   @Get("users/:userId/adoption-history")
   public async get(
     @CurrentUser() user: AuthenticatedUser,

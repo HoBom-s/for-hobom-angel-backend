@@ -14,10 +14,14 @@ import {
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
+  ApiNoContentResponse,
   ApiOperation,
-  ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import {
+  ApiCreatedEnvelope,
+  ApiEnvelopeArray,
+} from "src/shared/response/api-envelope.decorator";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
@@ -35,6 +39,7 @@ import { PostAnnouncementDto } from "src/hb-backend-api/announcement/adapters/in
 import { EditAnnouncementDto } from "src/hb-backend-api/announcement/adapters/in/dto/edit-announcement.dto";
 import { ListAnnouncementsQueryDto } from "src/hb-backend-api/announcement/adapters/in/dto/list-announcements.query.dto";
 import { AnnouncementResponse } from "src/hb-backend-api/announcement/adapters/in/dto/announcement.response";
+import { PostAnnouncementResponse } from "src/hb-backend-api/announcement/adapters/in/dto/post-announcement.response";
 
 @ApiTags("Announcements")
 @ApiBearerAuth()
@@ -53,6 +58,7 @@ export class AnnouncementController {
   ) {}
 
   @ApiOperation({ summary: "공지 등록 (보호소 담당자)" })
+  @ApiCreatedEnvelope(PostAnnouncementResponse)
   @Post("shelters/:shelterId/announcements")
   public post(
     @CurrentUser() user: AuthenticatedUser,
@@ -69,7 +75,7 @@ export class AnnouncementController {
   }
 
   @ApiOperation({ summary: "보호소 공지 목록 (고정 우선, 최신순)" })
-  @ApiResponse({ type: [AnnouncementResponse] })
+  @ApiEnvelopeArray(AnnouncementResponse)
   @Get("shelters/:shelterId/announcements")
   public async list(
     @Param("shelterId") shelterId: string,
@@ -83,6 +89,7 @@ export class AnnouncementController {
   }
 
   @ApiOperation({ summary: "공지 수정 (보호소 담당자)" })
+  @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Patch("announcements/:announcementId")
   public async edit(
@@ -100,6 +107,7 @@ export class AnnouncementController {
   }
 
   @ApiOperation({ summary: "공지 삭제 (보호소 담당자 또는 운영자)" })
+  @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete("announcements/:announcementId")
   public async remove(

@@ -13,9 +13,13 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiQuery,
-  ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import {
+  ApiCreatedEnvelope,
+  ApiEnvelope,
+  ApiEnvelopeArray,
+} from "src/shared/response/api-envelope.decorator";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
@@ -35,6 +39,8 @@ import { RegisterShelterDto } from "src/hb-backend-api/shelter/adapters/in/dto/r
 import { RequestStaffPromotionDto } from "src/hb-backend-api/shelter/adapters/in/dto/request-staff-promotion.dto";
 import { ShelterResponse } from "src/hb-backend-api/shelter/adapters/in/dto/shelter.response";
 import { ShelterMarkerResponse } from "src/hb-backend-api/shelter/adapters/in/dto/shelter-marker.response";
+import { RegisterShelterResponse } from "src/hb-backend-api/shelter/adapters/in/dto/register-shelter.response";
+import { StaffPromotionResponse } from "src/hb-backend-api/shelter/adapters/in/dto/staff-promotion.response";
 
 @ApiTags("Shelters")
 @ApiBearerAuth()
@@ -53,6 +59,7 @@ export class ShelterController {
   @ApiOperation({
     summary: "보호소 등록 (등록자가 대표가 되고 검증 심사가 열림)",
   })
+  @ApiCreatedEnvelope(RegisterShelterResponse)
   @Post()
   public register(
     @CurrentUser() user: AuthenticatedUser,
@@ -65,6 +72,7 @@ export class ShelterController {
   }
 
   @ApiOperation({ summary: "스태프 승격 요청 (보호소 관리자)" })
+  @ApiCreatedEnvelope(StaffPromotionResponse)
   @Post(":shelterId/staff-promotions")
   public requestStaffPromotion(
     @CurrentUser() user: AuthenticatedUser,
@@ -80,7 +88,7 @@ export class ShelterController {
 
   @ApiOperation({ summary: "지도 탐색 — 위치 공개 보호소 마커 (지역 필터)" })
   @ApiQuery({ name: "region", required: false, type: String })
-  @ApiResponse({ type: [ShelterMarkerResponse] })
+  @ApiEnvelopeArray(ShelterMarkerResponse)
   @Get("map")
   public async map(
     @Query("region") region?: string,
@@ -90,7 +98,7 @@ export class ShelterController {
   }
 
   @ApiOperation({ summary: "보호소 단건 조회 (슬러그)" })
-  @ApiResponse({ type: ShelterResponse })
+  @ApiEnvelope(ShelterResponse)
   @Get(":slug")
   public async getBySlug(
     @Param("slug") slug: string,

@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Inject,
   NotFoundException,
   Param,
@@ -11,11 +13,12 @@ import {
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
+  ApiNoContentResponse,
   ApiOperation,
   ApiParam,
-  ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import { ApiEnvelope } from "src/shared/response/api-envelope.decorator";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
@@ -42,6 +45,8 @@ export class QuestionnaireController {
 
   @ApiOperation({ summary: "설문 정의/수정 (보호소 관리자)" })
   @ApiParam({ name: "purpose", enum: QuestionnairePurpose })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Put(":purpose")
   public async define(
     @CurrentUser() user: AuthenticatedUser,
@@ -60,7 +65,7 @@ export class QuestionnaireController {
 
   @ApiOperation({ summary: "설문 조회" })
   @ApiParam({ name: "purpose", enum: QuestionnairePurpose })
-  @ApiResponse({ type: QuestionnaireResponse })
+  @ApiEnvelope(QuestionnaireResponse)
   @Get(":purpose")
   public async get(
     @Param("shelterId") shelterId: string,
