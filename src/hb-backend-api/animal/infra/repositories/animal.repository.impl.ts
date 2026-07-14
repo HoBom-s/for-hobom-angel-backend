@@ -3,6 +3,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { MongoSessionContext } from "src/infra/mongo/transaction/transaction.context";
 import { OptimisticLockException } from "src/shared/exception/optimistic-lock.exception";
+import { AnimalSort } from "src/hb-backend-api/animal/domain/enums/animal-sort.enum";
 import { AnimalEntity } from "src/hb-backend-api/animal/domain/model/animal.entity";
 import {
   AnimalMutablePatch,
@@ -51,6 +52,7 @@ export class AnimalRepositoryImpl implements AnimalRepository {
     filter: AnimalSearchFilter,
     cursorId: Types.ObjectId | null,
     limit: number,
+    sort: AnimalSort,
   ): Promise<AnimalEntity[]> {
     // Blinded (operator-hidden) listings never surface in public discovery.
     const query: Record<string, unknown> = { blinded: { $ne: true } };
@@ -71,14 +73,15 @@ export class AnimalRepositoryImpl implements AnimalRepository {
       const rx = new RegExp(escaped, "i");
       query.$or = [{ name: rx }, { description: rx }];
     }
+    // Keyset by id: OLDEST walks ascending (_id > cursor), LATEST descending.
+    const ascending = sort === AnimalSort.OLDEST;
     if (cursorId) {
-      query._id = { $lt: cursorId };
+      query._id = ascending ? { $gt: cursorId } : { $lt: cursorId };
     }
-    // Newest-first by id (ObjectId encodes creation time); fetch one extra to
-    // detect whether a further page exists.
+    // Fetch one extra to detect whether a further page exists.
     return this.animalModel
       .find(query)
-      .sort({ _id: -1 })
+      .sort({ _id: ascending ? 1 : -1 })
       .limit(limit + 1)
       .exec();
   }

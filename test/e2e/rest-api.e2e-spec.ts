@@ -140,7 +140,7 @@ describe("REST API (e2e)", () => {
       .post(`${PREFIX}/approvals/${approvalId}/decision`)
       .set(auth(registrant.token))
       .send({ decision: "APPROVE", metadata: { trustTier: "A" } })
-      .expect(201);
+      .expect(204);
 
     // shelter is now VERIFIED
     const shelterRes = await request(app.getHttpServer())
@@ -212,7 +212,7 @@ describe("REST API (e2e)", () => {
       .post(`${PREFIX}/approvals/${approvalId}/decision`)
       .set(auth(token))
       .send({ decision: "APPROVE", metadata: { trustTier: "A" } })
-      .expect(201);
+      .expect(204);
     return shelterId as string;
   };
 

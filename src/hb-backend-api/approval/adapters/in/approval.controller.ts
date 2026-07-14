@@ -1,12 +1,19 @@
 import {
   Body,
   Controller,
+  HttpCode,
+  HttpStatus,
   Inject,
   Param,
   Post,
   UseGuards,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiNoContentResponse,
+  ApiOperation,
+  ApiTags,
+} from "@nestjs/swagger";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
@@ -31,6 +38,8 @@ export class ApprovalController {
     summary:
       "승인 요청 결정 (유형별 결정권자: 운영자/보호소 대표/보호소). 유형별 콜백이 대상 애그리거트를 전이",
   })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Post(":requestId/decision")
   public async decide(
     @CurrentUser() user: AuthenticatedUser,

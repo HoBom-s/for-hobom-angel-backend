@@ -14,10 +14,15 @@ import {
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
+  ApiNoContentResponse,
   ApiOperation,
-  ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import {
+  ApiCreatedEnvelope,
+  ApiEnvelope,
+  ApiEnvelopeCursor,
+} from "src/shared/response/api-envelope.decorator";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
 import { CursorPageResponse } from "src/shared/pagination/cursor-page.response";
@@ -37,6 +42,7 @@ import { ReviseReviewDto } from "src/hb-backend-api/review/adapters/in/dto/revis
 import { ListReviewsQueryDto } from "src/hb-backend-api/review/adapters/in/dto/list-reviews.query.dto";
 import { ReviewResponse } from "src/hb-backend-api/review/adapters/in/dto/review.response";
 import { ShelterReputationResponse } from "src/hb-backend-api/review/adapters/in/dto/shelter-reputation.response";
+import { SubmitReviewResponse } from "src/hb-backend-api/review/adapters/in/dto/submit-review.response";
 
 @ApiTags("Reviews")
 @ApiBearerAuth()
@@ -55,6 +61,7 @@ export class ReviewController {
   ) {}
 
   @ApiOperation({ summary: "보호소 후기 작성 (완료된 입양/임보자만)" })
+  @ApiCreatedEnvelope(SubmitReviewResponse)
   @Post("shelters/:shelterId/reviews")
   public submit(
     @CurrentUser() user: AuthenticatedUser,
@@ -72,6 +79,7 @@ export class ReviewController {
   }
 
   @ApiOperation({ summary: "보호소 후기 목록 (커서 페이지네이션)" })
+  @ApiEnvelopeCursor(ReviewResponse)
   @Get("shelters/:shelterId/reviews")
   public async list(
     @Param("shelterId") shelterId: string,
@@ -86,7 +94,7 @@ export class ReviewController {
   }
 
   @ApiOperation({ summary: "보호소 평판 (평균 별점 + 분포)" })
-  @ApiResponse({ type: ShelterReputationResponse })
+  @ApiEnvelope(ShelterReputationResponse)
   @Get("shelters/:shelterId/reviews/reputation")
   public async reputation(
     @Param("shelterId") shelterId: string,
@@ -98,6 +106,7 @@ export class ReviewController {
   }
 
   @ApiOperation({ summary: "내 후기 수정" })
+  @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Patch("reviews/:reviewId")
   public async revise(
@@ -114,6 +123,7 @@ export class ReviewController {
   }
 
   @ApiOperation({ summary: "후기 삭제 (작성자 또는 운영자)" })
+  @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete("reviews/:reviewId")
   public async remove(

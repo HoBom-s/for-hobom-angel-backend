@@ -11,6 +11,7 @@ import {
 } from "class-validator";
 import { AnimalSex } from "src/hb-backend-api/animal/domain/enums/animal-sex.enum";
 import { AnimalSize } from "src/hb-backend-api/animal/domain/enums/animal-size.enum";
+import { AnimalSort } from "src/hb-backend-api/animal/domain/enums/animal-sort.enum";
 import { AnimalSpecies } from "src/hb-backend-api/animal/domain/enums/animal-species.enum";
 import { AnimalStatus } from "src/hb-backend-api/animal/domain/enums/animal-status.enum";
 
@@ -40,6 +41,15 @@ export class SearchAnimalsQueryDto {
   @IsString()
   @MaxLength(80)
   keyword?: string;
+
+  @ApiPropertyOptional({
+    enum: AnimalSort,
+    default: AnimalSort.LATEST,
+    description: "정렬: LATEST(최신순, 기본) / OLDEST(오래된순)",
+  })
+  @IsOptional()
+  @IsEnum(AnimalSort)
+  sort?: AnimalSort;
 
   @ApiPropertyOptional({ description: "이전 페이지 마지막 항목의 커서" })
   @IsOptional()

@@ -13,10 +13,11 @@ import {
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
+  ApiNoContentResponse,
   ApiOperation,
-  ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import { ApiEnvelope } from "src/shared/response/api-envelope.decorator";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
@@ -52,7 +53,7 @@ export class UserController {
   ) {}
 
   @ApiOperation({ summary: "내 프로필 조회" })
-  @ApiResponse({ type: MyProfileResponse })
+  @ApiEnvelope(MyProfileResponse)
   @Get("me")
   public async me(
     @CurrentUser() user: AuthenticatedUser,
@@ -67,6 +68,7 @@ export class UserController {
   }
 
   @ApiOperation({ summary: "닉네임 변경" })
+  @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Patch("me/nickname")
   public async changeNickname(
@@ -80,6 +82,7 @@ export class UserController {
   }
 
   @ApiOperation({ summary: "회원 탈퇴" })
+  @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Post("me/withdrawal")
   public async withdraw(@CurrentUser() user: AuthenticatedUser): Promise<void> {
@@ -87,6 +90,7 @@ export class UserController {
   }
 
   @ApiOperation({ summary: "계정 제재 (운영자)" })
+  @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Post(":userId/sanction")
   public async sanction(
@@ -102,6 +106,7 @@ export class UserController {
   }
 
   @ApiOperation({ summary: "계정 제재 해제 (운영자)" })
+  @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Post(":userId/reinstatement")
   public async reinstate(
@@ -115,7 +120,7 @@ export class UserController {
   }
 
   @ApiOperation({ summary: "공개 프로필 조회 (닉네임만)" })
-  @ApiResponse({ type: PublicProfileResponse })
+  @ApiEnvelope(PublicProfileResponse)
   @Get(":userId")
   public async publicProfile(
     @Param("userId") userId: string,

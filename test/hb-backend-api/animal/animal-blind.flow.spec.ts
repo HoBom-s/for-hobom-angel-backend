@@ -12,6 +12,7 @@ import { AnimalSex } from "src/hb-backend-api/animal/domain/enums/animal-sex.enu
 import { AnimalSize } from "src/hb-backend-api/animal/domain/enums/animal-size.enum";
 import { AnimalSpecies } from "src/hb-backend-api/animal/domain/enums/animal-species.enum";
 import { AnimalStatus } from "src/hb-backend-api/animal/domain/enums/animal-status.enum";
+import { AnimalSort } from "src/hb-backend-api/animal/domain/enums/animal-sort.enum";
 import { AnimalEntity } from "src/hb-backend-api/animal/domain/model/animal.entity";
 import { AnimalId } from "src/hb-backend-api/animal/domain/model/vo/animal-id.vo";
 import { AnimalQueryPort } from "src/hb-backend-api/animal/domain/ports/out/animal-query.port";
@@ -100,7 +101,10 @@ describe("Animal blind (flow)", () => {
   });
 
   const searchNames = async (): Promise<string[]> => {
-    const page = await animalQuery.search({ limit: 50 });
+    const page = await animalQuery.search({
+      limit: 50,
+      sort: AnimalSort.LATEST,
+    });
     return page.items.map((a) => a.getName);
   };
 
@@ -134,5 +138,33 @@ describe("Animal blind (flow)", () => {
     await expect(
       setBlind.invoke({ animalId: target, actorId: outsider, blinded: true }),
     ).rejects.toThrow("운영자");
+  });
+
+  it("sorts by LATEST (default) and OLDEST", async () => {
+    await seedAnimal("정렬-A");
+    await seedAnimal("정렬-B");
+    await seedAnimal("정렬-C"); // created last
+
+    const latest = await animalQuery.search({
+      limit: 3,
+      keyword: "정렬-",
+      sort: AnimalSort.LATEST,
+    });
+    expect(latest.items.map((a) => a.getName)).toEqual([
+      "정렬-C",
+      "정렬-B",
+      "정렬-A",
+    ]);
+
+    const oldest = await animalQuery.search({
+      limit: 3,
+      keyword: "정렬-",
+      sort: AnimalSort.OLDEST,
+    });
+    expect(oldest.items.map((a) => a.getName)).toEqual([
+      "정렬-A",
+      "정렬-B",
+      "정렬-C",
+    ]);
   });
 });

@@ -45,6 +45,7 @@ export class AnimalQueryAdapter implements AnimalQueryPort {
       },
       cursorId,
       criteria.limit,
+      criteria.sort,
     );
 
     const hasNext = docs.length > criteria.limit;

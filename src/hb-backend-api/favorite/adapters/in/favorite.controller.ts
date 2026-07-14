@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Inject,
   Param,
   ParseEnumPipe,
@@ -12,11 +14,12 @@ import {
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
+  ApiNoContentResponse,
   ApiOperation,
   ApiQuery,
-  ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import { ApiEnvelopeArray } from "src/shared/response/api-envelope.decorator";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
@@ -44,6 +47,8 @@ export class FavoriteController {
   ) {}
 
   @ApiOperation({ summary: "찜/팔로우 추가 (멱등)" })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Post()
   public add(
     @CurrentUser() user: AuthenticatedUser,
@@ -57,6 +62,8 @@ export class FavoriteController {
   }
 
   @ApiOperation({ summary: "찜/팔로우 해제" })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(":targetType/:targetRef")
   public remove(
     @CurrentUser() user: AuthenticatedUser,
@@ -73,7 +80,7 @@ export class FavoriteController {
 
   @ApiOperation({ summary: "내 찜/팔로우 목록" })
   @ApiQuery({ name: "targetType", required: false, enum: FavoriteTargetType })
-  @ApiResponse({ type: [FavoriteResponse] })
+  @ApiEnvelopeArray(FavoriteResponse)
   @Get()
   public async list(
     @CurrentUser() user: AuthenticatedUser,
