@@ -6,8 +6,11 @@ import { VolunteerSignupId } from "src/hb-backend-api/volunteer/domain/model/vo/
 /** Read-side port for volunteer signups. */
 export interface VolunteerSignupQueryPort {
   findById(id: VolunteerSignupId): Promise<VolunteerSignup | null>;
-  findActive(
+  /** A volunteer's still-live (PENDING or APPROVED) signup for an event, if any. */
+  findLive(
     eventId: VolunteerEventId,
     volunteerId: UserId,
   ): Promise<VolunteerSignup | null>;
+  /** An event's roster (newest first) — for the staff applicant list. */
+  findByEvent(eventId: VolunteerEventId): Promise<VolunteerSignup[]>;
 }

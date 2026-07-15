@@ -5,8 +5,10 @@ import { VolunteerSignupId } from "src/hb-backend-api/volunteer/domain/model/vo/
 
 /**
  * A volunteer's signup for one event. Kept as its own aggregate (the roster) so
- * signing up and withdrawing are auditable records; the event aggregate owns the
- * capacity count that these transitions drive.
+ * every transition is an auditable record; the event aggregate owns the capacity
+ * count that these transitions drive. A signup is reviewed by the shelter's
+ * staff: PENDING → APPROVED (keeps its slot) or REJECTED (frees it). The
+ * volunteer may WITHDRAW while still live (PENDING or APPROVED).
  */
 export class VolunteerSignup {
   private constructor(
@@ -25,7 +27,7 @@ export class VolunteerSignup {
       VolunteerSignupId.generate(),
       params.eventId,
       params.volunteerId,
-      VolunteerSignupStatus.ACTIVE,
+      VolunteerSignupStatus.PENDING,
       0,
     );
   }
@@ -46,15 +48,37 @@ export class VolunteerSignup {
     );
   }
 
+  /** Staff approves a pending applicant. */
+  public approve(): void {
+    this.assertPending("승인");
+    this.status = VolunteerSignupStatus.APPROVED;
+  }
+
+  /** Staff rejects a pending applicant (the caller frees the event slot). */
+  public reject(): void {
+    this.assertPending("거절");
+    this.status = VolunteerSignupStatus.REJECTED;
+  }
+
   public withdraw(): void {
-    if (this.status !== VolunteerSignupStatus.ACTIVE) {
-      throw new Error("이미 철회된 지원이에요.");
+    if (!this.isLive()) {
+      throw new Error("이미 처리된 지원이에요.");
     }
     this.status = VolunteerSignupStatus.WITHDRAWN;
   }
 
-  public isActive(): boolean {
-    return this.status === VolunteerSignupStatus.ACTIVE;
+  /** PENDING or APPROVED — the states that still occupy a capacity slot. */
+  public isLive(): boolean {
+    return (
+      this.status === VolunteerSignupStatus.PENDING ||
+      this.status === VolunteerSignupStatus.APPROVED
+    );
+  }
+
+  private assertPending(action: string): void {
+    if (this.status !== VolunteerSignupStatus.PENDING) {
+      throw new Error(`현재 상태(${this.status})에서는 ${action}할 수 없어요.`);
+    }
   }
 
   public isOwnedBy(volunteerId: UserId): boolean {

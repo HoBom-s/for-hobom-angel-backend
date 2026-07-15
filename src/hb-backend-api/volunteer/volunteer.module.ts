@@ -16,6 +16,8 @@ import { VolunteerSignupRepositoryImpl } from "src/hb-backend-api/volunteer/infr
 import { CreateVolunteerEventService } from "src/hb-backend-api/volunteer/application/use-cases/create-volunteer-event.service";
 import { SignUpForVolunteerService } from "src/hb-backend-api/volunteer/application/use-cases/sign-up-for-volunteer.service";
 import { WithdrawVolunteerSignupService } from "src/hb-backend-api/volunteer/application/use-cases/withdraw-volunteer-signup.service";
+import { DecideVolunteerSignupService } from "src/hb-backend-api/volunteer/application/use-cases/decide-volunteer-signup.service";
+import { ListEventSignupsService } from "src/hb-backend-api/volunteer/application/use-cases/list-event-signups.service";
 import { CancelVolunteerEventService } from "src/hb-backend-api/volunteer/application/use-cases/cancel-volunteer-event.service";
 import { CloseExpiredVolunteerEventsService } from "src/hb-backend-api/volunteer/application/use-cases/close-expired-volunteer-events.service";
 import { VolunteerController } from "src/hb-backend-api/volunteer/adapters/in/volunteer.controller";
@@ -48,6 +50,14 @@ import { VolunteerExpirySchedule } from "src/hb-backend-api/volunteer/adapters/i
     {
       provide: DIToken.VolunteerModule.WithdrawVolunteerSignupUseCase,
       useClass: WithdrawVolunteerSignupService,
+    },
+    {
+      provide: DIToken.VolunteerModule.DecideVolunteerSignupUseCase,
+      useClass: DecideVolunteerSignupService,
+    },
+    {
+      provide: DIToken.VolunteerModule.ListEventSignupsUseCase,
+      useClass: ListEventSignupsService,
     },
     {
       provide: DIToken.VolunteerModule.CancelVolunteerEventUseCase,

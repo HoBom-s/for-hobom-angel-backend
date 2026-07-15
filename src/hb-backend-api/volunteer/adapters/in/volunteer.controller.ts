@@ -41,12 +41,16 @@ import {
   SignUpForVolunteerUseCase,
 } from "src/hb-backend-api/volunteer/domain/ports/in/sign-up-for-volunteer.use-case";
 import { WithdrawVolunteerSignupUseCase } from "src/hb-backend-api/volunteer/domain/ports/in/withdraw-volunteer-signup.use-case";
+import { DecideVolunteerSignupUseCase } from "src/hb-backend-api/volunteer/domain/ports/in/decide-volunteer-signup.use-case";
+import { ListEventSignupsUseCase } from "src/hb-backend-api/volunteer/domain/ports/in/list-event-signups.use-case";
 import { CancelVolunteerEventUseCase } from "src/hb-backend-api/volunteer/domain/ports/in/cancel-volunteer-event.use-case";
 import { VolunteerEventQueryPort } from "src/hb-backend-api/volunteer/domain/ports/out/volunteer-event-query.port";
 import { CreateVolunteerEventDto } from "src/hb-backend-api/volunteer/adapters/in/dto/create-volunteer-event.dto";
+import { DecideVolunteerSignupDto } from "src/hb-backend-api/volunteer/adapters/in/dto/decide-volunteer-signup.dto";
 import { VolunteerEventResponse } from "src/hb-backend-api/volunteer/adapters/in/dto/volunteer-event.response";
 import { CreateVolunteerEventResponse } from "src/hb-backend-api/volunteer/adapters/in/dto/create-volunteer-event.response";
 import { VolunteerSignupResponse } from "src/hb-backend-api/volunteer/adapters/in/dto/volunteer-signup.response";
+import { VolunteerApplicantResponse } from "src/hb-backend-api/volunteer/adapters/in/dto/volunteer-applicant.response";
 
 @ApiTags("Volunteer")
 @ApiBearerAuth()
@@ -60,6 +64,10 @@ export class VolunteerController {
     private readonly signUpForVolunteerUseCase: SignUpForVolunteerUseCase,
     @Inject(DIToken.VolunteerModule.WithdrawVolunteerSignupUseCase)
     private readonly withdrawVolunteerSignupUseCase: WithdrawVolunteerSignupUseCase,
+    @Inject(DIToken.VolunteerModule.DecideVolunteerSignupUseCase)
+    private readonly decideVolunteerSignupUseCase: DecideVolunteerSignupUseCase,
+    @Inject(DIToken.VolunteerModule.ListEventSignupsUseCase)
+    private readonly listEventSignupsUseCase: ListEventSignupsUseCase,
     @Inject(DIToken.VolunteerModule.CancelVolunteerEventUseCase)
     private readonly cancelVolunteerEventUseCase: CancelVolunteerEventUseCase,
     @Inject(DIToken.VolunteerModule.VolunteerEventQueryPort)
@@ -160,6 +168,36 @@ export class VolunteerController {
     return this.withdrawVolunteerSignupUseCase.invoke({
       signupId,
       volunteerId: user.userId,
+    });
+  }
+
+  @ApiOperation({ summary: "봉사 지원자 목록 (스태프)" })
+  @ApiEnvelopeArray(VolunteerApplicantResponse)
+  @Get("volunteer-events/:eventId/signups")
+  public async listApplicants(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("eventId") eventId: string,
+  ): Promise<VolunteerApplicantResponse[]> {
+    const signups = await this.listEventSignupsUseCase.invoke(
+      eventId,
+      user.userId,
+    );
+    return signups.map((signup) => VolunteerApplicantResponse.from(signup));
+  }
+
+  @ApiOperation({ summary: "봉사 지원자 승인/거절 (스태프)" })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post("volunteer-signups/:signupId/decision")
+  public decide(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("signupId") signupId: string,
+    @Body() body: DecideVolunteerSignupDto,
+  ): Promise<void> {
+    return this.decideVolunteerSignupUseCase.invoke({
+      signupId,
+      actorId: user.userId,
+      decision: body.decision,
     });
   }
 }

@@ -14,8 +14,9 @@ export interface VolunteerSignupRepository {
     patch: VolunteerSignupMutablePatch,
   ): Promise<void>;
   findById(id: Types.ObjectId): Promise<VolunteerSignupEntity | null>;
-  findActive(
+  findLive(
     eventId: Types.ObjectId,
     volunteerId: Types.ObjectId,
   ): Promise<VolunteerSignupEntity | null>;
+  findByEvent(eventId: Types.ObjectId): Promise<VolunteerSignupEntity[]>;
 }
