@@ -14,6 +14,7 @@ import { VerifiedChannel } from "src/hb-backend-api/user/domain/enums/verified-c
 import { ShelterRole } from "src/hb-backend-api/user/domain/model/shelter-role";
 import { UserEntity } from "src/hb-backend-api/user/domain/model/user.entity";
 import { VolunteerEventStatus } from "src/hb-backend-api/volunteer/domain/enums/volunteer-event-status.enum";
+import { VolunteerType } from "src/hb-backend-api/volunteer/domain/enums/volunteer-type.enum";
 import { VolunteerEventEntity } from "src/hb-backend-api/volunteer/domain/model/volunteer-event.entity";
 import { CreateVolunteerEventUseCase } from "src/hb-backend-api/volunteer/domain/ports/in/create-volunteer-event.use-case";
 import { SignUpForVolunteerUseCase } from "src/hb-backend-api/volunteer/domain/ports/in/sign-up-for-volunteer.use-case";
@@ -225,6 +226,58 @@ describe("Volunteer (flow)", () => {
     await expect(
       signUp.invoke({ eventId, volunteerId: volunteerId.toHexString() }),
     ).rejects.toThrow("받을 수 없어요");
+  });
+
+  it("opens an OVERSEAS event and round-trips its transport details", async () => {
+    const shelterId = await seedShelter();
+    const staffId = await seedUser([
+      { shelterId, role: UserRole.SHELTER_STAFF },
+    ]);
+    const animalA = new Types.ObjectId().toHexString();
+    const animalB = new Types.ObjectId().toHexString();
+
+    const { eventId } = await createEvent.invoke({
+      shelterId: shelterId.toHexString(),
+      createdBy: staffId.toHexString(),
+      title: "해외 이동봉사",
+      startAt: START,
+      endAt: END,
+      capacity: 3,
+      type: VolunteerType.OVERSEAS,
+      transport: {
+        departure: "인천",
+        arrival: "밴쿠버",
+        flightAt: new Date("2027-06-01T09:00:00.000Z"),
+        animalIds: [animalA, animalB],
+        qualification: "반려동물 동반 경험",
+      },
+    });
+
+    const event = await eventModel.findById(eventId).lean().exec();
+    expect(event?.type).toBe(VolunteerType.OVERSEAS);
+    expect(event?.transport?.departure).toBe("인천");
+    expect(event?.transport?.arrival).toBe("밴쿠버");
+    expect(event?.transport?.animalIds).toHaveLength(2);
+    expect(String(event?.transport?.animalIds[0])).toBe(animalA);
+    expect(event?.transport?.qualification).toBe("반려동물 동반 경험");
+  });
+
+  it("refuses an OVERSEAS event without transport details", async () => {
+    const shelterId = await seedShelter();
+    const staffId = await seedUser([
+      { shelterId, role: UserRole.SHELTER_STAFF },
+    ]);
+    await expect(
+      createEvent.invoke({
+        shelterId: shelterId.toHexString(),
+        createdBy: staffId.toHexString(),
+        title: "해외 이동봉사",
+        startAt: START,
+        endAt: END,
+        capacity: 3,
+        type: VolunteerType.OVERSEAS,
+      }),
+    ).rejects.toThrow("해외 이동봉사");
   });
 
   it("refuses event creation by a non-staff user or under an unverified shelter", async () => {

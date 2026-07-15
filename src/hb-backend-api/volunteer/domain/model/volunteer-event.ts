@@ -1,6 +1,8 @@
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { VolunteerEventStatus } from "src/hb-backend-api/volunteer/domain/enums/volunteer-event-status.enum";
+import { VolunteerType } from "src/hb-backend-api/volunteer/domain/enums/volunteer-type.enum";
 import { VolunteerEventId } from "src/hb-backend-api/volunteer/domain/model/vo/volunteer-event-id.vo";
+import { TransportDetails } from "src/hb-backend-api/volunteer/domain/model/vo/transport-details";
 
 /**
  * Volunteer event aggregate — a shelter's scheduled volunteering with a capped
@@ -20,6 +22,8 @@ export class VolunteerEvent {
     private readonly capacity: number,
     private signedUpCount: number,
     private status: VolunteerEventStatus,
+    private readonly type: VolunteerType,
+    private readonly transport: TransportDetails | null,
     private readonly version: number,
   ) {}
 
@@ -30,6 +34,8 @@ export class VolunteerEvent {
     startAt: Date;
     endAt: Date;
     capacity: number;
+    type?: VolunteerType;
+    transport?: TransportDetails | null;
   }): VolunteerEvent {
     if (!params.title?.trim()) {
       throw new Error("봉사 제목이 필요해요.");
@@ -44,6 +50,9 @@ export class VolunteerEvent {
     ) {
       throw new Error("봉사 시작/종료 시간이 올바르지 않아요.");
     }
+    const type = params.type ?? VolunteerType.GENERAL;
+    const transport = params.transport ?? null;
+    VolunteerEvent.assertTransportMatchesType(type, transport);
     return new VolunteerEvent(
       VolunteerEventId.generate(),
       params.shelterId,
@@ -54,6 +63,8 @@ export class VolunteerEvent {
       params.capacity,
       0,
       VolunteerEventStatus.OPEN,
+      type,
+      transport,
       0,
     );
   }
@@ -68,6 +79,8 @@ export class VolunteerEvent {
     capacity: number;
     signedUpCount: number;
     status: VolunteerEventStatus;
+    type: VolunteerType;
+    transport: TransportDetails | null;
     version: number;
   }): VolunteerEvent {
     return new VolunteerEvent(
@@ -80,8 +93,23 @@ export class VolunteerEvent {
       params.capacity,
       params.signedUpCount,
       params.status,
+      params.type,
+      params.transport,
       params.version,
     );
+  }
+
+  /** OVERSEAS needs transport logistics; GENERAL must carry none. */
+  private static assertTransportMatchesType(
+    type: VolunteerType,
+    transport: TransportDetails | null,
+  ): void {
+    if (type === VolunteerType.OVERSEAS && !transport) {
+      throw new Error("해외 이동봉사는 출발/도착·항공 정보가 필요해요.");
+    }
+    if (type === VolunteerType.GENERAL && transport) {
+      throw new Error("일반 봉사에는 이동 정보를 넣을 수 없어요.");
+    }
   }
 
   // ── capacity ────────────────────────────────────────────────────
@@ -179,6 +207,12 @@ export class VolunteerEvent {
   }
   public get getStatus(): VolunteerEventStatus {
     return this.status;
+  }
+  public get getType(): VolunteerType {
+    return this.type;
+  }
+  public get getTransport(): TransportDetails | null {
+    return this.transport;
   }
   public get getVersion(): number {
     return this.version;
