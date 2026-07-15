@@ -99,6 +99,7 @@ describe("ShelterVerificationCallback", () => {
       findById: jest.fn().mockResolvedValue(shelter),
       findBySlug: jest.fn(),
       findMappable: jest.fn(),
+      findVerified: jest.fn(),
     };
     shelterPersistencePort = { create: jest.fn(), save: jest.fn() };
     userQueryPort = {

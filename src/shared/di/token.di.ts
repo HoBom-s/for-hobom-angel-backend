@@ -81,6 +81,7 @@ class ShelterModuleToken extends TokenRegistry {
   public readonly RequestStaffPromotionUseCase = this.register(
     "shelter.request-staff-promotion.use-case",
   );
+  public readonly ListSheltersUseCase = this.register("shelter.list.use-case");
   public readonly ShelterPersistencePort = this.register(
     "shelter.persistence.port",
   );

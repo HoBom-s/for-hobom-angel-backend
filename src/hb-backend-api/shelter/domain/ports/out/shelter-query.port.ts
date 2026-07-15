@@ -1,3 +1,4 @@
+import { Page } from "src/shared/pagination/page";
 import { Shelter } from "src/hb-backend-api/shelter/domain/model/shelter";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { ShelterSlug } from "src/hb-backend-api/shelter/domain/model/vo/shelter-slug.vo";
@@ -12,4 +13,14 @@ export interface ShelterQueryPort {
    * address disclosure policy.
    */
   findMappable(region?: string): Promise<Shelter[]>;
+  /**
+   * The verified-shelter directory (§04 list) — newest first, cursor-paged,
+   * optionally filtered by region. Unlike the map, hidden-address shelters are
+   * included (the list reveals only region-level location).
+   */
+  findVerified(params: {
+    region?: string;
+    cursor?: string;
+    limit: number;
+  }): Promise<Page<Shelter>>;
 }

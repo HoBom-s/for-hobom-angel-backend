@@ -19,7 +19,9 @@ import {
   ApiCreatedEnvelope,
   ApiEnvelope,
   ApiEnvelopeArray,
+  ApiEnvelopeCursor,
 } from "src/shared/response/api-envelope.decorator";
+import { CursorPageResponse } from "src/shared/pagination/cursor-page.response";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
@@ -34,6 +36,7 @@ import {
   RequestStaffPromotionResult,
   RequestStaffPromotionUseCase,
 } from "src/hb-backend-api/shelter/domain/ports/in/request-staff-promotion.use-case";
+import { ListSheltersUseCase } from "src/hb-backend-api/shelter/domain/ports/in/list-shelters.use-case";
 import { ShelterQueryPort } from "src/hb-backend-api/shelter/domain/ports/out/shelter-query.port";
 import { RegisterShelterDto } from "src/hb-backend-api/shelter/adapters/in/dto/register-shelter.dto";
 import { RequestStaffPromotionDto } from "src/hb-backend-api/shelter/adapters/in/dto/request-staff-promotion.dto";
@@ -41,6 +44,8 @@ import { ShelterResponse } from "src/hb-backend-api/shelter/adapters/in/dto/shel
 import { ShelterMarkerResponse } from "src/hb-backend-api/shelter/adapters/in/dto/shelter-marker.response";
 import { RegisterShelterResponse } from "src/hb-backend-api/shelter/adapters/in/dto/register-shelter.response";
 import { StaffPromotionResponse } from "src/hb-backend-api/shelter/adapters/in/dto/staff-promotion.response";
+import { ShelterListItemResponse } from "src/hb-backend-api/shelter/adapters/in/dto/shelter-list-item.response";
+import { SearchSheltersQueryDto } from "src/hb-backend-api/shelter/adapters/in/dto/search-shelters.query.dto";
 
 @ApiTags("Shelters")
 @ApiBearerAuth()
@@ -52,6 +57,8 @@ export class ShelterController {
     private readonly registerShelterUseCase: RegisterShelterUseCase,
     @Inject(DIToken.ShelterModule.RequestStaffPromotionUseCase)
     private readonly requestStaffPromotionUseCase: RequestStaffPromotionUseCase,
+    @Inject(DIToken.ShelterModule.ListSheltersUseCase)
+    private readonly listSheltersUseCase: ListSheltersUseCase,
     @Inject(DIToken.ShelterModule.ShelterQueryPort)
     private readonly shelterQueryPort: ShelterQueryPort,
   ) {}
@@ -84,6 +91,24 @@ export class ShelterController {
       candidateUserId: body.candidateUserId,
       requestedBy: user.userId,
     });
+  }
+
+  @ApiOperation({
+    summary: "보호소 디렉터리 — 검증된 보호소 목록 (지역 필터·커서)",
+  })
+  @ApiEnvelopeCursor(ShelterListItemResponse)
+  @Get()
+  public async list(
+    @Query() query: SearchSheltersQueryDto,
+  ): Promise<CursorPageResponse<ShelterListItemResponse>> {
+    const page = await this.listSheltersUseCase.invoke({
+      region: query.region,
+      cursor: query.cursor,
+      limit: query.limit ?? 20,
+    });
+    return CursorPageResponse.of(page, (shelter) =>
+      ShelterListItemResponse.from(shelter),
+    );
   }
 
   @ApiOperation({ summary: "지도 탐색 — 위치 공개 보호소 마커 (지역 필터)" })

@@ -15,6 +15,7 @@ export class ShelterProfile {
     private readonly representativeName: string | null,
     private readonly visitGuide: string | null,
     private readonly supportGuide: string | null,
+    private readonly coverImageKey: string | null,
   ) {
     Object.freeze(this);
   }
@@ -25,6 +26,7 @@ export class ShelterProfile {
     representativeName?: string | null;
     visitGuide?: string | null;
     supportGuide?: string | null;
+    coverImageKey?: string | null;
   }): ShelterProfile {
     return new ShelterProfile(
       params.intro?.trim() || null,
@@ -32,11 +34,12 @@ export class ShelterProfile {
       params.representativeName?.trim() || null,
       params.visitGuide?.trim() || null,
       params.supportGuide?.trim() || null,
+      params.coverImageKey?.trim() || null,
     );
   }
 
   public static empty(): ShelterProfile {
-    return new ShelterProfile(null, null, null, null, null);
+    return new ShelterProfile(null, null, null, null, null, null);
   }
 
   public get getIntro(): string | null {
@@ -53,5 +56,9 @@ export class ShelterProfile {
   }
   public get getSupportGuide(): string | null {
     return this.supportGuide;
+  }
+  /** Object key for the microsite hero/cover image (served via the CDN). */
+  public get getCoverImageKey(): string | null {
+    return this.coverImageKey;
   }
 }

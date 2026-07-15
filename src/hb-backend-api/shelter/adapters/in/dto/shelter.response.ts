@@ -52,6 +52,12 @@ export class ShelterResponse {
   @ApiProperty({ nullable: true, description: "후원 안내 (Markdown)" })
   supportGuide: string | null;
 
+  @ApiProperty({
+    nullable: true,
+    description: "마이크로사이트 커버(히어로) 이미지 object key",
+  })
+  coverImageKey: string | null;
+
   public static from(shelter: Shelter): ShelterResponse {
     const profile = shelter.getProfile;
     const dto = new ShelterResponse();
@@ -68,6 +74,7 @@ export class ShelterResponse {
     dto.representativeName = profile.getRepresentativeName;
     dto.visitGuide = profile.getVisitGuide;
     dto.supportGuide = profile.getSupportGuide;
+    dto.coverImageKey = profile.getCoverImageKey;
     return dto;
   }
 }

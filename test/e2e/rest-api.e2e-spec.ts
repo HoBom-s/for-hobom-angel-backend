@@ -320,7 +320,7 @@ describe("REST API (e2e)", () => {
     expect(about.body.items.representativeName).toBe("김보호");
     expect(about.body.items.visitGuide).toBeNull();
 
-    // Two AVAILABLE animals → shelteredCount 2, adoptedCount 0.
+    // Two AVAILABLE animals → shelteredCount 2, availableCount 2, adoptedCount 0.
     for (const name of [`s1-${Date.now()}`, `s2-${Date.now()}`]) {
       await request(app.getHttpServer())
         .post(`${PREFIX}/shelters/${shelterId}/animals`)
@@ -339,7 +339,39 @@ describe("REST API (e2e)", () => {
       .get(`${PREFIX}/shelters/${shelterId}/stats`)
       .set(auth(admin.token))
       .expect(200);
-    expect(stats.body.items).toEqual({ adoptedCount: 0, shelteredCount: 2 });
+    expect(stats.body.items).toEqual({
+      adoptedCount: 0,
+      shelteredCount: 2,
+      availableCount: 2,
+    });
+  });
+
+  it("lists verified shelters in the directory, filtered by region", async () => {
+    const admin = await seedUser();
+    const region = `dir-${Date.now()}`;
+    const shelterId = await registerAndApproveShelter(
+      admin.token,
+      `dir-list-${Date.now()}`,
+      {
+        region,
+        city: "강남구",
+        roadAddress: "테헤란로 9",
+        visibility: AddressVisibility.PARTIAL,
+      },
+    );
+
+    const res = await request(app.getHttpServer())
+      .get(`${PREFIX}/shelters`)
+      .query({ region, limit: 10 })
+      .set(auth(admin.token))
+      .expect(200);
+
+    expect(res.body.items.items).toHaveLength(1);
+    expect(res.body.items.items[0].id).toBe(shelterId);
+    expect(res.body.items.items[0].region).toBe(region);
+    expect(res.body.items.items[0].status).toBe("VERIFIED");
+    expect(res.body.items.hasNext).toBe(false);
+    expect(res.body.items.nextCursor).toBeNull();
   });
 
   it("returns map markers only for shelters with disclosed coordinates", async () => {

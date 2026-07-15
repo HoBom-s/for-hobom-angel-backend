@@ -32,4 +32,14 @@ export interface ShelterRepository {
   findBySlug(slug: string): Promise<ShelterEntity | null>;
   /** Verified, non-hidden shelters with coordinates; optionally by region. */
   findMappable(region?: string): Promise<ShelterEntity[]>;
+  /**
+   * Verified shelters, newest first, for the directory list. Returns up to
+   * `limit + 1` docs so the caller can detect a next page; `cursorId` is the id
+   * of the previous page's last item (exclusive), or null for the first page.
+   */
+  listVerified(
+    region: string | undefined,
+    cursorId: Types.ObjectId | null,
+    limit: number,
+  ): Promise<ShelterEntity[]>;
 }

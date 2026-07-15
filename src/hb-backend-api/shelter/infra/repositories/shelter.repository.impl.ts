@@ -60,4 +60,25 @@ export class ShelterRepositoryImpl implements ShelterRepository {
     }
     return this.shelterModel.find(query).exec();
   }
+
+  public listVerified(
+    region: string | undefined,
+    cursorId: Types.ObjectId | null,
+    limit: number,
+  ): Promise<ShelterEntity[]> {
+    const query: Record<string, unknown> = {
+      status: ShelterStatus.VERIFIED,
+    };
+    if (region) {
+      query["address.region"] = region;
+    }
+    if (cursorId) {
+      query._id = { $lt: cursorId };
+    }
+    return this.shelterModel
+      .find(query)
+      .sort({ _id: -1 })
+      .limit(limit + 1)
+      .exec();
+  }
 }
