@@ -324,6 +324,24 @@ class ShelterStatsModuleToken extends TokenRegistry {
   );
 }
 
+class VolunteerPostModuleToken extends TokenRegistry {
+  public readonly CreateVolunteerPostUseCase = this.register(
+    "volunteer-post.create.use-case",
+  );
+  public readonly DeleteVolunteerPostUseCase = this.register(
+    "volunteer-post.delete.use-case",
+  );
+  public readonly VolunteerPostPersistencePort = this.register(
+    "volunteer-post.persistence.port",
+  );
+  public readonly VolunteerPostQueryPort = this.register(
+    "volunteer-post.query.port",
+  );
+  public readonly VolunteerPostRepository = this.register(
+    "volunteer-post.repository",
+  );
+}
+
 export const DIToken = {
   OutboxModule: new OutboxModuleToken(),
   MediaModule: new MediaModuleToken(),
@@ -346,4 +364,5 @@ export const DIToken = {
   FaqModule: new FaqModuleToken(),
   AdopterHistoryModule: new AdopterHistoryModuleToken(),
   ShelterStatsModule: new ShelterStatsModuleToken(),
+  VolunteerPostModule: new VolunteerPostModuleToken(),
 } as const;
