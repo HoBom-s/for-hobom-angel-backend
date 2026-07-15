@@ -23,7 +23,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:e2e": "jest --config test/jest-e2e.json --runInBand",
-    "proto:pull": "rm -rf proto && buf export buf.build/hobom-s/hobom-buf-proto --output proto",
+    "proto:pull": "rm -rf proto && buf export buf.build/hobom/hobom-buf-proto --output proto",
     "migrate:up": "migrate-mongo up",
     "migrate:down": "migrate-mongo down",
     "migrate:status": "migrate-mongo status",

@@ -8,7 +8,7 @@
 .env.local
 *.log
 # Vendor only the angel domain of the shared proto module (source of truth:
-# buf.build/hobom-s/hobom-buf-proto, refresh with `npm run proto:pull`). Other
+# buf.build/hobom/hobom-buf-proto, refresh with `npm run proto:pull`). Other
 # domains the export pulls in are unused here and stay untracked.
 /proto/*
 !/proto/angel
