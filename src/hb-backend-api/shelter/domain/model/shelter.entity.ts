@@ -35,6 +35,7 @@ export interface ShelterProfileDoc {
   representativeName?: string | null;
   visitGuide?: string | null;
   supportGuide?: string | null;
+  coverImageKey?: string | null;
 }
 
 @Schema({ collection: "shelters", timestamps: true })
@@ -111,6 +112,7 @@ export class ShelterEntity extends BaseEntity {
       representativeName: { type: String, default: null },
       visitGuide: { type: String, default: null },
       supportGuide: { type: String, default: null },
+      coverImageKey: { type: String, default: null },
     },
     default: {},
   })

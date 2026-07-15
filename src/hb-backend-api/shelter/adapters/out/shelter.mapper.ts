@@ -52,6 +52,7 @@ export function toDomain(doc: ShelterEntity): Shelter {
       representativeName: doc.profile?.representativeName,
       visitGuide: doc.profile?.visitGuide,
       supportGuide: doc.profile?.supportGuide,
+      coverImageKey: doc.profile?.coverImageKey,
     }),
   });
 }
@@ -86,6 +87,7 @@ export function toInsertDoc(shelter: Shelter): Partial<ShelterEntity> {
       representativeName: shelter.getProfile.getRepresentativeName,
       visitGuide: shelter.getProfile.getVisitGuide,
       supportGuide: shelter.getProfile.getSupportGuide,
+      coverImageKey: shelter.getProfile.getCoverImageKey,
     },
   };
 }

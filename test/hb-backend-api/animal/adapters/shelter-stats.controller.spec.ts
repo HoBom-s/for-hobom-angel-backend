@@ -4,15 +4,21 @@ import { ShelterStatsController } from "src/hb-backend-api/animal/adapters/in/sh
 describe("ShelterStatsController", () => {
   it("delegates to the use-case and maps to the response", async () => {
     const useCase: jest.Mocked<GetShelterStatsUseCase> = {
-      invoke: jest
-        .fn()
-        .mockResolvedValue({ adoptedCount: 3, shelteredCount: 7 }),
+      invoke: jest.fn().mockResolvedValue({
+        adoptedCount: 3,
+        shelteredCount: 7,
+        availableCount: 4,
+      }),
     };
     const controller = new ShelterStatsController(useCase);
 
     const res = await controller.stats("shelter-1");
 
     expect(useCase.invoke).toHaveBeenCalledWith("shelter-1");
-    expect(res).toEqual({ adoptedCount: 3, shelteredCount: 7 });
+    expect(res).toEqual({
+      adoptedCount: 3,
+      shelteredCount: 7,
+      availableCount: 4,
+    });
   });
 });

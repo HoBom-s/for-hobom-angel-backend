@@ -23,12 +23,15 @@ export class GetShelterStatsService implements GetShelterStatsUseCase {
 
   public async invoke(shelterId: string): Promise<ShelterStats> {
     const id = ShelterId.fromString(shelterId);
-    const [adoptedCount, shelteredCount] = await Promise.all([
+    const [adoptedCount, shelteredCount, availableCount] = await Promise.all([
       this.animalQueryPort.countByShelterAndStatuses(id, [
         AnimalStatus.ADOPTED,
       ]),
       this.animalQueryPort.countByShelterAndStatuses(id, SHELTERED_STATUSES),
+      this.animalQueryPort.countByShelterAndStatuses(id, [
+        AnimalStatus.AVAILABLE,
+      ]),
     ]);
-    return { adoptedCount, shelteredCount };
+    return { adoptedCount, shelteredCount, availableCount };
   }
 }
