@@ -4,6 +4,7 @@ import { ShelterStatus } from "src/hb-backend-api/shelter/domain/enums/shelter-s
 import { TrustTier } from "src/hb-backend-api/shelter/domain/enums/trust-tier.enum";
 import { Address } from "src/hb-backend-api/shelter/domain/model/address";
 import { FacilityPhoto } from "src/hb-backend-api/shelter/domain/model/facility-photo";
+import { ShelterProfile } from "src/hb-backend-api/shelter/domain/model/shelter-profile";
 import { VerificationSignals } from "src/hb-backend-api/shelter/domain/model/verification-signals";
 import { BusinessNumber } from "src/hb-backend-api/shelter/domain/model/vo/business-number.vo";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
@@ -37,6 +38,7 @@ export class Shelter {
     private rejectionReason: string | null,
     private readonly verificationSignals: VerificationSignals | null,
     private readonly version: number,
+    private readonly profile: ShelterProfile,
   ) {}
 
   private static readonly MAX_FACILITY_PHOTOS = 20;
@@ -80,6 +82,7 @@ export class Shelter {
       null,
       params.verificationSignals ?? null,
       0,
+      ShelterProfile.empty(),
     );
   }
 
@@ -98,6 +101,7 @@ export class Shelter {
     rejectionReason: string | null;
     verificationSignals: VerificationSignals | null;
     version: number;
+    profile?: ShelterProfile;
   }): Shelter {
     return new Shelter(
       params.id,
@@ -114,6 +118,7 @@ export class Shelter {
       params.rejectionReason,
       params.verificationSignals,
       params.version,
+      params.profile ?? ShelterProfile.empty(),
     );
   }
 
@@ -250,5 +255,8 @@ export class Shelter {
   }
   public get getVersion(): number {
     return this.version;
+  }
+  public get getProfile(): ShelterProfile {
+    return this.profile;
   }
 }

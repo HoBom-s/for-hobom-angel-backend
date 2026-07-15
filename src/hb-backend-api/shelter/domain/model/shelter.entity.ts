@@ -29,6 +29,14 @@ export interface VerificationSignalsDoc {
   checkedAt: Date;
 }
 
+export interface ShelterProfileDoc {
+  intro?: string | null;
+  operatingSince?: Date | null;
+  representativeName?: string | null;
+  visitGuide?: string | null;
+  supportGuide?: string | null;
+}
+
 @Schema({ collection: "shelters", timestamps: true })
 export class ShelterEntity extends BaseEntity {
   @Prop({ required: true })
@@ -94,4 +102,17 @@ export class ShelterEntity extends BaseEntity {
 
   @Prop({ required: true, default: 0 })
   public version: number;
+
+  // Public "About" content (edited in §07, shown on §04). All optional.
+  @Prop({
+    type: {
+      intro: { type: String, default: null },
+      operatingSince: { type: Date, default: null },
+      representativeName: { type: String, default: null },
+      visitGuide: { type: String, default: null },
+      supportGuide: { type: String, default: null },
+    },
+    default: {},
+  })
+  public profile?: ShelterProfileDoc;
 }

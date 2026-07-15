@@ -82,6 +82,7 @@ describe("FosterApprovalCallback", () => {
       findById: jest.fn().mockResolvedValue(animal),
       findByShelter: jest.fn(),
       search: jest.fn(),
+      countByShelterAndStatuses: jest.fn(),
     };
     animalPersistencePort = { create: jest.fn(), save: jest.fn() };
     outboxPersistencePort = {

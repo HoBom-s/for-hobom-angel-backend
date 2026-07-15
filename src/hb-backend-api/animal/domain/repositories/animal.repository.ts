@@ -42,6 +42,10 @@ export interface AnimalRepository {
   ): Promise<void>;
   findById(id: Types.ObjectId): Promise<AnimalEntity | null>;
   findByShelterId(shelterId: Types.ObjectId): Promise<AnimalEntity[]>;
+  countByShelterAndStatuses(
+    shelterId: Types.ObjectId,
+    statuses: AnimalStatus[],
+  ): Promise<number>;
   /**
    * Cursor search ordered by id (LATEST = desc, OLDEST = asc). Returns up to
    * `limit + 1` documents so the caller can tell whether another page exists;

@@ -16,6 +16,7 @@ import { UserRole } from "src/hb-backend-api/user/domain/enums/user-role.enum";
 import { UserStatus } from "src/hb-backend-api/user/domain/enums/user-status.enum";
 import { VerifiedChannel } from "src/hb-backend-api/user/domain/enums/verified-channel.enum";
 import { UserEntity } from "src/hb-backend-api/user/domain/model/user.entity";
+import { ShelterEntity } from "src/hb-backend-api/shelter/domain/model/shelter.entity";
 
 const PREFIX = "/hobom-angel-backend/api/v1";
 
@@ -30,6 +31,7 @@ describe("REST API (e2e)", () => {
   let mongo: MongoMemoryReplSet;
   let jwt: JwtService;
   let userModel: Model<UserEntity>;
+  let shelterModel: Model<ShelterEntity>;
 
   let seq = 0;
   const seedUser = async (): Promise<{ id: string; token: string }> => {
@@ -98,6 +100,7 @@ describe("REST API (e2e)", () => {
 
     jwt = app.get(JwtService);
     userModel = app.get(getModelToken(UserEntity.name));
+    shelterModel = app.get(getModelToken(ShelterEntity.name));
   }, 60_000);
 
   afterAll(async () => {
@@ -287,6 +290,56 @@ describe("REST API (e2e)", () => {
       region: "서울",
       city: "강남구",
     });
+  });
+
+  it("exposes the About profile on GET /shelters/:slug and stats on /stats", async () => {
+    const admin = await seedUser();
+    const slug = `about-${Date.now()}`;
+    const shelterId = await registerAndApproveShelter(admin.token, slug);
+
+    // Profile is written by the §07 console (not built yet) — seed it directly.
+    await shelterModel.updateOne(
+      { _id: new Types.ObjectId(shelterId) },
+      {
+        $set: {
+          profile: {
+            intro: "# 안녕하세요\n행복한 발자국입니다.",
+            operatingSince: new Date("2015-03-01T00:00:00.000Z"),
+            representativeName: "김보호",
+          },
+        },
+      },
+    );
+
+    const about = await request(app.getHttpServer())
+      .get(`${PREFIX}/shelters/${slug}`)
+      .set(auth(admin.token))
+      .expect(200);
+    expect(about.body.items.intro).toContain("행복한 발자국");
+    expect(about.body.items.operatingSince).toBe("2015-03-01T00:00:00.000Z");
+    expect(about.body.items.representativeName).toBe("김보호");
+    expect(about.body.items.visitGuide).toBeNull();
+
+    // Two AVAILABLE animals → shelteredCount 2, adoptedCount 0.
+    for (const name of [`s1-${Date.now()}`, `s2-${Date.now()}`]) {
+      await request(app.getHttpServer())
+        .post(`${PREFIX}/shelters/${shelterId}/animals`)
+        .set(auth(admin.token))
+        .send({
+          name,
+          species: AnimalSpecies.CAT,
+          traits: { sex: AnimalSex.FEMALE, size: AnimalSize.SMALL },
+          health: { neutered: true, vaccinated: true },
+          intake: { intakeDate: "2026-01-02T00:00:00.000Z" },
+        })
+        .expect(201);
+    }
+
+    const stats = await request(app.getHttpServer())
+      .get(`${PREFIX}/shelters/${shelterId}/stats`)
+      .set(auth(admin.token))
+      .expect(200);
+    expect(stats.body.items).toEqual({ adoptedCount: 0, shelteredCount: 2 });
   });
 
   it("returns map markers only for shelters with disclosed coordinates", async () => {
