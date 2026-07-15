@@ -17,6 +17,10 @@ export class VolunteerPostEntity extends BaseEntity {
   @Prop({ type: [String], default: [] })
   public imageKeys: string[];
 
+  // Denormalized like tally, maintained by atomic $inc on the like toggle.
+  @Prop({ required: true, default: 0 })
+  public likeCount: number;
+
   @Prop({ required: true, default: 0 })
   public version: number;
 }

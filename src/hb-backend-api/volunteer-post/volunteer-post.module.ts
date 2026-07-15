@@ -4,22 +4,28 @@ import { DIToken } from "src/shared/di/token.di";
 import { UserModule } from "src/hb-backend-api/user/user.module";
 import { VolunteerPostEntity } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post.entity";
 import { VolunteerPostSchema } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post.schema";
+import { VolunteerPostLikeEntity } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post-like.entity";
+import { VolunteerPostLikeSchema } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post-like.schema";
 import { VolunteerPostController } from "src/hb-backend-api/volunteer-post/adapters/in/volunteer-post.controller";
 import { VolunteerPostPersistenceAdapter } from "src/hb-backend-api/volunteer-post/adapters/out/volunteer-post-persistence.adapter";
 import { VolunteerPostQueryAdapter } from "src/hb-backend-api/volunteer-post/adapters/out/volunteer-post-query.adapter";
+import { VolunteerPostLikeAdapter } from "src/hb-backend-api/volunteer-post/adapters/out/volunteer-post-like.adapter";
 import { VolunteerPostRepositoryImpl } from "src/hb-backend-api/volunteer-post/infra/repositories/volunteer-post.repository.impl";
+import { VolunteerPostLikeRepositoryImpl } from "src/hb-backend-api/volunteer-post/infra/repositories/volunteer-post-like.repository.impl";
 import { CreateVolunteerPostService } from "src/hb-backend-api/volunteer-post/application/use-cases/create-volunteer-post.service";
 import { DeleteVolunteerPostService } from "src/hb-backend-api/volunteer-post/application/use-cases/delete-volunteer-post.service";
+import { LikeVolunteerPostService } from "src/hb-backend-api/volunteer-post/application/use-cases/like-volunteer-post.service";
+import { ReadVolunteerFeedService } from "src/hb-backend-api/volunteer-post/application/use-cases/read-volunteer-feed.service";
 
 /**
- * §05 volunteer review/promo feed. Member-authored posts, independent of the
- * volunteer event lifecycle — needs only User (author validation). Likes,
- * comments, and bookmarks are a follow-up slice.
+ * §05 volunteer review/promo feed. Member-authored posts (independent of the
+ * volunteer event lifecycle) with likes. Comments and bookmarks are follow-ups.
  */
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: VolunteerPostEntity.name, schema: VolunteerPostSchema },
+      { name: VolunteerPostLikeEntity.name, schema: VolunteerPostLikeSchema },
     ]),
     UserModule,
   ],
@@ -34,8 +40,20 @@ import { DeleteVolunteerPostService } from "src/hb-backend-api/volunteer-post/ap
       useClass: DeleteVolunteerPostService,
     },
     {
+      provide: DIToken.VolunteerPostModule.LikeVolunteerPostUseCase,
+      useClass: LikeVolunteerPostService,
+    },
+    {
+      provide: DIToken.VolunteerPostModule.ReadVolunteerFeedUseCase,
+      useClass: ReadVolunteerFeedService,
+    },
+    {
       provide: DIToken.VolunteerPostModule.VolunteerPostRepository,
       useClass: VolunteerPostRepositoryImpl,
+    },
+    {
+      provide: DIToken.VolunteerPostModule.VolunteerPostLikeRepository,
+      useClass: VolunteerPostLikeRepositoryImpl,
     },
     {
       provide: DIToken.VolunteerPostModule.VolunteerPostPersistencePort,
@@ -44,6 +62,10 @@ import { DeleteVolunteerPostService } from "src/hb-backend-api/volunteer-post/ap
     {
       provide: DIToken.VolunteerPostModule.VolunteerPostQueryPort,
       useClass: VolunteerPostQueryAdapter,
+    },
+    {
+      provide: DIToken.VolunteerPostModule.VolunteerPostLikePort,
+      useClass: VolunteerPostLikeAdapter,
     },
   ],
 })

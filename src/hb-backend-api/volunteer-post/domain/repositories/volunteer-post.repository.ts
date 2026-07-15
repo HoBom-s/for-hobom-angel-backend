@@ -5,6 +5,8 @@ import { VolunteerPostEntity } from "src/hb-backend-api/volunteer-post/domain/mo
 export interface VolunteerPostRepository {
   insert(doc: Partial<VolunteerPostEntity>): Promise<VolunteerPostEntity>;
   deleteById(id: Types.ObjectId): Promise<void>;
+  /** Atomically adjust the denormalized like tally. */
+  incrementLikeCount(id: Types.ObjectId, delta: number): Promise<void>;
   findById(id: Types.ObjectId): Promise<VolunteerPostEntity | null>;
   /**
    * The feed, newest first. Returns up to `limit + 1` docs so the caller can

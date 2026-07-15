@@ -17,6 +17,7 @@ export class VolunteerPost {
     private readonly eventId: string | null,
     private body: string,
     private imageKeys: string[],
+    private readonly likeCount: number,
     private readonly createdAt: Date | null,
     private readonly version: number,
   ) {}
@@ -33,6 +34,7 @@ export class VolunteerPost {
       params.eventId?.trim() || null,
       VolunteerPost.cleanBody(params.body),
       VolunteerPost.cleanImages(params.imageKeys ?? []),
+      0,
       null,
       0,
     );
@@ -44,6 +46,7 @@ export class VolunteerPost {
     eventId: string | null;
     body: string;
     imageKeys: string[];
+    likeCount: number;
     createdAt: Date | null;
     version: number;
   }): VolunteerPost {
@@ -53,6 +56,7 @@ export class VolunteerPost {
       params.eventId,
       params.body,
       params.imageKeys,
+      params.likeCount,
       params.createdAt,
       params.version,
     );
@@ -94,6 +98,9 @@ export class VolunteerPost {
   }
   public get getImageKeys(): string[] {
     return [...this.imageKeys];
+  }
+  public get getLikeCount(): number {
+    return this.likeCount;
   }
   public get getCreatedAt(): Date | null {
     return this.createdAt;

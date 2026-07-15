@@ -11,6 +11,7 @@ export function toDomain(doc: VolunteerPostEntity): VolunteerPost {
     eventId: doc.eventId ? String(doc.eventId) : null,
     body: doc.body,
     imageKeys: doc.imageKeys ?? [],
+    likeCount: doc.likeCount ?? 0,
     createdAt: doc.createdAt ?? null,
     version: doc.version ?? 0,
   });

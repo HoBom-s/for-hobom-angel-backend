@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { VolunteerPost } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post";
+import { VolunteerFeedItem } from "src/hb-backend-api/volunteer-post/domain/ports/in/read-volunteer-feed.use-case";
 
 export class VolunteerPostResponse {
   @ApiProperty()
@@ -17,17 +17,25 @@ export class VolunteerPostResponse {
   @ApiProperty({ type: [String] })
   imageKeys: string[];
 
+  @ApiProperty({ description: "좋아요 수" })
+  likeCount: number;
+
+  @ApiProperty({ description: "내가 좋아요를 눌렀는지" })
+  liked: boolean;
+
   @ApiProperty({ nullable: true })
   createdAt: Date | null;
 
-  public static from(post: VolunteerPost): VolunteerPostResponse {
+  public static from(item: VolunteerFeedItem): VolunteerPostResponse {
     const dto = new VolunteerPostResponse();
-    dto.id = post.getId.toString();
-    dto.authorId = post.getAuthorId.toString();
-    dto.eventId = post.getEventId;
-    dto.body = post.getBody;
-    dto.imageKeys = post.getImageKeys;
-    dto.createdAt = post.getCreatedAt;
+    dto.id = item.post.getId.toString();
+    dto.authorId = item.post.getAuthorId.toString();
+    dto.eventId = item.post.getEventId;
+    dto.body = item.post.getBody;
+    dto.imageKeys = item.post.getImageKeys;
+    dto.likeCount = item.post.getLikeCount;
+    dto.liked = item.liked;
+    dto.createdAt = item.post.getCreatedAt;
     return dto;
   }
 }

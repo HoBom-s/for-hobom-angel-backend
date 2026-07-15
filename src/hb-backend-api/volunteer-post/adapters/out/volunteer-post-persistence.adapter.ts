@@ -1,6 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { DIToken } from "src/shared/di/token.di";
 import { VolunteerPost } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post";
+import { VolunteerPostId } from "src/hb-backend-api/volunteer-post/domain/model/vo/volunteer-post-id.vo";
 import { VolunteerPostPersistencePort } from "src/hb-backend-api/volunteer-post/domain/ports/out/volunteer-post-persistence.port";
 import { VolunteerPostRepository } from "src/hb-backend-api/volunteer-post/domain/repositories/volunteer-post.repository";
 import { toInsertDoc } from "src/hb-backend-api/volunteer-post/adapters/out/volunteer-post.mapper";
@@ -19,5 +20,12 @@ export class VolunteerPostPersistenceAdapter implements VolunteerPostPersistence
 
   public async remove(post: VolunteerPost): Promise<void> {
     await this.repository.deleteById(post.getId.raw);
+  }
+
+  public async adjustLikeCount(
+    postId: VolunteerPostId,
+    delta: number,
+  ): Promise<void> {
+    await this.repository.incrementLikeCount(postId.raw, delta);
   }
 }
