@@ -20,7 +20,7 @@ RUN npm pkg delete scripts.prepare && npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
 # Angel outbox gRPC proto (vendored under proto/angel, source of truth is the
-# hobom-s BSR module). buildGrpcOptions() loads it at boot to bind the outbox
+# hobom BSR module). buildGrpcOptions() loads it at boot to bind the outbox
 # relay service consumed by hobom-event-processor.
 COPY --from=builder /app/proto ./proto
 
