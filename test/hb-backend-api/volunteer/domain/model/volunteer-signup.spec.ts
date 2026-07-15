@@ -12,18 +12,50 @@ const submit = () =>
   });
 
 describe("VolunteerSignup", () => {
-  it("starts ACTIVE and is owned by the volunteer", () => {
+  it("starts PENDING (live) and is owned by the volunteer", () => {
     const signup = submit();
-    expect(signup.getStatus).toBe(VolunteerSignupStatus.ACTIVE);
-    expect(signup.isActive()).toBe(true);
+    expect(signup.getStatus).toBe(VolunteerSignupStatus.PENDING);
+    expect(signup.isLive()).toBe(true);
     expect(signup.isOwnedBy(volunteerId)).toBe(true);
     expect(signup.isOwnedBy(UserId.generate())).toBe(false);
   });
 
-  it("withdraws once", () => {
-    const signup = submit();
-    signup.withdraw();
-    expect(signup.getStatus).toBe(VolunteerSignupStatus.WITHDRAWN);
-    expect(() => signup.withdraw()).toThrow("이미 철회");
+  describe("staff decision", () => {
+    it("approves a pending signup (stays live)", () => {
+      const signup = submit();
+      signup.approve();
+      expect(signup.getStatus).toBe(VolunteerSignupStatus.APPROVED);
+      expect(signup.isLive()).toBe(true);
+    });
+
+    it("rejects a pending signup (no longer live)", () => {
+      const signup = submit();
+      signup.reject();
+      expect(signup.getStatus).toBe(VolunteerSignupStatus.REJECTED);
+      expect(signup.isLive()).toBe(false);
+    });
+
+    it("cannot decide a non-pending signup", () => {
+      const approved = submit();
+      approved.approve();
+      expect(() => approved.approve()).toThrow("승인");
+      expect(() => approved.reject()).toThrow("거절");
+    });
+  });
+
+  describe("withdraw", () => {
+    it("withdraws from PENDING", () => {
+      const signup = submit();
+      signup.withdraw();
+      expect(signup.getStatus).toBe(VolunteerSignupStatus.WITHDRAWN);
+    });
+
+    it("withdraws from APPROVED, but not after a terminal state", () => {
+      const signup = submit();
+      signup.approve();
+      signup.withdraw();
+      expect(signup.getStatus).toBe(VolunteerSignupStatus.WITHDRAWN);
+      expect(() => signup.withdraw()).toThrow("이미 처리");
+    });
   });
 });

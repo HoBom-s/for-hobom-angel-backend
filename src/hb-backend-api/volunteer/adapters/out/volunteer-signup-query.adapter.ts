@@ -22,11 +22,18 @@ export class VolunteerSignupQueryAdapter implements VolunteerSignupQueryPort {
     return doc ? toDomain(doc) : null;
   }
 
-  public async findActive(
+  public async findLive(
     eventId: VolunteerEventId,
     volunteerId: UserId,
   ): Promise<VolunteerSignup | null> {
-    const doc = await this.repository.findActive(eventId.raw, volunteerId.raw);
+    const doc = await this.repository.findLive(eventId.raw, volunteerId.raw);
     return doc ? toDomain(doc) : null;
+  }
+
+  public async findByEvent(
+    eventId: VolunteerEventId,
+  ): Promise<VolunteerSignup[]> {
+    const docs = await this.repository.findByEvent(eventId.raw);
+    return docs.map(toDomain);
   }
 }

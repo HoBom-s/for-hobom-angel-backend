@@ -45,7 +45,7 @@ export class VolunteerSignupRepositoryImpl implements VolunteerSignupRepository 
     return this.model.findById(id).exec();
   }
 
-  public findActive(
+  public findLive(
     eventId: Types.ObjectId,
     volunteerId: Types.ObjectId,
   ): Promise<VolunteerSignupEntity | null> {
@@ -53,8 +53,16 @@ export class VolunteerSignupRepositoryImpl implements VolunteerSignupRepository 
       .findOne({
         eventId,
         volunteerId,
-        status: VolunteerSignupStatus.ACTIVE,
+        status: {
+          $in: [VolunteerSignupStatus.PENDING, VolunteerSignupStatus.APPROVED],
+        },
       })
       .exec();
+  }
+
+  public findByEvent(
+    eventId: Types.ObjectId,
+  ): Promise<VolunteerSignupEntity[]> {
+    return this.model.find({ eventId }).sort({ _id: -1 }).exec();
   }
 }

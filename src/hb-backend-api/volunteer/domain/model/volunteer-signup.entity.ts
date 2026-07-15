@@ -15,7 +15,7 @@ export class VolunteerSignupEntity extends BaseEntity {
     required: true,
     enum: VolunteerSignupStatus,
     type: String,
-    default: VolunteerSignupStatus.ACTIVE,
+    default: VolunteerSignupStatus.PENDING,
   })
   public status: VolunteerSignupStatus;
 
