@@ -48,4 +48,11 @@ export class FosterApplicationRepositoryImpl implements FosterApplicationReposit
   ): Promise<number> {
     return this.model.countDocuments({ applicantId, status }).exec();
   }
+
+  public countByShelterAndStatus(
+    shelterId: Types.ObjectId,
+    status: FosterApplicationStatus,
+  ): Promise<number> {
+    return this.model.countDocuments({ shelterId, status }).exec();
+  }
 }

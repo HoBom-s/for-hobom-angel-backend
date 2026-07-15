@@ -22,4 +22,14 @@ export interface AdoptionApplicationRepository {
     applicantId: Types.ObjectId,
     status: AdoptionApplicationStatus,
   ): Promise<number>;
+  countByShelterAndStatus(
+    shelterId: Types.ObjectId,
+    status: AdoptionApplicationStatus,
+  ): Promise<number>;
+  countByShelterAndStatusBetween(
+    shelterId: Types.ObjectId,
+    status: AdoptionApplicationStatus,
+    from: Date,
+    to: Date,
+  ): Promise<number>;
 }

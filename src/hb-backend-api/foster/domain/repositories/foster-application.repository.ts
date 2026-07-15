@@ -22,4 +22,8 @@ export interface FosterApplicationRepository {
     applicantId: Types.ObjectId,
     status: FosterApplicationStatus,
   ): Promise<number>;
+  countByShelterAndStatus(
+    shelterId: Types.ObjectId,
+    status: FosterApplicationStatus,
+  ): Promise<number>;
 }

@@ -1,5 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { DIToken } from "src/shared/di/token.di";
+import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { FosterApplicationStatus } from "src/hb-backend-api/foster/domain/enums/foster-application-status.enum";
 import { FosterApplication } from "src/hb-backend-api/foster/domain/model/foster-application";
@@ -27,5 +28,12 @@ export class FosterApplicationQueryAdapter implements FosterApplicationQueryPort
     status: FosterApplicationStatus,
   ): Promise<number> {
     return this.repository.countByApplicantAndStatus(applicantId.raw, status);
+  }
+
+  public countByShelterAndStatus(
+    shelterId: ShelterId,
+    status: FosterApplicationStatus,
+  ): Promise<number> {
+    return this.repository.countByShelterAndStatus(shelterId.raw, status);
   }
 }

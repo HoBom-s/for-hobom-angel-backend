@@ -50,4 +50,22 @@ export class AdoptionApplicationRepositoryImpl implements AdoptionApplicationRep
   ): Promise<number> {
     return this.model.countDocuments({ applicantId, status }).exec();
   }
+
+  public countByShelterAndStatus(
+    shelterId: Types.ObjectId,
+    status: AdoptionApplicationStatus,
+  ): Promise<number> {
+    return this.model.countDocuments({ shelterId, status }).exec();
+  }
+
+  public countByShelterAndStatusBetween(
+    shelterId: Types.ObjectId,
+    status: AdoptionApplicationStatus,
+    from: Date,
+    to: Date,
+  ): Promise<number> {
+    return this.model
+      .countDocuments({ shelterId, status, updatedAt: { $gte: from, $lt: to } })
+      .exec();
+  }
 }

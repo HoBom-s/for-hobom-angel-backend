@@ -30,10 +30,13 @@ describe("PlacementEligibilityAdapter", () => {
     adoptionQueryPort = {
       findById: jest.fn(),
       countByApplicantAndStatus: jest.fn(),
+      countByShelterAndStatus: jest.fn(),
+      countByShelterAndStatusBetween: jest.fn(),
     };
     fosterQueryPort = {
       findById: jest.fn(),
       countByApplicantAndStatus: jest.fn(),
+      countByShelterAndStatus: jest.fn(),
     };
     adapter = new PlacementEligibilityAdapter(
       adoptionQueryPort,
