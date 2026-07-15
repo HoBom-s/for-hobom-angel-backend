@@ -102,5 +102,13 @@ export function toMutablePatch(shelter: Shelter): ShelterMutablePatch {
     representatives: shelter.getRepresentatives.map((r) => r.raw),
     facilityPhotos: shelter.getFacilityPhotos.map((p) => p.toPlain()),
     verificationSignals: shelter.getVerificationSignals ?? undefined,
+    profile: {
+      intro: shelter.getProfile.getIntro,
+      operatingSince: shelter.getProfile.getOperatingSince,
+      representativeName: shelter.getProfile.getRepresentativeName,
+      visitGuide: shelter.getProfile.getVisitGuide,
+      supportGuide: shelter.getProfile.getSupportGuide,
+      coverImageKey: shelter.getProfile.getCoverImageKey,
+    },
   };
 }

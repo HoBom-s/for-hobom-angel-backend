@@ -16,7 +16,6 @@ import { UserRole } from "src/hb-backend-api/user/domain/enums/user-role.enum";
 import { UserStatus } from "src/hb-backend-api/user/domain/enums/user-status.enum";
 import { VerifiedChannel } from "src/hb-backend-api/user/domain/enums/verified-channel.enum";
 import { UserEntity } from "src/hb-backend-api/user/domain/model/user.entity";
-import { ShelterEntity } from "src/hb-backend-api/shelter/domain/model/shelter.entity";
 
 const PREFIX = "/hobom-angel-backend/api/v1";
 
@@ -31,7 +30,6 @@ describe("REST API (e2e)", () => {
   let mongo: MongoMemoryReplSet;
   let jwt: JwtService;
   let userModel: Model<UserEntity>;
-  let shelterModel: Model<ShelterEntity>;
 
   let seq = 0;
   const seedUser = async (): Promise<{ id: string; token: string }> => {
@@ -100,7 +98,6 @@ describe("REST API (e2e)", () => {
 
     jwt = app.get(JwtService);
     userModel = app.get(getModelToken(UserEntity.name));
-    shelterModel = app.get(getModelToken(ShelterEntity.name));
   }, 60_000);
 
   afterAll(async () => {
@@ -297,19 +294,16 @@ describe("REST API (e2e)", () => {
     const slug = `about-${Date.now()}`;
     const shelterId = await registerAndApproveShelter(admin.token, slug);
 
-    // Profile is written by the §07 console (not built yet) — seed it directly.
-    await shelterModel.updateOne(
-      { _id: new Types.ObjectId(shelterId) },
-      {
-        $set: {
-          profile: {
-            intro: "# 안녕하세요\n행복한 발자국입니다.",
-            operatingSince: new Date("2015-03-01T00:00:00.000Z"),
-            representativeName: "김보호",
-          },
-        },
-      },
-    );
+    // Profile is written by the §07 About editor (PATCH), not raw DB seeding.
+    await request(app.getHttpServer())
+      .patch(`${PREFIX}/shelters/${shelterId}/profile`)
+      .set(auth(admin.token))
+      .send({
+        intro: "# 안녕하세요\n행복한 발자국입니다.",
+        operatingSince: "2015-03-01T00:00:00.000Z",
+        representativeName: "김보호",
+      })
+      .expect(204);
 
     const about = await request(app.getHttpServer())
       .get(`${PREFIX}/shelters/${slug}`)
@@ -344,6 +338,42 @@ describe("REST API (e2e)", () => {
       shelteredCount: 2,
       availableCount: 2,
     });
+  });
+
+  it("saves a cover image via PATCH, surfaces it on the directory card, and refuses non-staff", async () => {
+    const admin = await seedUser();
+    const region = `cover-${Date.now()}`;
+    const slug = `cover-${Date.now()}`;
+    const shelterId = await registerAndApproveShelter(admin.token, slug, {
+      region,
+      city: "강남구",
+      roadAddress: "테헤란로 5",
+      visibility: AddressVisibility.PARTIAL,
+    });
+
+    // A non-staff member cannot edit the profile.
+    const outsider = await seedUser();
+    await request(app.getHttpServer())
+      .patch(`${PREFIX}/shelters/${shelterId}/profile`)
+      .set(auth(outsider.token))
+      .send({ coverImageKey: "shelters/nope.webp" })
+      .expect(403);
+
+    // The shelter's admin sets the cover image.
+    await request(app.getHttpServer())
+      .patch(`${PREFIX}/shelters/${shelterId}/profile`)
+      .set(auth(admin.token))
+      .send({ coverImageKey: "shelters/hero.webp" })
+      .expect(204);
+
+    // It now rides along on the §04 directory card.
+    const list = await request(app.getHttpServer())
+      .get(`${PREFIX}/shelters`)
+      .query({ region, limit: 10 })
+      .set(auth(admin.token))
+      .expect(200);
+    expect(list.body.items.items).toHaveLength(1);
+    expect(list.body.items.items[0].coverImageKey).toBe("shelters/hero.webp");
   });
 
   it("lists verified shelters in the directory, filtered by region", async () => {

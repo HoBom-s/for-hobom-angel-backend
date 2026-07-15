@@ -12,6 +12,7 @@ export type ShelterMutablePatch = Partial<
     | "representatives"
     | "facilityPhotos"
     | "verificationSignals"
+    | "profile"
   >
 >;
 

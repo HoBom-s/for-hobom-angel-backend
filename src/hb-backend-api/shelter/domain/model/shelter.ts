@@ -38,7 +38,7 @@ export class Shelter {
     private rejectionReason: string | null,
     private readonly verificationSignals: VerificationSignals | null,
     private readonly version: number,
-    private readonly profile: ShelterProfile,
+    private profile: ShelterProfile,
   ) {}
 
   private static readonly MAX_FACILITY_PHOTOS = 20;
@@ -183,6 +183,36 @@ export class Shelter {
     this.facilityPhotos = this.facilityPhotos.filter(
       (p) => !p.hasKey(objectKey),
     );
+  }
+
+  // ── About profile (§07 content editor) ──────────────────────────
+  /**
+   * Partial edit of the public About content. Only fields present in `patch`
+   * change; an explicit empty string clears one (trimmed to null by the VO),
+   * while an omitted (`undefined`) field keeps its current value.
+   */
+  public editProfile(patch: {
+    intro?: string | null;
+    operatingSince?: Date | null;
+    representativeName?: string | null;
+    visitGuide?: string | null;
+    supportGuide?: string | null;
+    coverImageKey?: string | null;
+  }): void {
+    const keep = <T>(next: T | undefined, current: T): T =>
+      next !== undefined ? next : current;
+    const p = this.profile;
+    this.profile = ShelterProfile.of({
+      intro: keep(patch.intro, p.getIntro),
+      operatingSince: keep(patch.operatingSince, p.getOperatingSince),
+      representativeName: keep(
+        patch.representativeName,
+        p.getRepresentativeName,
+      ),
+      visitGuide: keep(patch.visitGuide, p.getVisitGuide),
+      supportGuide: keep(patch.supportGuide, p.getSupportGuide),
+      coverImageKey: keep(patch.coverImageKey, p.getCoverImageKey),
+    });
   }
 
   // ── predicates ──────────────────────────────────────────────────
