@@ -84,7 +84,11 @@ describe("FosterApprovalCallback", () => {
       search: jest.fn(),
     };
     animalPersistencePort = { create: jest.fn(), save: jest.fn() };
-    outboxPersistencePort = { save: jest.fn() };
+    outboxPersistencePort = {
+      save: jest.fn(),
+      markAsSent: jest.fn(),
+      markAsFailed: jest.fn(),
+    };
     callback = new FosterApprovalCallback(
       applicationQueryPort,
       applicationPersistencePort,

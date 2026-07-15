@@ -107,7 +107,11 @@ describe("ShelterVerificationCallback", () => {
       findByEmail: jest.fn(),
     };
     userPersistencePort = { register: jest.fn(), save: jest.fn() };
-    outboxPersistencePort = { save: jest.fn() };
+    outboxPersistencePort = {
+      save: jest.fn(),
+      markAsSent: jest.fn(),
+      markAsFailed: jest.fn(),
+    };
     callback = new ShelterVerificationCallback(
       shelterQueryPort,
       shelterPersistencePort,

@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package outbox.angel;
+
+option go_package = "github.com/HoBom-s/hobom-event-processor/infra/grpc/v1/hobom-angel-outbox;hobomangelpb";
+
+import "google/protobuf/timestamp.proto";
+
+// Polled by hobom-event-processor (AngelPoller): fetch outbox rows for an event
+// type + status, publish each PENDING row to the Kafka topic `hobom.angel-events`,
+// then advance it via PatchHoBomAngelOutboxController.
+service FindHoBomAngelOutboxController {
+  rpc FindOutboxByEventTypeAndStatusUseCase (Request) returns (Response);
+}
+
+message Request {
+  string eventType = 1; // e.g. ADOPTION_APPROVED, FOSTER_TERMINATED, HOBOM_LOG
+  string status = 2;    // PENDING | SENT | FAILED
+}
+
+message Response {
+  repeated QueryResult items = 1;
+}
+
+// One outbox row. Transport metadata (status/retry/timestamps) wraps a typed,
+// discriminated event payload — a real schema, not opaque JSON, so `buf breaking`
+// guards its evolution and consumers get a compile-time contract.
+message QueryResult {
+  string id = 1;
+  string eventId = 2;
+  string eventType = 3;
+  AngelEventPayload payload = 4;
+  string status = 5;
+  int32 retryCount = 6;
+  string sentAt = 7;   // ISO-8601, "" when null
+  string failedAt = 8; // ISO-8601, "" when null
+  string lastError = 9;
+  int32 version = 10;
+  string createdAt = 11;
+  string updatedAt = 12;
+}
+
+// Discriminated union of Angel event payloads. Exactly one field is set, matching
+// the row's `eventType`.
+message AngelEventPayload {
+  oneof kind {
+    ApprovalApproved approval_approved = 1;
+    FosterTerminated foster_terminated = 2;
+    AccessLog access_log = 3;
+  }
+}
+
+enum ApprovalType {
+  APPROVAL_TYPE_UNSPECIFIED = 0;
+  APPROVAL_TYPE_SHELTER_VERIFICATION = 1;
+  APPROVAL_TYPE_STAFF_PROMOTION = 2;
+  APPROVAL_TYPE_ADOPTION = 3;
+  APPROVAL_TYPE_FOSTER = 4;
+}
+
+// Any *_APPROVED event: shelter verification, staff promotion, adoption, foster.
+// `approval_type` distinguishes which; the shape is shared.
+message ApprovalApproved {
+  ApprovalType approval_type = 1;
+  string subject_ref = 2;       // decided entity id (shelter / application / candidate)
+  string recipient_user_id = 3; // whom to notify
+  string shelter_id = 4;
+  google.protobuf.Timestamp occurred_at = 5;
+}
+
+enum FosterEndReason {
+  FOSTER_END_REASON_UNSPECIFIED = 0;
+  FOSTER_END_REASON_EXPIRED = 1;
+  FOSTER_END_REASON_EARLY_TERMINATED = 2;
+}
+
+// FOSTER_TERMINATED: an active foster ended (expiry or early termination).
+message FosterTerminated {
+  string foster_process_id = 1;
+  string animal_id = 2;
+  string recipient_user_id = 3;
+  FosterEndReason reason = 4;
+  google.protobuf.Timestamp occurred_at = 5;
+}
+
+// HOBOM_LOG: best-effort redacted HTTP access log shipped via the outbox.
+message AccessLog {
+  string trace_id = 1;
+  string level = 2; // INFO | ERROR
+  string method = 3;
+  string path = 4;
+  int32 status_code = 5;
+  string host = 6;
+  string user_id = 7;
+  string message = 8;
+  map<string, string> meta = 9; // redacted request context (never raw PII/secrets)
+}

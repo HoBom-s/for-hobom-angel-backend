@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package outbox.angel;
+
+option go_package = "github.com/HoBom-s/hobom-event-processor/infra/grpc/v1/hobom-angel-outbox;hobomangelpb";
+
+import "google/protobuf/empty.proto";
+
+// Called by the processor after each publish attempt to advance the outbox row:
+// SENT on success, FAILED (with the error) on failure. The Angel backend applies
+// these with optimistic concurrency and bumps retryCount on failure.
+service PatchHoBomAngelOutboxController {
+  rpc PatchOutboxMarkAsSentUseCase (MarkRequest) returns (google.protobuf.Empty);
+  rpc PatchOutboxMarkAsFailedUseCase (MarkFailedRequest) returns (google.protobuf.Empty);
+}
+
+message MarkRequest {
+  string eventId = 1;
+}
+
+message MarkFailedRequest {
+  string eventId = 1;
+  string errorMessage = 2;
+}
