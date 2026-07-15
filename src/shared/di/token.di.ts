@@ -10,7 +10,15 @@ class OutboxModuleToken extends TokenRegistry {
   public readonly OutboxPersistencePort = this.register(
     "outbox.persistence.port",
   );
+  public readonly OutboxQueryPort = this.register("outbox.query.port");
   public readonly OutboxRepository = this.register("outbox.repository");
+  public readonly FindOutboxUseCase = this.register("outbox.find.use-case");
+  public readonly MarkOutboxSentUseCase = this.register(
+    "outbox.mark-sent.use-case",
+  );
+  public readonly MarkOutboxFailedUseCase = this.register(
+    "outbox.mark-failed.use-case",
+  );
 }
 
 class UserModuleToken extends TokenRegistry {
@@ -23,6 +31,10 @@ class UserModuleToken extends TokenRegistry {
   public readonly WithdrawAccountUseCase = this.register(
     "user.withdraw-account.use-case",
   );
+  public readonly SanctionUserUseCase = this.register("user.sanction.use-case");
+  public readonly ReinstateUserUseCase = this.register(
+    "user.reinstate.use-case",
+  );
 }
 
 class AuthModuleToken extends TokenRegistry {
@@ -30,6 +42,8 @@ class AuthModuleToken extends TokenRegistry {
   public readonly RefreshTokenRepository = this.register(
     "auth.refresh-token.repository",
   );
+  public readonly SignUpUseCase = this.register("auth.sign-up.use-case");
+  public readonly LoginUseCase = this.register("auth.login.use-case");
 }
 
 class AuditModuleToken extends TokenRegistry {
@@ -87,6 +101,10 @@ class AnimalModuleToken extends TokenRegistry {
   public readonly UpdateAnimalProfileUseCase = this.register(
     "animal.update-profile.use-case",
   );
+  public readonly RelistAnimalUseCase = this.register("animal.relist.use-case");
+  public readonly SetAnimalBlindUseCase = this.register(
+    "animal.set-blind.use-case",
+  );
   public readonly AnimalPersistencePort = this.register(
     "animal.persistence.port",
   );
@@ -113,6 +131,9 @@ class AdoptionModuleToken extends TokenRegistry {
   public readonly SubmitAdoptionApplicationUseCase = this.register(
     "adoption.submit-application.use-case",
   );
+  public readonly ReturnAdoptionUseCase = this.register(
+    "adoption.return.use-case",
+  );
   public readonly AdoptionApplicationPersistencePort = this.register(
     "adoption.application.persistence.port",
   );
@@ -130,6 +151,9 @@ class FosterModuleToken extends TokenRegistry {
   );
   public readonly TerminateFosterUseCase = this.register(
     "foster.terminate.use-case",
+  );
+  public readonly ConvertFosterToAdoptionUseCase = this.register(
+    "foster.convert-to-adoption.use-case",
   );
   public readonly FosterApplicationPersistencePort = this.register(
     "foster.application.persistence.port",
@@ -154,6 +178,9 @@ class VolunteerModuleToken extends TokenRegistry {
   );
   public readonly CancelVolunteerEventUseCase = this.register(
     "volunteer.cancel-event.use-case",
+  );
+  public readonly CloseExpiredVolunteerEventsUseCase = this.register(
+    "volunteer.close-expired-events.use-case",
   );
   public readonly VolunteerEventPersistencePort = this.register(
     "volunteer.event.persistence.port",
@@ -219,6 +246,56 @@ class ReportModuleToken extends TokenRegistry {
   public readonly ReportRepository = this.register("report.repository");
 }
 
+class AnnouncementModuleToken extends TokenRegistry {
+  public readonly PostAnnouncementUseCase = this.register(
+    "announcement.post.use-case",
+  );
+  public readonly EditAnnouncementUseCase = this.register(
+    "announcement.edit.use-case",
+  );
+  public readonly DeleteAnnouncementUseCase = this.register(
+    "announcement.delete.use-case",
+  );
+  public readonly AnnouncementPersistencePort = this.register(
+    "announcement.persistence.port",
+  );
+  public readonly AnnouncementQueryPort = this.register(
+    "announcement.query.port",
+  );
+  public readonly AnnouncementRepository = this.register(
+    "announcement.repository",
+  );
+}
+
+class AdopterHistoryModuleToken extends TokenRegistry {
+  public readonly GetAdopterHistoryUseCase = this.register(
+    "adopter-history.get.use-case",
+  );
+}
+
+class FaqModuleToken extends TokenRegistry {
+  public readonly PostFaqUseCase = this.register("faq.post.use-case");
+  public readonly EditFaqUseCase = this.register("faq.edit.use-case");
+  public readonly DeleteFaqUseCase = this.register("faq.delete.use-case");
+  public readonly FaqPersistencePort = this.register("faq.persistence.port");
+  public readonly FaqQueryPort = this.register("faq.query.port");
+  public readonly FaqRepository = this.register("faq.repository");
+}
+
+class ReviewModuleToken extends TokenRegistry {
+  public readonly SubmitReviewUseCase = this.register("review.submit.use-case");
+  public readonly ReviseReviewUseCase = this.register("review.revise.use-case");
+  public readonly DeleteReviewUseCase = this.register("review.delete.use-case");
+  public readonly ReviewPersistencePort = this.register(
+    "review.persistence.port",
+  );
+  public readonly ReviewQueryPort = this.register("review.query.port");
+  public readonly ReviewRepository = this.register("review.repository");
+  public readonly PlacementEligibilityPort = this.register(
+    "review.placement-eligibility.port",
+  );
+}
+
 export const DIToken = {
   OutboxModule: new OutboxModuleToken(),
   UserModule: new UserModuleToken(),
@@ -235,4 +312,8 @@ export const DIToken = {
   MessagingModule: new MessagingModuleToken(),
   FavoriteModule: new FavoriteModuleToken(),
   ReportModule: new ReportModuleToken(),
+  ReviewModule: new ReviewModuleToken(),
+  AnnouncementModule: new AnnouncementModuleToken(),
+  FaqModule: new FaqModuleToken(),
+  AdopterHistoryModule: new AdopterHistoryModuleToken(),
 } as const;

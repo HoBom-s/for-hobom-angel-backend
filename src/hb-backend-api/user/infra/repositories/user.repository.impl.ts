@@ -46,7 +46,7 @@ export class UserRepositoryImpl implements UserRepository {
     return this.userModel.findOne({ nickname }).exec();
   }
 
-  public findByCi(ci: string): Promise<UserEntity | null> {
-    return this.userModel.findOne({ ci }).exec();
+  public findByEmail(email: string): Promise<UserEntity | null> {
+    return this.userModel.findOne({ email }).exec();
   }
 }

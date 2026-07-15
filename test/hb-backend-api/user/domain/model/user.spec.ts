@@ -6,7 +6,6 @@ import { VerifiedChannel } from "src/hb-backend-api/user/domain/enums/verified-c
 import { RegisterUser } from "src/hb-backend-api/user/domain/model/register-user";
 import { ShelterRoleGrant } from "src/hb-backend-api/user/domain/model/shelter-role-grant";
 import { User } from "src/hb-backend-api/user/domain/model/user";
-import { Ci } from "src/hb-backend-api/user/domain/model/vo/ci.vo";
 import { Email } from "src/hb-backend-api/user/domain/model/vo/email.vo";
 import { Nickname } from "src/hb-backend-api/user/domain/model/vo/nickname.vo";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
@@ -15,7 +14,7 @@ const registration = (roles?: UserRole[]) =>
   RegisterUser.of({
     nickname: "hobom",
     realName: "홍길동",
-    ci: "ci-value",
+    passwordHash: "hashed",
     phone: "01012345678",
     email: "hobom@example.com",
     verifiedChannel: VerifiedChannel.PHONE,
@@ -31,13 +30,15 @@ const reconstitute = (
     id: UserId.generate(),
     nickname: Nickname.of("hobom"),
     email: Email.of("hobom@example.com"),
-    ci: Ci.of("ci-value"),
+    passwordHash: "hashed",
     verifiedChannel: VerifiedChannel.PHONE,
     roles: [UserRole.USER],
     shelterRoles: [],
     status: UserStatus.ACTIVE,
     withdrawnAt: null,
     purgeAfter: null,
+    suspendedAt: null,
+    sanctionReason: null,
     version: 0,
     ...overrides,
   });
@@ -166,6 +167,41 @@ describe("User aggregate", () => {
       const user = User.register(registration());
       user.withdraw(new Date(), new Date());
       expect(() => user.withdraw(new Date(), new Date())).toThrow();
+    });
+
+    it("suspend blocks the account, recording reason and time", () => {
+      const user = User.register(registration());
+      const at = new Date("2026-07-10T00:00:00Z");
+      user.suspend("악성 신고 다수", at);
+      expect(user.getStatus).toBe(UserStatus.SUSPENDED);
+      expect(user.isSuspended()).toBe(true);
+      expect(user.isActive()).toBe(false);
+      expect(user.getSanctionReason).toBe("악성 신고 다수");
+      expect(user.getSuspendedAt).toEqual(at);
+    });
+
+    it("suspend requires a reason and an active account", () => {
+      expect(() =>
+        User.register(registration()).suspend("  ", new Date()),
+      ).toThrow("사유");
+      const withdrawn = reconstitute({ status: UserStatus.WITHDRAWN });
+      expect(() => withdrawn.suspend("사유", new Date())).toThrow("활성");
+    });
+
+    it("reinstate clears the sanction and reactivates", () => {
+      const user = User.register(registration());
+      user.suspend("사유", new Date());
+      user.reinstate();
+      expect(user.getStatus).toBe(UserStatus.ACTIVE);
+      expect(user.isActive()).toBe(true);
+      expect(user.getSuspendedAt).toBeNull();
+      expect(user.getSanctionReason).toBeNull();
+    });
+
+    it("reinstate is rejected unless suspended", () => {
+      expect(() => User.register(registration()).reinstate()).toThrow(
+        "제재 중",
+      );
     });
 
     it("changeNickname replaces the display name", () => {

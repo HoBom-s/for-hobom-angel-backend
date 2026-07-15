@@ -7,4 +7,6 @@ export interface VolunteerEventQueryPort {
   findById(id: VolunteerEventId): Promise<VolunteerEvent | null>;
   findByShelter(shelterId: ShelterId): Promise<VolunteerEvent[]>;
   findUpcoming(now: Date, limit: number): Promise<VolunteerEvent[]>;
+  /** OPEN events past their end time — the auto-close sweep's candidates. */
+  findExpiredOpen(now: Date, limit: number): Promise<VolunteerEvent[]>;
 }

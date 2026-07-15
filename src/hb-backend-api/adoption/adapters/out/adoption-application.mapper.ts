@@ -19,6 +19,8 @@ export function toDomain(doc: AdoptionApplicationEntity): AdoptionApplication {
     ),
     status: doc.status,
     decidedReason: doc.decidedReason ?? null,
+    returnedAt: doc.returnedAt ?? null,
+    returnReason: doc.returnReason ?? null,
     version: doc.version ?? 0,
   });
 }
@@ -48,5 +50,7 @@ export function toMutablePatch(
   return {
     status: application.getStatus,
     decidedReason: application.getDecidedReason ?? undefined,
+    returnedAt: application.getReturnedAt ?? undefined,
+    returnReason: application.getReturnReason ?? undefined,
   };
 }

@@ -8,13 +8,15 @@ import { UserQueryAdapter } from "src/hb-backend-api/user/adapters/out/user-quer
 import { UserRepositoryImpl } from "src/hb-backend-api/user/infra/repositories/user.repository.impl";
 import { ChangeNicknameService } from "src/hb-backend-api/user/application/use-cases/change-nickname.service";
 import { WithdrawAccountService } from "src/hb-backend-api/user/application/use-cases/withdraw-account.service";
+import { SanctionUserService } from "src/hb-backend-api/user/application/use-cases/sanction-user.service";
+import { ReinstateUserService } from "src/hb-backend-api/user/application/use-cases/reinstate-user.service";
 import { UserController } from "src/hb-backend-api/user/adapters/in/user.controller";
 
 /**
- * User store. Owns member records (encrypted PII, CI/DI identity, roles) and the
- * self-service profile surface (view / rename / withdraw). Exposes
- * query/persistence ports; the auth layer consumes UserQueryPort for
- * authorization decisions.
+ * User store. Owns member records (encrypted PII, roles) and the self-service
+ * profile surface (view / rename / withdraw), plus operator moderation
+ * (sanction / reinstate). Exposes query/persistence ports; the auth layer
+ * consumes UserQueryPort for authorization decisions.
  */
 @Module({
   imports: [
@@ -29,6 +31,14 @@ import { UserController } from "src/hb-backend-api/user/adapters/in/user.control
     {
       provide: DIToken.UserModule.WithdrawAccountUseCase,
       useClass: WithdrawAccountService,
+    },
+    {
+      provide: DIToken.UserModule.SanctionUserUseCase,
+      useClass: SanctionUserService,
+    },
+    {
+      provide: DIToken.UserModule.ReinstateUserUseCase,
+      useClass: ReinstateUserService,
     },
     {
       provide: DIToken.UserModule.UserRepository,

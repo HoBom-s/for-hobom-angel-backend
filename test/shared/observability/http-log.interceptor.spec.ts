@@ -38,7 +38,11 @@ describe("HttpLogInterceptor", () => {
   let interceptor: HttpLogInterceptor;
 
   beforeEach(() => {
-    port = { save: jest.fn().mockResolvedValue(undefined) };
+    port = {
+      save: jest.fn().mockResolvedValue(undefined),
+      markAsSent: jest.fn(),
+      markAsFailed: jest.fn(),
+    };
     interceptor = new HttpLogInterceptor(new TraceContext(), port);
   });
 

@@ -20,8 +20,7 @@ export class UserPersistenceAdapter implements UserPersistencePort {
       _id: user.getId.raw,
       nickname: user.getNickname.raw,
       email: user.getEmail.raw,
-      ci: user.getCi.raw,
-      di: registration.getDi ?? undefined,
+      passwordHash: user.getPasswordHash,
       realNameEnc: this.cipher.encrypt(registration.getRealName.raw),
       phoneEnc: this.cipher.encrypt(registration.getPhone.raw),
       verifiedChannel: user.getVerifiedChannel,
@@ -43,6 +42,8 @@ export class UserPersistenceAdapter implements UserPersistencePort {
       status: user.getStatus,
       withdrawnAt: user.getWithdrawnAt ?? undefined,
       purgeAfter: user.getPurgeAfter ?? undefined,
+      suspendedAt: user.getSuspendedAt,
+      sanctionReason: user.getSanctionReason,
     });
   }
 }

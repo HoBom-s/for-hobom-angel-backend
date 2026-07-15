@@ -15,10 +15,13 @@ import { DiscordModule } from "src/shared/discord/discord.module";
 import { HttpLogInterceptor } from "src/shared/observability/http-log.interceptor";
 import { TraceContext } from "src/shared/trace/trace.context";
 import { TraceInterceptor } from "src/shared/trace/trace.interceptor";
+import { AdopterHistoryModule } from "src/hb-backend-api/adopter-history/adopter-history.module";
 import { AdoptionModule } from "src/hb-backend-api/adoption/adoption.module";
 import { AnimalModule } from "src/hb-backend-api/animal/animal.module";
+import { AnnouncementModule } from "src/hb-backend-api/announcement/announcement.module";
 import { ApprovalModule } from "src/hb-backend-api/approval/approval.module";
 import { AuditModule } from "src/hb-backend-api/audit/audit.module";
+import { FaqModule } from "src/hb-backend-api/faq/faq.module";
 import { FavoriteModule } from "src/hb-backend-api/favorite/favorite.module";
 import { FosterModule } from "src/hb-backend-api/foster/foster.module";
 import { AuthModule } from "src/hb-backend-api/auth/auth.module";
@@ -28,6 +31,7 @@ import { MessagingModule } from "src/hb-backend-api/messaging/messaging.module";
 import { OutboxModule } from "src/hb-backend-api/outbox/outbox.module";
 import { QuestionnaireModule } from "src/hb-backend-api/questionnaire/questionnaire.module";
 import { ReportModule } from "src/hb-backend-api/report/report.module";
+import { ReviewModule } from "src/hb-backend-api/review/review.module";
 import { ShelterModule } from "src/hb-backend-api/shelter/shelter.module";
 import { UserModule } from "src/hb-backend-api/user/user.module";
 import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
@@ -77,6 +81,10 @@ import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
     VolunteerModule,
     FavoriteModule,
     ReportModule,
+    ReviewModule,
+    AnnouncementModule,
+    FaqModule,
+    AdopterHistoryModule,
   ],
   providers: [
     TraceContext,

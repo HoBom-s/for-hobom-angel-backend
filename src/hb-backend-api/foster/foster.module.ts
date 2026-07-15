@@ -1,6 +1,7 @@
 import { Module, OnModuleInit } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { DIToken } from "src/shared/di/token.di";
+import { AdoptionModule } from "src/hb-backend-api/adoption/adoption.module";
 import { AnimalModule } from "src/hb-backend-api/animal/animal.module";
 import { ApprovalModule } from "src/hb-backend-api/approval/approval.module";
 import { ApprovalCallbackRegistry } from "src/hb-backend-api/approval/application/approval-callback.registry";
@@ -16,6 +17,7 @@ import { FosterApplicationQueryAdapter } from "src/hb-backend-api/foster/adapter
 import { FosterApplicationRepositoryImpl } from "src/hb-backend-api/foster/infra/repositories/foster-application.repository.impl";
 import { SubmitFosterApplicationService } from "src/hb-backend-api/foster/application/use-cases/submit-foster-application.service";
 import { TerminateFosterService } from "src/hb-backend-api/foster/application/use-cases/terminate-foster.service";
+import { ConvertFosterToAdoptionService } from "src/hb-backend-api/foster/application/use-cases/convert-foster-to-adoption.service";
 import { FosterApprovalCallback } from "src/hb-backend-api/foster/application/foster-approval.callback";
 import { FosterMessageSubjectResolver } from "src/hb-backend-api/foster/application/foster-message-subject.resolver";
 import { FosterController } from "src/hb-backend-api/foster/adapters/in/foster.controller";
@@ -34,6 +36,7 @@ import { FosterController } from "src/hb-backend-api/foster/adapters/in/foster.c
     ]),
     ApprovalModule,
     AnimalModule,
+    AdoptionModule,
     UserModule,
     OutboxModule,
     QuestionnaireModule,
@@ -48,6 +51,10 @@ import { FosterController } from "src/hb-backend-api/foster/adapters/in/foster.c
     {
       provide: DIToken.FosterModule.TerminateFosterUseCase,
       useClass: TerminateFosterService,
+    },
+    {
+      provide: DIToken.FosterModule.ConvertFosterToAdoptionUseCase,
+      useClass: ConvertFosterToAdoptionService,
     },
     {
       provide: DIToken.FosterModule.FosterApplicationRepository,
@@ -67,6 +74,7 @@ import { FosterController } from "src/hb-backend-api/foster/adapters/in/foster.c
   exports: [
     DIToken.FosterModule.SubmitFosterApplicationUseCase,
     DIToken.FosterModule.TerminateFosterUseCase,
+    DIToken.FosterModule.FosterApplicationQueryPort,
   ],
 })
 export class FosterModule implements OnModuleInit {

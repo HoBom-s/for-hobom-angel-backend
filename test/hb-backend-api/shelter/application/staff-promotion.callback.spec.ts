@@ -10,7 +10,6 @@ import { UserRole } from "src/hb-backend-api/user/domain/enums/user-role.enum";
 import { UserStatus } from "src/hb-backend-api/user/domain/enums/user-status.enum";
 import { VerifiedChannel } from "src/hb-backend-api/user/domain/enums/verified-channel.enum";
 import { User } from "src/hb-backend-api/user/domain/model/user";
-import { Ci } from "src/hb-backend-api/user/domain/model/vo/ci.vo";
 import { Email } from "src/hb-backend-api/user/domain/model/vo/email.vo";
 import { Nickname } from "src/hb-backend-api/user/domain/model/vo/nickname.vo";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
@@ -25,13 +24,15 @@ const activeCandidate = () =>
     id: candidateId,
     nickname: Nickname.of("nari"),
     email: Email.of("nari@example.com"),
-    ci: Ci.of("ci-candidate"),
+    passwordHash: "hashed",
     verifiedChannel: VerifiedChannel.EMAIL,
     roles: [UserRole.USER],
     shelterRoles: [],
     status: UserStatus.ACTIVE,
     withdrawnAt: null,
     purgeAfter: null,
+    suspendedAt: null,
+    sanctionReason: null,
     version: 0,
   });
 
@@ -70,10 +71,14 @@ describe("StaffPromotionCallback", () => {
     userQueryPort = {
       findById: jest.fn().mockResolvedValue(candidate),
       findByNickname: jest.fn(),
-      findByCi: jest.fn(),
+      findByEmail: jest.fn(),
     };
     userPersistencePort = { register: jest.fn(), save: jest.fn() };
-    outboxPersistencePort = { save: jest.fn() };
+    outboxPersistencePort = {
+      save: jest.fn(),
+      markAsSent: jest.fn(),
+      markAsFailed: jest.fn(),
+    };
     callback = new StaffPromotionCallback(
       userQueryPort,
       userPersistencePort,

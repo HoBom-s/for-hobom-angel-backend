@@ -6,30 +6,27 @@ import { VerifiedChannel } from "src/hb-backend-api/user/domain/enums/verified-c
 import { ShelterRole } from "src/hb-backend-api/user/domain/model/shelter-role";
 
 /**
- * Member record. RRN is NEVER stored — identity is keyed on `ci`
- * (irreversible identity value from the verification provider), which also blocks
- * duplicate signups. `realNameEnc`/`phoneEnc` are AES-256-GCM ciphertext at
- * rest; only `nickname` is public. `di` is optional.
+ * Member record. Identity is keyed on `email` (the login id) and `passwordHash`
+ * is the bcrypt credential — plaintext passwords are never stored. RRN is NEVER
+ * stored. `realNameEnc`/`phoneEnc` are self-declared PII, AES-256-GCM ciphertext
+ * at rest; only `nickname` is public.
  */
 @Schema({ collection: "users", timestamps: true })
 export class UserEntity extends BaseEntity {
   @Prop({ required: true, unique: true })
   public nickname: string;
 
+  @Prop({ required: true, unique: true })
+  public email: string;
+
+  @Prop({ required: true })
+  public passwordHash: string;
+
   @Prop({ required: true })
   public realNameEnc: string;
 
-  @Prop({ required: true, unique: true })
-  public ci: string;
-
-  @Prop()
-  public di?: string;
-
   @Prop({ required: true })
   public phoneEnc: string;
-
-  @Prop({ required: true })
-  public email: string;
 
   @Prop({ required: true, enum: VerifiedChannel, type: String })
   public verifiedChannel: VerifiedChannel;
@@ -53,6 +50,12 @@ export class UserEntity extends BaseEntity {
 
   @Prop({ type: Date })
   public purgeAfter?: Date;
+
+  @Prop({ type: Date })
+  public suspendedAt?: Date;
+
+  @Prop({ type: String })
+  public sanctionReason?: string;
 
   // Optimistic-concurrency version; guarded and bumped on every authz update.
   @Prop({ required: true, default: 0 })

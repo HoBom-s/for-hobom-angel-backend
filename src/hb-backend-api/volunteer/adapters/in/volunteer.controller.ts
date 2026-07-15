@@ -3,6 +3,8 @@ import {
   Controller,
   DefaultValuePipe,
   Get,
+  HttpCode,
+  HttpStatus,
   Inject,
   NotFoundException,
   Param,
@@ -13,11 +15,16 @@ import {
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
+  ApiNoContentResponse,
   ApiOperation,
   ApiQuery,
-  ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import {
+  ApiCreatedEnvelope,
+  ApiEnvelope,
+  ApiEnvelopeArray,
+} from "src/shared/response/api-envelope.decorator";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
@@ -38,6 +45,8 @@ import { CancelVolunteerEventUseCase } from "src/hb-backend-api/volunteer/domain
 import { VolunteerEventQueryPort } from "src/hb-backend-api/volunteer/domain/ports/out/volunteer-event-query.port";
 import { CreateVolunteerEventDto } from "src/hb-backend-api/volunteer/adapters/in/dto/create-volunteer-event.dto";
 import { VolunteerEventResponse } from "src/hb-backend-api/volunteer/adapters/in/dto/volunteer-event.response";
+import { CreateVolunteerEventResponse } from "src/hb-backend-api/volunteer/adapters/in/dto/create-volunteer-event.response";
+import { VolunteerSignupResponse } from "src/hb-backend-api/volunteer/adapters/in/dto/volunteer-signup.response";
 
 @ApiTags("Volunteer")
 @ApiBearerAuth()
@@ -58,6 +67,7 @@ export class VolunteerController {
   ) {}
 
   @ApiOperation({ summary: "봉사 일정 개설 (검증된 보호소의 스태프)" })
+  @ApiCreatedEnvelope(CreateVolunteerEventResponse)
   @Post("shelters/:shelterId/volunteer-events")
   public create(
     @CurrentUser() user: AuthenticatedUser,
@@ -72,7 +82,7 @@ export class VolunteerController {
   }
 
   @ApiOperation({ summary: "보호소 봉사 일정 목록" })
-  @ApiResponse({ type: [VolunteerEventResponse] })
+  @ApiEnvelopeArray(VolunteerEventResponse)
   @Get("shelters/:shelterId/volunteer-events")
   public async listByShelter(
     @Param("shelterId") shelterId: string,
@@ -85,7 +95,7 @@ export class VolunteerController {
 
   @ApiOperation({ summary: "다가오는 모집 중 봉사 (탐색)" })
   @ApiQuery({ name: "limit", required: false, type: Number })
-  @ApiResponse({ type: [VolunteerEventResponse] })
+  @ApiEnvelopeArray(VolunteerEventResponse)
   @Get("volunteer-events")
   public async upcoming(
     @Query("limit", new DefaultValuePipe(20), ParseIntPipe) limit: number,
@@ -98,7 +108,7 @@ export class VolunteerController {
   }
 
   @ApiOperation({ summary: "봉사 일정 단건 조회" })
-  @ApiResponse({ type: VolunteerEventResponse })
+  @ApiEnvelope(VolunteerEventResponse)
   @Get("volunteer-events/:eventId")
   public async getOne(
     @Param("eventId") eventId: string,
@@ -113,6 +123,7 @@ export class VolunteerController {
   }
 
   @ApiOperation({ summary: "봉사 지원" })
+  @ApiCreatedEnvelope(VolunteerSignupResponse)
   @Post("volunteer-events/:eventId/signups")
   public signUp(
     @CurrentUser() user: AuthenticatedUser,
@@ -125,6 +136,8 @@ export class VolunteerController {
   }
 
   @ApiOperation({ summary: "봉사 일정 취소 (스태프)" })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Post("volunteer-events/:eventId/cancellation")
   public cancel(
     @CurrentUser() user: AuthenticatedUser,
@@ -137,6 +150,8 @@ export class VolunteerController {
   }
 
   @ApiOperation({ summary: "봉사 지원 철회" })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Post("volunteer-signups/:signupId/withdrawal")
   public withdraw(
     @CurrentUser() user: AuthenticatedUser,

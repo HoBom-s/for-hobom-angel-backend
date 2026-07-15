@@ -3,6 +3,8 @@ import {
   Controller,
   DefaultValuePipe,
   Get,
+  HttpCode,
+  HttpStatus,
   Inject,
   Param,
   ParseIntPipe,
@@ -12,11 +14,16 @@ import {
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
+  ApiNoContentResponse,
   ApiOperation,
   ApiQuery,
-  ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import {
+  ApiCreatedEnvelope,
+  ApiEnvelopeArray,
+} from "src/shared/response/api-envelope.decorator";
+import { SubmitReportResponse } from "src/hb-backend-api/report/adapters/in/dto/submit-report.response";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
@@ -47,6 +54,7 @@ export class ReportController {
   ) {}
 
   @ApiOperation({ summary: "신고 접수" })
+  @ApiCreatedEnvelope(SubmitReportResponse)
   @Post()
   public submit(
     @CurrentUser() user: AuthenticatedUser,
@@ -63,7 +71,7 @@ export class ReportController {
 
   @ApiOperation({ summary: "신고 처리 큐 (운영자)" })
   @ApiQuery({ name: "limit", required: false, type: Number })
-  @ApiResponse({ type: [ReportResponse] })
+  @ApiEnvelopeArray(ReportResponse)
   @Get("pending")
   public async pending(
     @CurrentUser() user: AuthenticatedUser,
@@ -77,6 +85,8 @@ export class ReportController {
   }
 
   @ApiOperation({ summary: "신고 처리 (운영자)" })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Post(":reportId/resolution")
   public resolve(
     @CurrentUser() user: AuthenticatedUser,

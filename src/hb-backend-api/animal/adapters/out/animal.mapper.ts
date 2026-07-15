@@ -23,6 +23,7 @@ export function toDomain(doc: AnimalEntity): Animal {
       breed: doc.traits.breed,
       color: doc.traits.color,
       personality: doc.traits.personality,
+      weightKg: doc.traits.weightKg,
     }),
     health: HealthProfile.of({
       neutered: doc.health.neutered,
@@ -39,6 +40,7 @@ export function toDomain(doc: AnimalEntity): Animal {
       AnimalPhoto.of({ objectKey: p.objectKey, caption: p.caption }),
     ),
     status: doc.status,
+    blinded: doc.blinded ?? false,
     version: doc.version ?? 0,
   });
 }
@@ -60,6 +62,7 @@ export function toInsertDoc(animal: Animal): Partial<AnimalEntity> {
     },
     photos: animal.getPhotos.map((p) => p.toPlain()),
     status: animal.getStatus,
+    blinded: animal.isBlinded(),
     version: animal.getVersion,
   };
 }
@@ -74,6 +77,7 @@ export function toMutablePatch(animal: Animal): AnimalMutablePatch {
     health: toHealthDoc(animal),
     photos: animal.getPhotos.map((p) => p.toPlain()),
     status: animal.getStatus,
+    blinded: animal.isBlinded(),
   };
 }
 
@@ -86,6 +90,7 @@ function toTraitsDoc(animal: Animal) {
     breed: t.getBreed,
     color: t.getColor,
     personality: t.getPersonality,
+    weightKg: t.getWeightKg,
   };
 }
 

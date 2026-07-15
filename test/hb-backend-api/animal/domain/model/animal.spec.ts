@@ -104,6 +104,17 @@ describe("Animal aggregate", () => {
       adopted.markAdopted();
       expect(() => adopted.reserve()).toThrow("예약");
     });
+
+    it("blind/unblind toggles visibility without touching status", () => {
+      const animal = register();
+      expect(animal.isBlinded()).toBe(false);
+      animal.reserve();
+      animal.blind();
+      expect(animal.isBlinded()).toBe(true);
+      expect(animal.getStatus).toBe(AnimalStatus.RESERVED); // orthogonal
+      animal.unblind();
+      expect(animal.isBlinded()).toBe(false);
+    });
   });
 
   describe("profile edits", () => {
@@ -131,5 +142,18 @@ describe("Animal aggregate", () => {
       animal.removePhoto("a");
       expect(animal.getPhotos).toHaveLength(0);
     });
+  });
+});
+
+describe("Traits", () => {
+  const base = { sex: AnimalSex.FEMALE, size: AnimalSize.SMALL };
+
+  it("keeps a fractional weight and defaults it to null when omitted", () => {
+    expect(Traits.of({ ...base, weightKg: 4.2 }).getWeightKg).toBe(4.2);
+    expect(Traits.of(base).getWeightKg).toBeNull();
+  });
+
+  it("rejects a negative weight", () => {
+    expect(() => Traits.of({ ...base, weightKg: -1 })).toThrow("몸무게");
   });
 });

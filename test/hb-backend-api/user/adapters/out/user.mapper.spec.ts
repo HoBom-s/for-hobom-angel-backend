@@ -10,7 +10,7 @@ const doc = (over: Partial<UserEntity> = {}): UserEntity =>
     _id: new Types.ObjectId(),
     nickname: "hobom",
     email: "hobom@example.com",
-    ci: "ci-value",
+    passwordHash: "hashed",
     verifiedChannel: VerifiedChannel.PHONE,
     roles: [UserRole.USER],
     shelterRoles: [],

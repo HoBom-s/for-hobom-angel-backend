@@ -40,9 +40,9 @@ describe("REST API (e2e)", () => {
       _id: id,
       nickname,
       realNameEnc: "enc",
-      ci: `ci-${id.toHexString()}`,
+      passwordHash: "hashed",
       phoneEnc: "enc",
-      email: "bom@example.com",
+      email: `bom-${id.toHexString()}@example.com`,
       verifiedChannel: VerifiedChannel.EMAIL,
       roles: [UserRole.USER],
       shelterRoles: [],
@@ -140,7 +140,7 @@ describe("REST API (e2e)", () => {
       .post(`${PREFIX}/approvals/${approvalId}/decision`)
       .set(auth(registrant.token))
       .send({ decision: "APPROVE", metadata: { trustTier: "A" } })
-      .expect(201);
+      .expect(204);
 
     // shelter is now VERIFIED
     const shelterRes = await request(app.getHttpServer())
@@ -212,7 +212,7 @@ describe("REST API (e2e)", () => {
       .post(`${PREFIX}/approvals/${approvalId}/decision`)
       .set(auth(token))
       .send({ decision: "APPROVE", metadata: { trustTier: "A" } })
-      .expect(201);
+      .expect(204);
     return shelterId as string;
   };
 
@@ -251,6 +251,42 @@ describe("REST API (e2e)", () => {
       .set(auth(admin.token))
       .expect(200);
     expect(miss.body.items.items).toHaveLength(0);
+  });
+
+  it("returns animal detail with weight and the owning-shelter summary", async () => {
+    const admin = await seedUser();
+    const slug = `detail-${Date.now()}`;
+    const shelterId = await registerAndApproveShelter(admin.token, slug);
+
+    const reg = await request(app.getHttpServer())
+      .post(`${PREFIX}/shelters/${shelterId}/animals`)
+      .set(auth(admin.token))
+      .send({
+        name: `보리-${Date.now()}`,
+        species: AnimalSpecies.DOG,
+        traits: {
+          sex: AnimalSex.MALE,
+          size: AnimalSize.SMALL,
+          weightKg: 4.2,
+        },
+        health: { neutered: true, vaccinated: true },
+        intake: { intakeDate: "2026-01-02T00:00:00.000Z" },
+      })
+      .expect(201);
+    const { animalId } = reg.body.items;
+
+    const detail = await request(app.getHttpServer())
+      .get(`${PREFIX}/animals/${animalId}`)
+      .set(auth(admin.token))
+      .expect(200);
+
+    expect(detail.body.items.traits.weightKg).toBe(4.2);
+    expect(detail.body.items.shelter).toMatchObject({
+      slug,
+      name: "행복한 발자국",
+      region: "서울",
+      city: "강남구",
+    });
   });
 
   it("returns map markers only for shelters with disclosed coordinates", async () => {

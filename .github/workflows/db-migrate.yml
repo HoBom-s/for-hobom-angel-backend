@@ -1,0 +1,58 @@
+name: DB Migrate
+
+# Reconciles the database with the code: runs data migrations (migrate-mongo)
+# then syncs every schema's indexes (drops orphaned, creates missing). Keeps the
+# schema as the single source of truth — no hand-typed `migrate:up && indexes:sync`.
+#
+# Runs automatically after a merge to main that touches migrations or persistence
+# shapes (entity/schema files), and on demand from the Actions tab. Pinned to the
+# `production` environment, so adding required reviewers there gates each run.
+#
+# Safe by design — it never inserts document data: migrate:up applies only
+# PENDING, PR-reviewed migration files (already-applied ones are skipped via the
+# changelog); indexes:sync only creates/drops INDEXES to match the schema.
+# Requires these secrets on the `production` environment:
+#   HOBOM_SYSTEM_ANGEL_BACKEND_TIGER_DB, HOBOM_JWT_SECRET,
+#   HOBOM_JWT_REFRESH_SECRET, FIELD_ENCRYPTION_KEY
+# (Atlas Network Access must allow the GitHub runner — 0.0.0.0/0 or the GH IP
+# ranges.)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "migrations/**"
+      - "src/**/*.entity.ts"
+      - "src/**/*.schema.ts"
+  workflow_dispatch: {}
+
+# Never let two migration runs overlap.
+concurrency:
+  group: db-migrate
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      HOBOM_SYSTEM_ANGEL_BACKEND_TIGER_DB: ${{ secrets.HOBOM_SYSTEM_ANGEL_BACKEND_TIGER_DB }}
+      HOBOM_JWT_SECRET: ${{ secrets.HOBOM_JWT_SECRET }}
+      HOBOM_JWT_REFRESH_SECRET: ${{ secrets.HOBOM_JWT_REFRESH_SECRET }}
+      FIELD_ENCRYPTION_KEY: ${{ secrets.FIELD_ENCRYPTION_KEY }}
+      HOBOM_JWT_ACCESS_TOKEN_EXPIRED: "15m"
+      HOBOM_JWT_REFRESH_TOKEN_EXPIRED: "30d"
+      NODE_ENV: production
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Migration status (before)
+        run: npm run migrate:status
+      - name: Migrate + sync indexes
+        run: npm run db:deploy

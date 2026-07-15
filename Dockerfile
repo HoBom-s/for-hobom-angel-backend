@@ -19,9 +19,12 @@ COPY package.json package-lock.json ./
 RUN npm pkg delete scripts.prepare && npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
-# NOTE: proto/ is intentionally not copied yet — the Angel outbox gRPC service
-# is not wired until the proto lands in hobom-buf-proto. When it does: run
-# `npm run proto:pull` in CI and re-add `COPY --from=builder /app/proto ./proto`.
+# Angel outbox gRPC proto (vendored under proto/angel, source of truth is the
+# hobom BSR module). buildGrpcOptions() loads it at boot to bind the outbox
+# relay service consumed by hobom-event-processor.
+COPY --from=builder /app/proto ./proto
 
 EXPOSE 8080
+# gRPC (outbox relay) listens on 50051; HTTP on 8080.
+EXPOSE 50051
 CMD ["node", "dist/main.js"]

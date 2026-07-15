@@ -15,6 +15,7 @@ import { AdoptionApplicationPersistenceAdapter } from "src/hb-backend-api/adopti
 import { AdoptionApplicationQueryAdapter } from "src/hb-backend-api/adoption/adapters/out/adoption-application-query.adapter";
 import { AdoptionApplicationRepositoryImpl } from "src/hb-backend-api/adoption/infra/repositories/adoption-application.repository.impl";
 import { SubmitAdoptionApplicationService } from "src/hb-backend-api/adoption/application/use-cases/submit-adoption-application.service";
+import { ReturnAdoptionService } from "src/hb-backend-api/adoption/application/use-cases/return-adoption.service";
 import { AdoptionApprovalCallback } from "src/hb-backend-api/adoption/application/adoption-approval.callback";
 import { AdoptionMessageSubjectResolver } from "src/hb-backend-api/adoption/application/adoption-message-subject.resolver";
 import { AdoptionController } from "src/hb-backend-api/adoption/adapters/in/adoption.controller";
@@ -48,6 +49,10 @@ import { AdoptionController } from "src/hb-backend-api/adoption/adapters/in/adop
       useClass: SubmitAdoptionApplicationService,
     },
     {
+      provide: DIToken.AdoptionModule.ReturnAdoptionUseCase,
+      useClass: ReturnAdoptionService,
+    },
+    {
       provide: DIToken.AdoptionModule.AdoptionApplicationRepository,
       useClass: AdoptionApplicationRepositoryImpl,
     },
@@ -62,7 +67,11 @@ import { AdoptionController } from "src/hb-backend-api/adoption/adapters/in/adop
     AdoptionApprovalCallback,
     AdoptionMessageSubjectResolver,
   ],
-  exports: [DIToken.AdoptionModule.SubmitAdoptionApplicationUseCase],
+  exports: [
+    DIToken.AdoptionModule.SubmitAdoptionApplicationUseCase,
+    DIToken.AdoptionModule.AdoptionApplicationQueryPort,
+    DIToken.AdoptionModule.AdoptionApplicationPersistencePort,
+  ],
 })
 export class AdoptionModule implements OnModuleInit {
   constructor(

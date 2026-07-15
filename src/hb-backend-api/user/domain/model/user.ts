@@ -5,7 +5,6 @@ import { UserStatus } from "src/hb-backend-api/user/domain/enums/user-status.enu
 import { VerifiedChannel } from "src/hb-backend-api/user/domain/enums/verified-channel.enum";
 import { RegisterUser } from "src/hb-backend-api/user/domain/model/register-user";
 import { ShelterRoleGrant } from "src/hb-backend-api/user/domain/model/shelter-role-grant";
-import { Ci } from "src/hb-backend-api/user/domain/model/vo/ci.vo";
 import { Email } from "src/hb-backend-api/user/domain/model/vo/email.vo";
 import { Nickname } from "src/hb-backend-api/user/domain/model/vo/nickname.vo";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
@@ -26,13 +25,15 @@ export class User {
     private readonly id: UserId,
     private nickname: Nickname,
     private readonly email: Email,
-    private readonly ci: Ci,
+    private readonly passwordHash: string,
     private readonly verifiedChannel: VerifiedChannel,
     private readonly roles: UserRole[],
     private readonly shelterRoles: ShelterRoleGrant[],
     private status: UserStatus,
     private withdrawnAt: Date | null,
     private purgeAfter: Date | null,
+    private suspendedAt: Date | null,
+    private sanctionReason: string | null,
     private readonly version: number,
   ) {}
 
@@ -45,11 +46,13 @@ export class User {
       UserId.generate(),
       registration.getNickname,
       registration.getEmail,
-      registration.getCi,
+      registration.getPasswordHash,
       registration.getVerifiedChannel,
       roles,
       [],
       UserStatus.ACTIVE,
+      null,
+      null,
       null,
       null,
       0,
@@ -60,26 +63,30 @@ export class User {
     id: UserId;
     nickname: Nickname;
     email: Email;
-    ci: Ci;
+    passwordHash: string;
     verifiedChannel: VerifiedChannel;
     roles: UserRole[];
     shelterRoles: ShelterRoleGrant[];
     status: UserStatus;
     withdrawnAt: Date | null;
     purgeAfter: Date | null;
+    suspendedAt: Date | null;
+    sanctionReason: string | null;
     version: number;
   }): User {
     return new User(
       params.id,
       params.nickname,
       params.email,
-      params.ci,
+      params.passwordHash,
       params.verifiedChannel,
       params.roles,
       params.shelterRoles,
       params.status,
       params.withdrawnAt,
       params.purgeAfter,
+      params.suspendedAt,
+      params.sanctionReason,
       params.version,
     );
   }
@@ -168,6 +175,33 @@ export class User {
     this.purgeAfter = purgeAfter;
   }
 
+  /** Operator sanction: suspend an active member (blocks all actions). */
+  public suspend(reason: string, at: Date): void {
+    if (!reason?.trim()) {
+      throw new Error("제재 사유가 필요해요.");
+    }
+    if (this.status !== UserStatus.ACTIVE) {
+      throw new Error("활성 상태의 회원만 제재할 수 있어요.");
+    }
+    this.status = UserStatus.SUSPENDED;
+    this.suspendedAt = at;
+    this.sanctionReason = reason.trim();
+  }
+
+  /** Lift a sanction, returning the member to ACTIVE. */
+  public reinstate(): void {
+    if (this.status !== UserStatus.SUSPENDED) {
+      throw new Error("제재 중인 회원만 해제할 수 있어요.");
+    }
+    this.status = UserStatus.ACTIVE;
+    this.suspendedAt = null;
+    this.sanctionReason = null;
+  }
+
+  public isSuspended(): boolean {
+    return this.status === UserStatus.SUSPENDED;
+  }
+
   private assertActive(): void {
     if (!this.isActive()) {
       throw new Error("활성 상태의 회원만 처리할 수 있어요.");
@@ -184,8 +218,8 @@ export class User {
   public get getEmail(): Email {
     return this.email;
   }
-  public get getCi(): Ci {
-    return this.ci;
+  public get getPasswordHash(): string {
+    return this.passwordHash;
   }
   public get getVerifiedChannel(): VerifiedChannel {
     return this.verifiedChannel;
@@ -204,6 +238,12 @@ export class User {
   }
   public get getPurgeAfter(): Date | null {
     return this.purgeAfter;
+  }
+  public get getSuspendedAt(): Date | null {
+    return this.suspendedAt;
+  }
+  public get getSanctionReason(): string | null {
+    return this.sanctionReason;
   }
   /** Loaded version, used as the optimistic-lock guard on the next save. */
   public get getVersion(): number {
