@@ -25,6 +25,18 @@ export class VolunteerPostRepositoryImpl implements VolunteerPostRepository {
     await this.model.deleteOne({ _id: id }, { session });
   }
 
+  public async incrementLikeCount(
+    id: Types.ObjectId,
+    delta: number,
+  ): Promise<void> {
+    const session = MongoSessionContext.getSession();
+    await this.model.updateOne(
+      { _id: id },
+      { $inc: { likeCount: delta } },
+      { session },
+    );
+  }
+
   public findById(id: Types.ObjectId): Promise<VolunteerPostEntity | null> {
     return this.model.findById(id).exec();
   }

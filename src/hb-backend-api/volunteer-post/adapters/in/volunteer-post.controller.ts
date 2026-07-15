@@ -31,8 +31,8 @@ import { JwtAuthGuard } from "src/hb-backend-api/auth/adapters/in/rest/guard/jwt
 import { AuthenticatedUser } from "src/hb-backend-api/auth/domain/model/token-pair";
 import { CreateVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/create-volunteer-post.use-case";
 import { DeleteVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/delete-volunteer-post.use-case";
-import { VolunteerPostQueryPort } from "src/hb-backend-api/volunteer-post/domain/ports/out/volunteer-post-query.port";
-import { VolunteerPostId } from "src/hb-backend-api/volunteer-post/domain/model/vo/volunteer-post-id.vo";
+import { LikeVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/like-volunteer-post.use-case";
+import { ReadVolunteerFeedUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/read-volunteer-feed.use-case";
 import { CreateVolunteerPostDto } from "src/hb-backend-api/volunteer-post/adapters/in/dto/create-volunteer-post.dto";
 import { CreateVolunteerPostResponse } from "src/hb-backend-api/volunteer-post/adapters/in/dto/create-volunteer-post.response";
 import { ListVolunteerPostsQueryDto } from "src/hb-backend-api/volunteer-post/adapters/in/dto/list-volunteer-posts.query.dto";
@@ -48,8 +48,10 @@ export class VolunteerPostController {
     private readonly createVolunteerPostUseCase: CreateVolunteerPostUseCase,
     @Inject(DIToken.VolunteerPostModule.DeleteVolunteerPostUseCase)
     private readonly deleteVolunteerPostUseCase: DeleteVolunteerPostUseCase,
-    @Inject(DIToken.VolunteerPostModule.VolunteerPostQueryPort)
-    private readonly queryPort: VolunteerPostQueryPort,
+    @Inject(DIToken.VolunteerPostModule.LikeVolunteerPostUseCase)
+    private readonly likeVolunteerPostUseCase: LikeVolunteerPostUseCase,
+    @Inject(DIToken.VolunteerPostModule.ReadVolunteerFeedUseCase)
+    private readonly readVolunteerFeedUseCase: ReadVolunteerFeedUseCase,
   ) {}
 
   @ApiOperation({ summary: "봉사 후기 작성 (§05)" })
@@ -68,18 +70,20 @@ export class VolunteerPostController {
     return CreateVolunteerPostResponse.from(result);
   }
 
-  @ApiOperation({ summary: "봉사 후기 피드 (최신순·커서)" })
+  @ApiOperation({ summary: "봉사 후기 피드 (최신순·커서, 좋아요 포함)" })
   @ApiEnvelopeCursor(VolunteerPostResponse)
   @Get()
   public async feed(
+    @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListVolunteerPostsQueryDto,
   ): Promise<CursorPageResponse<VolunteerPostResponse>> {
-    const page = await this.queryPort.findFeed({
+    const page = await this.readVolunteerFeedUseCase.feed({
+      viewerId: user.userId,
       cursor: query.cursor,
       limit: query.limit ?? 20,
     });
-    return CursorPageResponse.of(page, (post) =>
-      VolunteerPostResponse.from(post),
+    return CursorPageResponse.of(page, (item) =>
+      VolunteerPostResponse.from(item),
     );
   }
 
@@ -87,15 +91,39 @@ export class VolunteerPostController {
   @ApiEnvelope(VolunteerPostResponse)
   @Get(":postId")
   public async getOne(
+    @CurrentUser() user: AuthenticatedUser,
     @Param("postId") postId: string,
   ): Promise<VolunteerPostResponse> {
-    const post = await this.queryPort.findById(
-      VolunteerPostId.fromString(postId),
-    );
-    if (!post) {
+    const item = await this.readVolunteerFeedUseCase.one(postId, user.userId);
+    if (!item) {
       throw new NotFoundException("후기를 찾을 수 없어요.");
     }
-    return VolunteerPostResponse.from(post);
+    return VolunteerPostResponse.from(item);
+  }
+
+  @ApiOperation({ summary: "봉사 후기 좋아요" })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post(":postId/likes")
+  public like(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("postId") postId: string,
+  ): Promise<void> {
+    return this.likeVolunteerPostUseCase.like({ postId, userId: user.userId });
+  }
+
+  @ApiOperation({ summary: "봉사 후기 좋아요 취소" })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(":postId/likes")
+  public unlike(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("postId") postId: string,
+  ): Promise<void> {
+    return this.likeVolunteerPostUseCase.unlike({
+      postId,
+      userId: user.userId,
+    });
   }
 
   @ApiOperation({ summary: "봉사 후기 삭제 (작성자)" })

@@ -331,14 +331,26 @@ class VolunteerPostModuleToken extends TokenRegistry {
   public readonly DeleteVolunteerPostUseCase = this.register(
     "volunteer-post.delete.use-case",
   );
+  public readonly LikeVolunteerPostUseCase = this.register(
+    "volunteer-post.like.use-case",
+  );
+  public readonly ReadVolunteerFeedUseCase = this.register(
+    "volunteer-post.read-feed.use-case",
+  );
   public readonly VolunteerPostPersistencePort = this.register(
     "volunteer-post.persistence.port",
   );
   public readonly VolunteerPostQueryPort = this.register(
     "volunteer-post.query.port",
   );
+  public readonly VolunteerPostLikePort = this.register(
+    "volunteer-post.like.port",
+  );
   public readonly VolunteerPostRepository = this.register(
     "volunteer-post.repository",
+  );
+  public readonly VolunteerPostLikeRepository = this.register(
+    "volunteer-post.like.repository",
   );
 }
 

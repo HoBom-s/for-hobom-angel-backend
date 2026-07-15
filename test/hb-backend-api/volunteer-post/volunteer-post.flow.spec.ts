@@ -11,6 +11,8 @@ import { UserEntity } from "src/hb-backend-api/user/domain/model/user.entity";
 import { VolunteerPostEntity } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post.entity";
 import { CreateVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/create-volunteer-post.use-case";
 import { DeleteVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/delete-volunteer-post.use-case";
+import { LikeVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/like-volunteer-post.use-case";
+import { ReadVolunteerFeedUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/read-volunteer-feed.use-case";
 import { VolunteerPostQueryPort } from "src/hb-backend-api/volunteer-post/domain/ports/out/volunteer-post-query.port";
 import { VolunteerPostId } from "src/hb-backend-api/volunteer-post/domain/model/vo/volunteer-post-id.vo";
 
@@ -24,6 +26,8 @@ describe("Volunteer post (flow)", () => {
   let mongo: MongoMemoryReplSet;
   let createPost: CreateVolunteerPostUseCase;
   let deletePost: DeleteVolunteerPostUseCase;
+  let likePost: LikeVolunteerPostUseCase;
+  let readFeed: ReadVolunteerFeedUseCase;
   let queryPort: VolunteerPostQueryPort;
   let userModel: Model<UserEntity>;
   let postModel: Model<VolunteerPostEntity>;
@@ -74,6 +78,8 @@ describe("Volunteer post (flow)", () => {
     deletePost = app.get(
       DIToken.VolunteerPostModule.DeleteVolunteerPostUseCase,
     );
+    likePost = app.get(DIToken.VolunteerPostModule.LikeVolunteerPostUseCase);
+    readFeed = app.get(DIToken.VolunteerPostModule.ReadVolunteerFeedUseCase);
     queryPort = app.get(DIToken.VolunteerPostModule.VolunteerPostQueryPort);
     userModel = app.get(getModelToken(UserEntity.name));
     postModel = app.get(getModelToken(VolunteerPostEntity.name));
@@ -138,6 +144,39 @@ describe("Volunteer post (flow)", () => {
       expectedOrder.slice(2),
     );
     expect(second.hasNext).toBe(false);
+  });
+
+  it("likes are idempotent and reflected in likeCount + the viewer's liked flag", async () => {
+    const author = await seedUser();
+    const fan = await seedUser();
+    const { postId } = await createPost.invoke({
+      authorId: author,
+      body: "좋아요 눌러주세요",
+    });
+
+    // Not liked yet.
+    let item = await readFeed.one(postId, fan);
+    expect(item?.post.getLikeCount).toBe(0);
+    expect(item?.liked).toBe(false);
+
+    // Like twice — idempotent, count stays 1.
+    await likePost.like({ postId, userId: fan });
+    await likePost.like({ postId, userId: fan });
+    item = await readFeed.one(postId, fan);
+    expect(item?.post.getLikeCount).toBe(1);
+    expect(item?.liked).toBe(true);
+
+    // The author viewing the same post hasn't liked it.
+    const authorView = await readFeed.one(postId, author);
+    expect(authorView?.post.getLikeCount).toBe(1);
+    expect(authorView?.liked).toBe(false);
+
+    // Unlike twice — count floors at 0.
+    await likePost.unlike({ postId, userId: fan });
+    await likePost.unlike({ postId, userId: fan });
+    item = await readFeed.one(postId, fan);
+    expect(item?.post.getLikeCount).toBe(0);
+    expect(item?.liked).toBe(false);
   });
 
   it("lets only the author delete their post", async () => {
