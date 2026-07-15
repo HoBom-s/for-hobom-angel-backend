@@ -5,6 +5,7 @@ import { Shelter } from "src/hb-backend-api/shelter/domain/model/shelter";
 export interface ListSheltersUseCase {
   invoke(params: {
     region?: string;
+    keyword?: string;
     cursor?: string;
     limit: number;
   }): Promise<Page<Shelter>>;

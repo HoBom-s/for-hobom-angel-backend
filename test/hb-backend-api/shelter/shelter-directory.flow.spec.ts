@@ -26,12 +26,13 @@ describe("Shelter directory list (flow)", () => {
     status: ShelterStatus;
     region: string;
     coverImageKey?: string;
+    name?: string;
   }): Promise<Types.ObjectId> => {
     const id = new Types.ObjectId();
     seq += 1;
     await shelterModel.create({
       _id: id,
-      name: `보호소-${seq}`,
+      name: params.name ?? `보호소-${seq}`,
       slug: `dir-${id.toHexString()}`,
       address: {
         region: params.region,
@@ -115,6 +116,58 @@ describe("Shelter directory list (flow)", () => {
 
     expect(page.items).toHaveLength(1);
     expect(page.items[0].getId.toString()).toBe(busan.toHexString());
+  });
+
+  it("searches by name (case-insensitive substring)", async () => {
+    await seedShelter({
+      status: ShelterStatus.VERIFIED,
+      region: "서울",
+      name: "행복한 발자국",
+    });
+    const target = await seedShelter({
+      status: ShelterStatus.VERIFIED,
+      region: "서울",
+      name: "우리동네 냥이쉼터",
+    });
+
+    const page = await listShelters.invoke({ keyword: "냥이", limit: 20 });
+
+    expect(page.items).toHaveLength(1);
+    expect(page.items[0].getId.toString()).toBe(target.toHexString());
+  });
+
+  it("treats regex metacharacters in the keyword literally", async () => {
+    await seedShelter({
+      status: ShelterStatus.VERIFIED,
+      region: "서울",
+      name: "행복한 발자국",
+    });
+
+    // '.*' must match a literal substring, not act as a wildcard.
+    const page = await listShelters.invoke({ keyword: ".*", limit: 20 });
+    expect(page.items).toHaveLength(0);
+  });
+
+  it("combines region and name filters", async () => {
+    await seedShelter({
+      status: ShelterStatus.VERIFIED,
+      region: "부산",
+      name: "행복 보호소",
+    });
+    const seoulHappy = await seedShelter({
+      status: ShelterStatus.VERIFIED,
+      region: "서울",
+      name: "행복 보호소",
+    });
+
+    const page = await listShelters.invoke({
+      region: "서울",
+      keyword: "행복",
+      limit: 20,
+    });
+
+    expect(page.items).toHaveLength(1);
+    expect(page.items[0].getId.toString()).toBe(seoulHappy.toHexString());
   });
 
   it("keyset-paginates across pages without overlap", async () => {

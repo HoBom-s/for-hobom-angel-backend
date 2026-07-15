@@ -40,6 +40,7 @@ export interface ShelterRepository {
    */
   listVerified(
     region: string | undefined,
+    keyword: string | undefined,
     cursorId: Types.ObjectId | null,
     limit: number,
   ): Promise<ShelterEntity[]>;
