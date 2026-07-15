@@ -11,6 +11,7 @@ import { MarkOutboxSentService } from "src/hb-backend-api/outbox/application/use
 import { MarkOutboxFailedService } from "src/hb-backend-api/outbox/application/use-cases/mark-outbox-failed.service";
 import { FindOutboxGrpcController } from "src/hb-backend-api/outbox/adapters/in/grpc/find-outbox.grpc.controller";
 import { PatchOutboxGrpcController } from "src/hb-backend-api/outbox/adapters/in/grpc/patch-outbox.grpc.controller";
+import { GrpcApiKeyGuard } from "src/infra/grpc/grpc-api-key.guard";
 
 /**
  * Outbox module. The write path exposes
@@ -27,6 +28,7 @@ import { PatchOutboxGrpcController } from "src/hb-backend-api/outbox/adapters/in
   ],
   controllers: [FindOutboxGrpcController, PatchOutboxGrpcController],
   providers: [
+    GrpcApiKeyGuard,
     {
       provide: DIToken.OutboxModule.OutboxPersistencePort,
       useClass: OutboxPersistenceAdapter,

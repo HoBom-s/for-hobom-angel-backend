@@ -20,6 +20,13 @@ import { VerifiedChannel } from "src/hb-backend-api/user/domain/enums/verified-c
 
 const PREFIX = "/hobom-angel-backend/api/v1";
 const GRPC_PORT = "50079";
+const GRPC_API_KEY = "test-grpc-api-key";
+
+const authMeta = () => {
+  const m = new grpc.Metadata();
+  m.set("x-api-key", GRPC_API_KEY);
+  return m;
+};
 
 /**
  * Notification-pipeline e2e (the half this service owns): a real HTTP approval
@@ -66,10 +73,14 @@ describe("Outbox relay (e2e)", () => {
     client: Record<string, any>,
     method: string,
     payload: unknown,
+    metadata: grpc.Metadata,
   ): Promise<any> =>
     new Promise((resolve, reject) =>
-      client[method](payload, (err: grpc.ServiceError | null, res: unknown) =>
-        err ? reject(err) : resolve(res),
+      client[method](
+        payload,
+        metadata,
+        (err: grpc.ServiceError | null, res: unknown) =>
+          err ? reject(err) : resolve(res),
       ),
     );
 
@@ -84,6 +95,7 @@ describe("Outbox relay (e2e)", () => {
     process.env.FIELD_ENCRYPTION_KEY = Buffer.alloc(32, 7).toString("base64");
     process.env.HOBOM_GRPC_HOST = "127.0.0.1";
     process.env.HOBOM_GRPC_PORT = GRPC_PORT;
+    process.env.HOBOM_GRPC_API_KEY = GRPC_API_KEY;
 
     const { AppModule } = await import("src/app.module");
     const moduleRef = await Test.createTestingModule({
@@ -190,6 +202,7 @@ describe("Outbox relay (e2e)", () => {
         eventType: "SHELTER_VERIFICATION_APPROVED",
         status: "PENDING",
       },
+      authMeta(),
     );
     expect(found.items.length).toBeGreaterThanOrEqual(1);
     const row = found.items[0];
@@ -201,9 +214,12 @@ describe("Outbox relay (e2e)", () => {
     expect(row.payload.approval_approved.recipient_user_id).toBe(admin.id);
 
     // 4) The relay marks it SENT after publishing.
-    await grpcCall(patchClient, "PatchOutboxMarkAsSentUseCase", {
-      eventId: row.eventId,
-    });
+    await grpcCall(
+      patchClient,
+      "PatchOutboxMarkAsSentUseCase",
+      { eventId: row.eventId },
+      authMeta(),
+    );
     const persisted = await outboxModel
       .findOne({ eventId: row.eventId })
       .lean();
@@ -217,11 +233,23 @@ describe("Outbox relay (e2e)", () => {
         eventType: "SHELTER_VERIFICATION_APPROVED",
         status: "PENDING",
       },
+      authMeta(),
     );
     expect(
       afterSent.items.some(
         (r: { eventId: string }) => r.eventId === row.eventId,
       ),
     ).toBe(false);
+  });
+
+  it("rejects a gRPC call missing the x-api-key", async () => {
+    await expect(
+      grpcCall(
+        findClient,
+        "FindOutboxByEventTypeAndStatusUseCase",
+        { eventType: "SHELTER_VERIFICATION_APPROVED", status: "PENDING" },
+        new grpc.Metadata(),
+      ),
+    ).rejects.toBeDefined();
   });
 });
