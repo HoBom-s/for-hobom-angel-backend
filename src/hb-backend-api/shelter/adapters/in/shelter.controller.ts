@@ -94,7 +94,7 @@ export class ShelterController {
   }
 
   @ApiOperation({
-    summary: "보호소 디렉터리 — 검증된 보호소 목록 (지역 필터·커서)",
+    summary: "보호소 디렉터리 — 검증된 보호소 목록 (지역·이름 검색·커서)",
   })
   @ApiEnvelopeCursor(ShelterListItemResponse)
   @Get()
@@ -103,6 +103,7 @@ export class ShelterController {
   ): Promise<CursorPageResponse<ShelterListItemResponse>> {
     const page = await this.listSheltersUseCase.invoke({
       region: query.region,
+      keyword: query.keyword,
       cursor: query.cursor,
       limit: query.limit ?? 20,
     });

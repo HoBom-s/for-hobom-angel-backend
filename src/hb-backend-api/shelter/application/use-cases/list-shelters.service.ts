@@ -14,6 +14,7 @@ export class ListSheltersService implements ListSheltersUseCase {
 
   public invoke(params: {
     region?: string;
+    keyword?: string;
     cursor?: string;
     limit: number;
   }): Promise<Page<Shelter>> {

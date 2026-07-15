@@ -34,6 +34,7 @@ export class ShelterQueryAdapter implements ShelterQueryPort {
 
   public async findVerified(params: {
     region?: string;
+    keyword?: string;
     cursor?: string;
     limit: number;
   }): Promise<Page<Shelter>> {
@@ -44,6 +45,7 @@ export class ShelterQueryAdapter implements ShelterQueryPort {
 
     const docs = await this.shelterRepository.listVerified(
       params.region,
+      params.keyword,
       cursorId,
       params.limit,
     );

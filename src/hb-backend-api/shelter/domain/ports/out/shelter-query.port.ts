@@ -20,6 +20,7 @@ export interface ShelterQueryPort {
    */
   findVerified(params: {
     region?: string;
+    keyword?: string;
     cursor?: string;
     limit: number;
   }): Promise<Page<Shelter>>;

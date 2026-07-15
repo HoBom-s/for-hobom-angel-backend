@@ -63,6 +63,7 @@ export class ShelterRepositoryImpl implements ShelterRepository {
 
   public listVerified(
     region: string | undefined,
+    keyword: string | undefined,
     cursorId: Types.ObjectId | null,
     limit: number,
   ): Promise<ShelterEntity[]> {
@@ -71,6 +72,12 @@ export class ShelterRepositoryImpl implements ShelterRepository {
     };
     if (region) {
       query["address.region"] = region;
+    }
+    const trimmed = keyword?.trim();
+    if (trimmed) {
+      // Case-insensitive substring match on name; escape user input so
+      // regex metacharacters are treated literally.
+      query.name = { $regex: escapeRegExp(trimmed), $options: "i" };
     }
     if (cursorId) {
       query._id = { $lt: cursorId };
@@ -81,4 +88,9 @@ export class ShelterRepositoryImpl implements ShelterRepository {
       .limit(limit + 1)
       .exec();
   }
+}
+
+/** Escapes regex metacharacters so a user keyword matches literally. */
+function escapeRegExp(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
