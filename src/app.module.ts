@@ -27,6 +27,7 @@ import { FosterModule } from "src/hb-backend-api/foster/foster.module";
 import { AuthModule } from "src/hb-backend-api/auth/auth.module";
 import { HealthModule } from "src/hb-backend-api/health/health.module";
 import { IdempotencyModule } from "src/hb-backend-api/idempotency/idempotency.module";
+import { MediaModule } from "src/hb-backend-api/media/media.module";
 import { MessagingModule } from "src/hb-backend-api/messaging/messaging.module";
 import { OutboxModule } from "src/hb-backend-api/outbox/outbox.module";
 import { QuestionnaireModule } from "src/hb-backend-api/questionnaire/questionnaire.module";
@@ -85,6 +86,7 @@ import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
     AnnouncementModule,
     FaqModule,
     AdopterHistoryModule,
+    MediaModule,
   ],
   providers: [
     TraceContext,

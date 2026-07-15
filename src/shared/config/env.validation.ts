@@ -55,6 +55,29 @@ class EnvironmentVariables {
   @IsOptional()
   @IsString()
   HOBOM_GRPC_API_KEY?: string;
+
+  // Object storage for image uploads (Cloudflare R2 / any S3-compatible bucket).
+  // Validated at the media endpoint via `getOrThrow`, so the app boots without
+  // them; only issuing an upload URL requires them.
+  @IsOptional()
+  @IsString()
+  HOBOM_R2_ENDPOINT?: string;
+
+  @IsOptional()
+  @IsString()
+  HOBOM_R2_BUCKET?: string;
+
+  @IsOptional()
+  @IsString()
+  HOBOM_R2_ACCESS_KEY_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  HOBOM_R2_SECRET_ACCESS_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  HOBOM_R2_PUBLIC_BASE_URL?: string;
 }
 
 /**
