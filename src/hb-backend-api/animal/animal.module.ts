@@ -70,6 +70,7 @@ import { ShelterStatsController } from "src/hb-backend-api/animal/adapters/in/sh
     DIToken.AnimalModule.UpdateAnimalProfileUseCase,
     DIToken.AnimalModule.AnimalPersistencePort,
     DIToken.AnimalModule.AnimalQueryPort,
+    DIToken.AnimalModule.GetShelterStatsUseCase,
   ],
 })
 export class AnimalModule {}

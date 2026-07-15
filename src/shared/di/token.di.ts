@@ -309,6 +309,12 @@ class MediaModuleToken extends TokenRegistry {
   );
 }
 
+class ShelterStatsModuleToken extends TokenRegistry {
+  public readonly GetShelterDashboardUseCase = this.register(
+    "shelter-stats.get-dashboard.use-case",
+  );
+}
+
 export const DIToken = {
   OutboxModule: new OutboxModuleToken(),
   MediaModule: new MediaModuleToken(),
@@ -330,4 +336,5 @@ export const DIToken = {
   AnnouncementModule: new AnnouncementModuleToken(),
   FaqModule: new FaqModuleToken(),
   AdopterHistoryModule: new AdopterHistoryModuleToken(),
+  ShelterStatsModule: new ShelterStatsModuleToken(),
 } as const;
