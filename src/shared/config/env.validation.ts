@@ -49,6 +49,12 @@ class EnvironmentVariables {
   @IsOptional()
   @IsString()
   FIELD_ENCRYPTION_KEY?: string;
+
+  // Shared secret the outbox relay (hobom-event-processor) presents as the
+  // `x-api-key` gRPC header. Enforced as required in production below.
+  @IsOptional()
+  @IsString()
+  HOBOM_GRPC_API_KEY?: string;
 }
 
 /**
@@ -71,6 +77,9 @@ export function validate(
   }
   if (parsed.NODE_ENV === NodeEnv.Production && !config.FIELD_ENCRYPTION_KEY) {
     throw new Error("FIELD_ENCRYPTION_KEY is required in production");
+  }
+  if (parsed.NODE_ENV === NodeEnv.Production && !config.HOBOM_GRPC_API_KEY) {
+    throw new Error("HOBOM_GRPC_API_KEY is required in production");
   }
   return config;
 }

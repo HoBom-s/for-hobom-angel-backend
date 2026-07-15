@@ -1,6 +1,7 @@
-import { Controller, Inject } from "@nestjs/common";
+import { Controller, Inject, UseGuards } from "@nestjs/common";
 import { GrpcMethod } from "@nestjs/microservices";
 import { DIToken } from "src/shared/di/token.di";
+import { GrpcApiKeyGuard } from "src/infra/grpc/grpc-api-key.guard";
 import { FindOutboxUseCase } from "src/hb-backend-api/outbox/domain/ports/in/find-outbox.use-case";
 import {
   parseEventType,
@@ -18,6 +19,7 @@ interface FindRequest {
  * hobom-event-processor polls this to fetch rows to publish to Kafka.
  */
 @Controller()
+@UseGuards(GrpcApiKeyGuard)
 export class FindOutboxGrpcController {
   constructor(
     @Inject(DIToken.OutboxModule.FindOutboxUseCase)

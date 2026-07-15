@@ -38,10 +38,26 @@ describe("env validation", () => {
   });
 
   it("requires FIELD_ENCRYPTION_KEY in production", () => {
-    const prod = { ...validEnv(), NODE_ENV: "production" };
+    const prod = {
+      ...validEnv(),
+      NODE_ENV: "production",
+      HOBOM_GRPC_API_KEY: "grpc-key",
+    };
     expect(() => validate(prod)).toThrow(/FIELD_ENCRYPTION_KEY/);
     expect(() =>
       validate({ ...prod, FIELD_ENCRYPTION_KEY: "key" }),
+    ).not.toThrow();
+  });
+
+  it("requires HOBOM_GRPC_API_KEY in production", () => {
+    const prod = {
+      ...validEnv(),
+      NODE_ENV: "production",
+      FIELD_ENCRYPTION_KEY: "key",
+    };
+    expect(() => validate(prod)).toThrow(/HOBOM_GRPC_API_KEY/);
+    expect(() =>
+      validate({ ...prod, HOBOM_GRPC_API_KEY: "grpc-key" }),
     ).not.toThrow();
   });
 
