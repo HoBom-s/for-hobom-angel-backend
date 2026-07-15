@@ -296,8 +296,18 @@ class ReviewModuleToken extends TokenRegistry {
   );
 }
 
+class MediaModuleToken extends TokenRegistry {
+  public readonly ObjectStoragePort = this.register(
+    "media.object-storage.port",
+  );
+  public readonly CreateUploadUrlUseCase = this.register(
+    "media.create-upload-url.use-case",
+  );
+}
+
 export const DIToken = {
   OutboxModule: new OutboxModuleToken(),
+  MediaModule: new MediaModuleToken(),
   UserModule: new UserModuleToken(),
   AuthModule: new AuthModuleToken(),
   AuditModule: new AuditModuleToken(),
