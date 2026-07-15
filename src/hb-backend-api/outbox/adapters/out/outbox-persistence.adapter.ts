@@ -14,4 +14,12 @@ export class OutboxPersistenceAdapter implements OutboxPersistencePort {
   public save(entity: CreateOutboxEntity): Promise<void> {
     return this.outboxRepository.save(entity);
   }
+
+  public markAsSent(eventId: string): Promise<boolean> {
+    return this.outboxRepository.markAsSent(eventId);
+  }
+
+  public markAsFailed(eventId: string, errorMessage: string): Promise<boolean> {
+    return this.outboxRepository.markAsFailed(eventId, errorMessage);
+  }
 }

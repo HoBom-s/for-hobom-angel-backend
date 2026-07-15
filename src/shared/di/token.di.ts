@@ -10,7 +10,15 @@ class OutboxModuleToken extends TokenRegistry {
   public readonly OutboxPersistencePort = this.register(
     "outbox.persistence.port",
   );
+  public readonly OutboxQueryPort = this.register("outbox.query.port");
   public readonly OutboxRepository = this.register("outbox.repository");
+  public readonly FindOutboxUseCase = this.register("outbox.find.use-case");
+  public readonly MarkOutboxSentUseCase = this.register(
+    "outbox.mark-sent.use-case",
+  );
+  public readonly MarkOutboxFailedUseCase = this.register(
+    "outbox.mark-failed.use-case",
+  );
 }
 
 class UserModuleToken extends TokenRegistry {
