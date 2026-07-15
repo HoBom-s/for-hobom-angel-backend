@@ -105,6 +105,9 @@ class AnimalModuleToken extends TokenRegistry {
   public readonly SetAnimalBlindUseCase = this.register(
     "animal.set-blind.use-case",
   );
+  public readonly GetShelterStatsUseCase = this.register(
+    "animal.get-shelter-stats.use-case",
+  );
   public readonly AnimalPersistencePort = this.register(
     "animal.persistence.port",
   );

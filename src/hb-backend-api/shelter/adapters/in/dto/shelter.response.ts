@@ -31,7 +31,29 @@ export class ShelterResponse {
   @ApiProperty({ type: [Object] })
   facilityPhotos: { objectKey: string; kind: string; caption?: string }[];
 
+  @ApiProperty({
+    nullable: true,
+    description: "소개 본문 (Markdown, 항상 공개)",
+  })
+  intro: string | null;
+
+  @ApiProperty({
+    nullable: true,
+    description: "운영 시작일 (ISO) — 클라이언트가 운영 연수 계산",
+  })
+  operatingSince: string | null;
+
+  @ApiProperty({ nullable: true, description: "대표자 표기명" })
+  representativeName: string | null;
+
+  @ApiProperty({ nullable: true, description: "방문 안내 (Markdown)" })
+  visitGuide: string | null;
+
+  @ApiProperty({ nullable: true, description: "후원 안내 (Markdown)" })
+  supportGuide: string | null;
+
   public static from(shelter: Shelter): ShelterResponse {
+    const profile = shelter.getProfile;
     const dto = new ShelterResponse();
     dto.id = shelter.getId.toString();
     dto.name = shelter.getName;
@@ -41,6 +63,11 @@ export class ShelterResponse {
     dto.addressVisibility = shelter.getAddressVisibility;
     dto.address = shelter.getAddress.publicView();
     dto.facilityPhotos = shelter.getFacilityPhotos.map((p) => p.toPlain());
+    dto.intro = profile.getIntro;
+    dto.operatingSince = profile.getOperatingSince?.toISOString() ?? null;
+    dto.representativeName = profile.getRepresentativeName;
+    dto.visitGuide = profile.getVisitGuide;
+    dto.supportGuide = profile.getSupportGuide;
     return dto;
   }
 }
