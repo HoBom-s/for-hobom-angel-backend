@@ -1,22 +1,23 @@
+import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { VolunteerPostId } from "src/hb-backend-api/volunteer-post/domain/model/vo/volunteer-post-id.vo";
-
-const MAX_BODY_LENGTH = 5000;
-const MAX_IMAGES = 10;
+import { PostContent } from "src/hb-backend-api/volunteer-post/domain/model/vo/post-content";
+import { PostBlockInput } from "src/hb-backend-api/volunteer-post/domain/model/vo/post-block";
 
 /**
  * A volunteer's review/promo post ("봉사 후기 홍보글", §05). Member-authored
- * content: the post itself is the consistency boundary and only its author may
- * remove it (a platform operator may moderate). `eventId` optionally links the
- * post to the volunteer event it reviews — stored as an opaque reference.
+ * content about a specific shelter (`shelterId`); `eventId` optionally pins it to
+ * one of that shelter's events. The body is a {@link PostContent} block list so
+ * images sit inline. The post is its own consistency boundary — only the author
+ * may remove it (a platform operator may moderate).
  */
 export class VolunteerPost {
   private constructor(
     private readonly id: VolunteerPostId,
     private readonly authorId: UserId,
+    private readonly shelterId: ShelterId,
     private readonly eventId: string | null,
-    private body: string,
-    private imageKeys: string[],
+    private readonly content: PostContent,
     private readonly likeCount: number,
     private readonly commentCount: number,
     private readonly createdAt: Date | null,
@@ -25,16 +26,16 @@ export class VolunteerPost {
 
   public static write(params: {
     authorId: UserId;
+    shelterId: ShelterId;
     eventId?: string | null;
-    body: string;
-    imageKeys?: string[];
+    content: PostBlockInput[];
   }): VolunteerPost {
     return new VolunteerPost(
       VolunteerPostId.generate(),
       params.authorId,
+      params.shelterId,
       params.eventId?.trim() || null,
-      VolunteerPost.cleanBody(params.body),
-      VolunteerPost.cleanImages(params.imageKeys ?? []),
+      PostContent.of(params.content),
       0,
       0,
       null,
@@ -45,9 +46,9 @@ export class VolunteerPost {
   public static reconstitute(params: {
     id: VolunteerPostId;
     authorId: UserId;
+    shelterId: ShelterId;
     eventId: string | null;
-    body: string;
-    imageKeys: string[];
+    content: PostContent;
     likeCount: number;
     commentCount: number;
     createdAt: Date | null;
@@ -56,9 +57,9 @@ export class VolunteerPost {
     return new VolunteerPost(
       params.id,
       params.authorId,
+      params.shelterId,
       params.eventId,
-      params.body,
-      params.imageKeys,
+      params.content,
       params.likeCount,
       params.commentCount,
       params.createdAt,
@@ -70,38 +71,24 @@ export class VolunteerPost {
     return this.authorId.equals(userId);
   }
 
-  private static cleanBody(body: string): string {
-    const trimmed = body?.trim();
-    if (!trimmed) {
-      throw new Error("후기 내용이 필요해요.");
-    }
-    if (trimmed.length > MAX_BODY_LENGTH) {
-      throw new Error(`후기는 ${MAX_BODY_LENGTH}자까지 쓸 수 있어요.`);
-    }
-    return trimmed;
-  }
-
-  private static cleanImages(imageKeys: string[]): string[] {
-    if (imageKeys.length > MAX_IMAGES) {
-      throw new Error(`이미지는 최대 ${MAX_IMAGES}장까지예요.`);
-    }
-    return [...imageKeys];
-  }
-
   public get getId(): VolunteerPostId {
     return this.id;
   }
   public get getAuthorId(): UserId {
     return this.authorId;
   }
+  public get getShelterId(): ShelterId {
+    return this.shelterId;
+  }
   public get getEventId(): string | null {
     return this.eventId;
   }
-  public get getBody(): string {
-    return this.body;
+  public get getContent(): PostContent {
+    return this.content;
   }
+  /** The attached-image manifest (object keys of every image block). */
   public get getImageKeys(): string[] {
-    return [...this.imageKeys];
+    return this.content.getImageKeys;
   }
   public get getLikeCount(): number {
     return this.likeCount;

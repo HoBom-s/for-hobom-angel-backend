@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { DIToken } from "src/shared/di/token.di";
+import { ShelterModule } from "src/hb-backend-api/shelter/shelter.module";
 import { UserModule } from "src/hb-backend-api/user/user.module";
 import { VolunteerPostEntity } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post.entity";
 import { VolunteerPostSchema } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post.schema";
@@ -47,6 +48,7 @@ import { ListMyBookmarksService } from "src/hb-backend-api/volunteer-post/applic
         schema: VolunteerPostBookmarkSchema,
       },
     ]),
+    ShelterModule,
     UserModule,
   ],
   controllers: [VolunteerPostController, MyBookmarksController],
