@@ -24,6 +24,7 @@ import {
   SignupDecision,
 } from "src/hb-backend-api/volunteer/domain/ports/in/decide-volunteer-signup.use-case";
 import { ListEventSignupsUseCase } from "src/hb-backend-api/volunteer/domain/ports/in/list-event-signups.use-case";
+import { ReadVolunteerEventsUseCase } from "src/hb-backend-api/volunteer/domain/ports/in/read-volunteer-events.use-case";
 import { CancelVolunteerEventUseCase } from "src/hb-backend-api/volunteer/domain/ports/in/cancel-volunteer-event.use-case";
 import { VolunteerSignupStatus } from "src/hb-backend-api/volunteer/domain/enums/volunteer-signup-status.enum";
 
@@ -44,6 +45,7 @@ describe("Volunteer (flow)", () => {
   let withdraw: WithdrawVolunteerSignupUseCase;
   let decide: DecideVolunteerSignupUseCase;
   let listApplicants: ListEventSignupsUseCase;
+  let readEvents: ReadVolunteerEventsUseCase;
   let cancel: CancelVolunteerEventUseCase;
   let eventModel: Model<VolunteerEventEntity>;
   let shelterModel: Model<ShelterEntity>;
@@ -136,6 +138,7 @@ describe("Volunteer (flow)", () => {
     withdraw = app.get(DIToken.VolunteerModule.WithdrawVolunteerSignupUseCase);
     decide = app.get(DIToken.VolunteerModule.DecideVolunteerSignupUseCase);
     listApplicants = app.get(DIToken.VolunteerModule.ListEventSignupsUseCase);
+    readEvents = app.get(DIToken.VolunteerModule.ReadVolunteerEventsUseCase);
     cancel = app.get(DIToken.VolunteerModule.CancelVolunteerEventUseCase);
     eventModel = app.get(getModelToken(VolunteerEventEntity.name));
     shelterModel = app.get(getModelToken(ShelterEntity.name));
@@ -163,6 +166,53 @@ describe("Volunteer (flow)", () => {
     const event = await eventModel.findById(eventId).lean().exec();
     expect(event?.signedUpCount).toBe(1);
     expect(event?.status).toBe(VolunteerEventStatus.OPEN);
+  });
+
+  it("event reads carry the viewer's own signup id + status (and null for others)", async () => {
+    const shelterId = await seedShelter();
+    const staffId = await seedUser([
+      { shelterId, role: UserRole.SHELTER_STAFF },
+    ]);
+    const eventId = await openEvent(shelterId, staffId, 2);
+    const volunteerId = await seedUser();
+    const other = await seedUser();
+
+    // Before signing up: null for everyone.
+    let view = await readEvents.one(eventId, volunteerId.toHexString());
+    expect(view?.mySignupId).toBeNull();
+    expect(view?.mySignupStatus).toBeNull();
+
+    const { signupId } = await signUp.invoke({
+      eventId,
+      volunteerId: volunteerId.toHexString(),
+    });
+
+    // The volunteer now sees their own signup id + PENDING status.
+    view = await readEvents.one(eventId, volunteerId.toHexString());
+    expect(view?.mySignupId).toBe(signupId);
+    expect(view?.mySignupStatus).toBe(VolunteerSignupStatus.PENDING);
+
+    // Another member sees null (it's per-viewer).
+    const otherView = await readEvents.one(eventId, other.toHexString());
+    expect(otherView?.mySignupId).toBeNull();
+
+    // Staff approves → status flips to APPROVED for the volunteer's view.
+    await decide.invoke({
+      signupId,
+      actorId: staffId.toHexString(),
+      decision: SignupDecision.APPROVE,
+    });
+    view = await readEvents.one(eventId, volunteerId.toHexString());
+    expect(view?.mySignupStatus).toBe(VolunteerSignupStatus.APPROVED);
+
+    // After withdrawal it clears (no longer live).
+    await withdraw.invoke({
+      signupId,
+      volunteerId: volunteerId.toHexString(),
+    });
+    view = await readEvents.one(eventId, volunteerId.toHexString());
+    expect(view?.mySignupId).toBeNull();
+    expect(view?.mySignupStatus).toBeNull();
   });
 
   it("staff approves an applicant — status APPROVED, slot kept", async () => {
