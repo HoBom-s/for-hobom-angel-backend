@@ -29,6 +29,7 @@ describe("LikeVolunteerPostService", () => {
       create: jest.fn(),
       remove: jest.fn(),
       adjustLikeCount: jest.fn(),
+      adjustCommentCount: jest.fn(),
     };
     const service = new LikeVolunteerPostService(
       { run: (fn: () => Promise<unknown>) => fn() } as TransactionRunner,

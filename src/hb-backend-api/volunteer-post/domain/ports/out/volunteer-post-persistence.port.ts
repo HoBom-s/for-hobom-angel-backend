@@ -7,4 +7,6 @@ export interface VolunteerPostPersistencePort {
   remove(post: VolunteerPost): Promise<void>;
   /** Atomically adjust a post's denormalized like tally. */
   adjustLikeCount(postId: VolunteerPostId, delta: number): Promise<void>;
+  /** Atomically adjust a post's denormalized comment tally. */
+  adjustCommentCount(postId: VolunteerPostId, delta: number): Promise<void>;
 }

@@ -21,6 +21,10 @@ export class VolunteerPostEntity extends BaseEntity {
   @Prop({ required: true, default: 0 })
   public likeCount: number;
 
+  // Denormalized comment tally, maintained by atomic $inc on create/delete.
+  @Prop({ required: true, default: 0 })
+  public commentCount: number;
+
   @Prop({ required: true, default: 0 })
   public version: number;
 }

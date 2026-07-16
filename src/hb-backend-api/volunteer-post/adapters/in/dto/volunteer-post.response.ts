@@ -20,6 +20,9 @@ export class VolunteerPostResponse {
   @ApiProperty({ description: "좋아요 수" })
   likeCount: number;
 
+  @ApiProperty({ description: "댓글 수" })
+  commentCount: number;
+
   @ApiProperty({ description: "내가 좋아요를 눌렀는지" })
   liked: boolean;
 
@@ -34,6 +37,7 @@ export class VolunteerPostResponse {
     dto.body = item.post.getBody;
     dto.imageKeys = item.post.getImageKeys;
     dto.likeCount = item.post.getLikeCount;
+    dto.commentCount = item.post.getCommentCount;
     dto.liked = item.liked;
     dto.createdAt = item.post.getCreatedAt;
     return dto;

@@ -7,6 +7,8 @@ export interface VolunteerPostRepository {
   deleteById(id: Types.ObjectId): Promise<void>;
   /** Atomically adjust the denormalized like tally. */
   incrementLikeCount(id: Types.ObjectId, delta: number): Promise<void>;
+  /** Atomically adjust the denormalized comment tally. */
+  incrementCommentCount(id: Types.ObjectId, delta: number): Promise<void>;
   findById(id: Types.ObjectId): Promise<VolunteerPostEntity | null>;
   /**
    * The feed, newest first. Returns up to `limit + 1` docs so the caller can

@@ -1,4 +1,8 @@
-import { ForbiddenException, INestApplication } from "@nestjs/common";
+import {
+  ForbiddenException,
+  INestApplication,
+  NotFoundException,
+} from "@nestjs/common";
 import { getModelToken } from "@nestjs/mongoose";
 import { Test } from "@nestjs/testing";
 import { MongoMemoryReplSet } from "mongodb-memory-server";
@@ -13,7 +17,9 @@ import { CreateVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/do
 import { DeleteVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/delete-volunteer-post.use-case";
 import { LikeVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/like-volunteer-post.use-case";
 import { ReadVolunteerFeedUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/read-volunteer-feed.use-case";
+import { CommentVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/comment-volunteer-post.use-case";
 import { VolunteerPostQueryPort } from "src/hb-backend-api/volunteer-post/domain/ports/out/volunteer-post-query.port";
+import { VolunteerPostCommentPort } from "src/hb-backend-api/volunteer-post/domain/ports/out/volunteer-post-comment.port";
 import { VolunteerPostId } from "src/hb-backend-api/volunteer-post/domain/model/vo/volunteer-post-id.vo";
 
 /**
@@ -28,7 +34,9 @@ describe("Volunteer post (flow)", () => {
   let deletePost: DeleteVolunteerPostUseCase;
   let likePost: LikeVolunteerPostUseCase;
   let readFeed: ReadVolunteerFeedUseCase;
+  let commentPost: CommentVolunteerPostUseCase;
   let queryPort: VolunteerPostQueryPort;
+  let commentPort: VolunteerPostCommentPort;
   let userModel: Model<UserEntity>;
   let postModel: Model<VolunteerPostEntity>;
 
@@ -80,7 +88,11 @@ describe("Volunteer post (flow)", () => {
     );
     likePost = app.get(DIToken.VolunteerPostModule.LikeVolunteerPostUseCase);
     readFeed = app.get(DIToken.VolunteerPostModule.ReadVolunteerFeedUseCase);
+    commentPost = app.get(
+      DIToken.VolunteerPostModule.CommentVolunteerPostUseCase,
+    );
     queryPort = app.get(DIToken.VolunteerPostModule.VolunteerPostQueryPort);
+    commentPort = app.get(DIToken.VolunteerPostModule.VolunteerPostCommentPort);
     userModel = app.get(getModelToken(UserEntity.name));
     postModel = app.get(getModelToken(VolunteerPostEntity.name));
   }, 60_000);
@@ -177,6 +189,65 @@ describe("Volunteer post (flow)", () => {
     item = await readFeed.one(postId, fan);
     expect(item?.post.getLikeCount).toBe(0);
     expect(item?.liked).toBe(false);
+  });
+
+  it("comments drive commentCount, list oldest-first, and author-only delete", async () => {
+    const author = await seedUser();
+    const commenter = await seedUser();
+    const { postId } = await createPost.invoke({
+      authorId: author,
+      body: "댓글 달아주세요",
+    });
+
+    const first = await commentPost.create({
+      postId,
+      authorId: commenter,
+      body: "첫 댓글",
+    });
+    await commentPost.create({
+      postId,
+      authorId: author,
+      body: "둘째 댓글",
+    });
+
+    // commentCount reflects both.
+    let post = await queryPort.findById(VolunteerPostId.fromString(postId));
+    expect(post?.getCommentCount).toBe(2);
+
+    // Listed oldest first.
+    const page = await commentPort.listByPost({
+      postId: VolunteerPostId.fromString(postId),
+      limit: 20,
+    });
+    expect(page.items.map((c) => c.getBody)).toEqual(["첫 댓글", "둘째 댓글"]);
+
+    // A stranger can't delete someone else's comment.
+    const stranger = await seedUser();
+    await expect(
+      commentPost.delete({
+        commentId: first.commentId,
+        requesterId: stranger,
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+
+    // The author of the comment deletes it → commentCount drops.
+    await commentPost.delete({
+      commentId: first.commentId,
+      requesterId: commenter,
+    });
+    post = await queryPort.findById(VolunteerPostId.fromString(postId));
+    expect(post?.getCommentCount).toBe(1);
+  });
+
+  it("refuses a comment on a missing post", async () => {
+    const commenter = await seedUser();
+    await expect(
+      commentPost.create({
+        postId: new Types.ObjectId().toHexString(),
+        authorId: commenter,
+        body: "유령 후기",
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it("lets only the author delete their post", async () => {
