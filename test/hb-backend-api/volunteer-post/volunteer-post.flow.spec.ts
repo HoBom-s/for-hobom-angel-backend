@@ -8,11 +8,16 @@ import { Test } from "@nestjs/testing";
 import { MongoMemoryReplSet } from "mongodb-memory-server";
 import { Model, Types } from "mongoose";
 import { DIToken } from "src/shared/di/token.di";
+import { AddressVisibility } from "src/hb-backend-api/shelter/domain/enums/address-visibility.enum";
+import { ShelterStatus } from "src/hb-backend-api/shelter/domain/enums/shelter-status.enum";
+import { TrustTier } from "src/hb-backend-api/shelter/domain/enums/trust-tier.enum";
+import { ShelterEntity } from "src/hb-backend-api/shelter/domain/model/shelter.entity";
 import { UserRole } from "src/hb-backend-api/user/domain/enums/user-role.enum";
 import { UserStatus } from "src/hb-backend-api/user/domain/enums/user-status.enum";
 import { VerifiedChannel } from "src/hb-backend-api/user/domain/enums/verified-channel.enum";
 import { UserEntity } from "src/hb-backend-api/user/domain/model/user.entity";
 import { VolunteerPostEntity } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post.entity";
+import { PostBlockType } from "src/hb-backend-api/volunteer-post/domain/model/vo/post-block";
 import { CreateVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/create-volunteer-post.use-case";
 import { DeleteVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/delete-volunteer-post.use-case";
 import { LikeVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/like-volunteer-post.use-case";
@@ -24,9 +29,12 @@ import { VolunteerPostQueryPort } from "src/hb-backend-api/volunteer-post/domain
 import { VolunteerPostCommentPort } from "src/hb-backend-api/volunteer-post/domain/ports/out/volunteer-post-comment.port";
 import { VolunteerPostId } from "src/hb-backend-api/volunteer-post/domain/model/vo/volunteer-post-id.vo";
 
+const text = (t: string) => [{ type: PostBlockType.TEXT, text: t }];
+
 /**
- * §05 volunteer post feed end-to-end: a member writes reviews, the public feed
- * keyset-paginates them newest-first, and only the author (or an operator) can
+ * §05 volunteer post feed end-to-end: a member writes reviews about a shelter
+ * (content blocks with inline images), the public feed keyset-paginates them,
+ * likes/comments/bookmarks work, and only the author (or an operator) can
  * delete — proven through the real DI graph and Mongo.
  */
 describe("Volunteer post (flow)", () => {
@@ -41,8 +49,11 @@ describe("Volunteer post (flow)", () => {
   let listMyBookmarks: ListMyBookmarksUseCase;
   let queryPort: VolunteerPostQueryPort;
   let commentPort: VolunteerPostCommentPort;
+  let shelterModel: Model<ShelterEntity>;
   let userModel: Model<UserEntity>;
   let postModel: Model<VolunteerPostEntity>;
+
+  let shelterId: string;
 
   let seq = 0;
   const seedUser = async (
@@ -61,6 +72,31 @@ describe("Volunteer post (flow)", () => {
       roles: [UserRole.USER],
       shelterRoles: [],
       status,
+      version: 0,
+    });
+    return id.toHexString();
+  };
+
+  const seedShelter = async (
+    status: ShelterStatus = ShelterStatus.VERIFIED,
+  ): Promise<string> => {
+    const id = new Types.ObjectId();
+    seq += 1;
+    await shelterModel.create({
+      _id: id,
+      name: "행복한 발자국",
+      slug: `shelter-${id.toHexString()}`,
+      address: {
+        region: "서울",
+        city: "강남구",
+        roadAddress: "테헤란로 1",
+        lat: null,
+        lng: null,
+        visibility: AddressVisibility.PARTIAL,
+      },
+      representatives: [],
+      status,
+      trustTier: status === ShelterStatus.VERIFIED ? TrustTier.A : undefined,
       version: 0,
     });
     return id.toHexString();
@@ -103,8 +139,11 @@ describe("Volunteer post (flow)", () => {
     );
     queryPort = app.get(DIToken.VolunteerPostModule.VolunteerPostQueryPort);
     commentPort = app.get(DIToken.VolunteerPostModule.VolunteerPostCommentPort);
+    shelterModel = app.get(getModelToken(ShelterEntity.name));
     userModel = app.get(getModelToken(UserEntity.name));
     postModel = app.get(getModelToken(VolunteerPostEntity.name));
+
+    shelterId = await seedShelter();
   }, 60_000);
 
   afterEach(async () => {
@@ -116,37 +155,71 @@ describe("Volunteer post (flow)", () => {
     await mongo?.stop();
   });
 
-  it("publishes a post and reads it back on the feed with its images", async () => {
+  it("publishes a post about a shelter with inline image blocks", async () => {
     const author = await seedUser();
     const { postId } = await createPost.invoke({
       authorId: author,
-      body: "산책 봉사 다녀왔어요",
-      imageKeys: ["posts/1.webp"],
+      shelterId,
+      content: [
+        { type: PostBlockType.TEXT, text: "산책 봉사 다녀왔어요" },
+        { type: PostBlockType.IMAGE, imageKey: "posts/1.webp" },
+        { type: PostBlockType.TEXT, text: "행복했어요" },
+      ],
     });
 
     const post = await queryPort.findById(VolunteerPostId.fromString(postId));
-    expect(post?.getBody).toBe("산책 봉사 다녀왔어요");
+    expect(post?.getShelterId.toString()).toBe(shelterId);
+    expect(post?.getContent.getBlocks).toHaveLength(3);
+    expect(post?.getContent.getBlocks[1]).toEqual({
+      type: PostBlockType.IMAGE,
+      imageKey: "posts/1.webp",
+      caption: null,
+    });
     expect(post?.getImageKeys).toEqual(["posts/1.webp"]);
 
     const feed = await queryPort.findFeed({ limit: 20 });
     expect(feed.items.some((p) => p.getId.toString() === postId)).toBe(true);
   });
 
+  it("refuses a post about a missing or unverified shelter", async () => {
+    const author = await seedUser();
+    await expect(
+      createPost.invoke({
+        authorId: author,
+        shelterId: new Types.ObjectId().toHexString(),
+        content: text("유령 보호소"),
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+
+    const pending = await seedShelter(ShelterStatus.PENDING_VERIFICATION);
+    await expect(
+      createPost.invoke({
+        authorId: author,
+        shelterId: pending,
+        content: text("미검증 보호소"),
+      }),
+    ).rejects.toThrow("검증된 보호소");
+  });
+
   it("refuses a suspended member", async () => {
     const suspended = await seedUser(UserStatus.SUSPENDED);
     await expect(
-      createPost.invoke({ authorId: suspended, body: "hi" }),
+      createPost.invoke({
+        authorId: suspended,
+        shelterId,
+        content: text("hi"),
+      }),
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
   it("keyset-paginates the feed newest-first without overlap", async () => {
-    await userModel.deleteMany({}).exec();
     const author = await seedUser();
     const ids: string[] = [];
     for (let i = 0; i < 3; i += 1) {
       const { postId } = await createPost.invoke({
         authorId: author,
-        body: `post-${i}`,
+        shelterId,
+        content: text(`post-${i}`),
       });
       ids.push(postId);
     }
@@ -173,27 +246,24 @@ describe("Volunteer post (flow)", () => {
     const fan = await seedUser();
     const { postId } = await createPost.invoke({
       authorId: author,
-      body: "좋아요 눌러주세요",
+      shelterId,
+      content: text("좋아요 눌러주세요"),
     });
 
-    // Not liked yet.
     let item = await readFeed.one(postId, fan);
     expect(item?.post.getLikeCount).toBe(0);
     expect(item?.liked).toBe(false);
 
-    // Like twice — idempotent, count stays 1.
     await likePost.like({ postId, userId: fan });
     await likePost.like({ postId, userId: fan });
     item = await readFeed.one(postId, fan);
     expect(item?.post.getLikeCount).toBe(1);
     expect(item?.liked).toBe(true);
 
-    // The author viewing the same post hasn't liked it.
     const authorView = await readFeed.one(postId, author);
     expect(authorView?.post.getLikeCount).toBe(1);
     expect(authorView?.liked).toBe(false);
 
-    // Unlike twice — count floors at 0.
     await likePost.unlike({ postId, userId: fan });
     await likePost.unlike({ postId, userId: fan });
     item = await readFeed.one(postId, fan);
@@ -206,7 +276,8 @@ describe("Volunteer post (flow)", () => {
     const commenter = await seedUser();
     const { postId } = await createPost.invoke({
       authorId: author,
-      body: "댓글 달아주세요",
+      shelterId,
+      content: text("댓글 달아주세요"),
     });
 
     const first = await commentPost.create({
@@ -214,33 +285,22 @@ describe("Volunteer post (flow)", () => {
       authorId: commenter,
       body: "첫 댓글",
     });
-    await commentPost.create({
-      postId,
-      authorId: author,
-      body: "둘째 댓글",
-    });
+    await commentPost.create({ postId, authorId: author, body: "둘째 댓글" });
 
-    // commentCount reflects both.
     let post = await queryPort.findById(VolunteerPostId.fromString(postId));
     expect(post?.getCommentCount).toBe(2);
 
-    // Listed oldest first.
     const page = await commentPort.listByPost({
       postId: VolunteerPostId.fromString(postId),
       limit: 20,
     });
     expect(page.items.map((c) => c.getBody)).toEqual(["첫 댓글", "둘째 댓글"]);
 
-    // A stranger can't delete someone else's comment.
     const stranger = await seedUser();
     await expect(
-      commentPost.delete({
-        commentId: first.commentId,
-        requesterId: stranger,
-      }),
+      commentPost.delete({ commentId: first.commentId, requesterId: stranger }),
     ).rejects.toBeInstanceOf(ForbiddenException);
 
-    // The author of the comment deletes it → commentCount drops.
     await commentPost.delete({
       commentId: first.commentId,
       requesterId: commenter,
@@ -252,14 +312,20 @@ describe("Volunteer post (flow)", () => {
   it("bookmarks toggle the viewer flag and show up in 'my bookmarks'", async () => {
     const author = await seedUser();
     const saver = await seedUser();
-    const a = await createPost.invoke({ authorId: author, body: "첫 후기" });
-    const b = await createPost.invoke({ authorId: author, body: "둘째 후기" });
+    const a = await createPost.invoke({
+      authorId: author,
+      shelterId,
+      content: text("첫 후기"),
+    });
+    const b = await createPost.invoke({
+      authorId: author,
+      shelterId,
+      content: text("둘째 후기"),
+    });
 
-    // Not bookmarked yet.
     let item = await readFeed.one(a.postId, saver);
     expect(item?.bookmarked).toBe(false);
 
-    // Save both (idempotent — save the same one twice).
     await bookmarkPost.bookmark({ postId: a.postId, userId: saver });
     await bookmarkPost.bookmark({ postId: a.postId, userId: saver });
     await bookmarkPost.bookmark({ postId: b.postId, userId: saver });
@@ -267,11 +333,9 @@ describe("Volunteer post (flow)", () => {
     item = await readFeed.one(a.postId, saver);
     expect(item?.bookmarked).toBe(true);
 
-    // Another member's view is unaffected.
     const other = await seedUser();
     expect((await readFeed.one(a.postId, other))?.bookmarked).toBe(false);
 
-    // "My bookmarks" lists both, most-recently-saved first, flagged bookmarked.
     const mine = await listMyBookmarks.invoke({ viewerId: saver, limit: 20 });
     expect(mine.items.map((i) => i.post.getId.toString())).toEqual([
       b.postId,
@@ -279,7 +343,6 @@ describe("Volunteer post (flow)", () => {
     ]);
     expect(mine.items.every((i) => i.bookmarked)).toBe(true);
 
-    // Unsaving drops it from the flag and the list.
     await bookmarkPost.unbookmark({ postId: a.postId, userId: saver });
     expect((await readFeed.one(a.postId, saver))?.bookmarked).toBe(false);
     const after = await listMyBookmarks.invoke({ viewerId: saver, limit: 20 });
@@ -302,7 +365,8 @@ describe("Volunteer post (flow)", () => {
     const stranger = await seedUser();
     const { postId } = await createPost.invoke({
       authorId: author,
-      body: "지울 후기",
+      shelterId,
+      content: text("지울 후기"),
     });
 
     await expect(

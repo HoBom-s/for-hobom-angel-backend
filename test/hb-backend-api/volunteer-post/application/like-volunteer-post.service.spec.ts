@@ -1,12 +1,18 @@
 import { NotFoundException } from "@nestjs/common";
 import { TransactionRunner } from "src/infra/mongo/transaction/transaction.runner";
+import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { VolunteerPost } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post";
 import { VolunteerPostId } from "src/hb-backend-api/volunteer-post/domain/model/vo/volunteer-post-id.vo";
+import { PostBlockType } from "src/hb-backend-api/volunteer-post/domain/model/vo/post-block";
 import { LikeVolunteerPostService } from "src/hb-backend-api/volunteer-post/application/use-cases/like-volunteer-post.service";
 
 const post = () =>
-  VolunteerPost.write({ authorId: UserId.generate(), body: "hi" });
+  VolunteerPost.write({
+    authorId: UserId.generate(),
+    shelterId: ShelterId.generate(),
+    content: [{ type: PostBlockType.TEXT, text: "hi" }],
+  });
 
 const cmd = () => ({
   postId: VolunteerPostId.generate().toString(),

@@ -78,9 +78,9 @@ export class VolunteerPostController {
   ): Promise<CreateVolunteerPostResponse> {
     const result = await this.createVolunteerPostUseCase.invoke({
       authorId: user.userId,
+      shelterId: body.shelterId,
       eventId: body.eventId,
-      body: body.body,
-      imageKeys: body.imageKeys,
+      content: body.content,
     });
     return CreateVolunteerPostResponse.from(result);
   }
