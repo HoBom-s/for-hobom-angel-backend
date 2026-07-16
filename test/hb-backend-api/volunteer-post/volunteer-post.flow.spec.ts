@@ -18,6 +18,8 @@ import { DeleteVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/do
 import { LikeVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/like-volunteer-post.use-case";
 import { ReadVolunteerFeedUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/read-volunteer-feed.use-case";
 import { CommentVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/comment-volunteer-post.use-case";
+import { BookmarkVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/bookmark-volunteer-post.use-case";
+import { ListMyBookmarksUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/list-my-bookmarks.use-case";
 import { VolunteerPostQueryPort } from "src/hb-backend-api/volunteer-post/domain/ports/out/volunteer-post-query.port";
 import { VolunteerPostCommentPort } from "src/hb-backend-api/volunteer-post/domain/ports/out/volunteer-post-comment.port";
 import { VolunteerPostId } from "src/hb-backend-api/volunteer-post/domain/model/vo/volunteer-post-id.vo";
@@ -35,6 +37,8 @@ describe("Volunteer post (flow)", () => {
   let likePost: LikeVolunteerPostUseCase;
   let readFeed: ReadVolunteerFeedUseCase;
   let commentPost: CommentVolunteerPostUseCase;
+  let bookmarkPost: BookmarkVolunteerPostUseCase;
+  let listMyBookmarks: ListMyBookmarksUseCase;
   let queryPort: VolunteerPostQueryPort;
   let commentPort: VolunteerPostCommentPort;
   let userModel: Model<UserEntity>;
@@ -90,6 +94,12 @@ describe("Volunteer post (flow)", () => {
     readFeed = app.get(DIToken.VolunteerPostModule.ReadVolunteerFeedUseCase);
     commentPost = app.get(
       DIToken.VolunteerPostModule.CommentVolunteerPostUseCase,
+    );
+    bookmarkPost = app.get(
+      DIToken.VolunteerPostModule.BookmarkVolunteerPostUseCase,
+    );
+    listMyBookmarks = app.get(
+      DIToken.VolunteerPostModule.ListMyBookmarksUseCase,
     );
     queryPort = app.get(DIToken.VolunteerPostModule.VolunteerPostQueryPort);
     commentPort = app.get(DIToken.VolunteerPostModule.VolunteerPostCommentPort);
@@ -237,6 +247,43 @@ describe("Volunteer post (flow)", () => {
     });
     post = await queryPort.findById(VolunteerPostId.fromString(postId));
     expect(post?.getCommentCount).toBe(1);
+  });
+
+  it("bookmarks toggle the viewer flag and show up in 'my bookmarks'", async () => {
+    const author = await seedUser();
+    const saver = await seedUser();
+    const a = await createPost.invoke({ authorId: author, body: "첫 후기" });
+    const b = await createPost.invoke({ authorId: author, body: "둘째 후기" });
+
+    // Not bookmarked yet.
+    let item = await readFeed.one(a.postId, saver);
+    expect(item?.bookmarked).toBe(false);
+
+    // Save both (idempotent — save the same one twice).
+    await bookmarkPost.bookmark({ postId: a.postId, userId: saver });
+    await bookmarkPost.bookmark({ postId: a.postId, userId: saver });
+    await bookmarkPost.bookmark({ postId: b.postId, userId: saver });
+
+    item = await readFeed.one(a.postId, saver);
+    expect(item?.bookmarked).toBe(true);
+
+    // Another member's view is unaffected.
+    const other = await seedUser();
+    expect((await readFeed.one(a.postId, other))?.bookmarked).toBe(false);
+
+    // "My bookmarks" lists both, most-recently-saved first, flagged bookmarked.
+    const mine = await listMyBookmarks.invoke({ viewerId: saver, limit: 20 });
+    expect(mine.items.map((i) => i.post.getId.toString())).toEqual([
+      b.postId,
+      a.postId,
+    ]);
+    expect(mine.items.every((i) => i.bookmarked)).toBe(true);
+
+    // Unsaving drops it from the flag and the list.
+    await bookmarkPost.unbookmark({ postId: a.postId, userId: saver });
+    expect((await readFeed.one(a.postId, saver))?.bookmarked).toBe(false);
+    const after = await listMyBookmarks.invoke({ viewerId: saver, limit: 20 });
+    expect(after.items.map((i) => i.post.getId.toString())).toEqual([b.postId]);
   });
 
   it("refuses a comment on a missing post", async () => {

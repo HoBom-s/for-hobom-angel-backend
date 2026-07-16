@@ -34,6 +34,7 @@ import { DeleteVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/do
 import { LikeVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/like-volunteer-post.use-case";
 import { ReadVolunteerFeedUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/read-volunteer-feed.use-case";
 import { CommentVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/comment-volunteer-post.use-case";
+import { BookmarkVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/bookmark-volunteer-post.use-case";
 import { VolunteerPostCommentPort } from "src/hb-backend-api/volunteer-post/domain/ports/out/volunteer-post-comment.port";
 import { VolunteerPostId } from "src/hb-backend-api/volunteer-post/domain/model/vo/volunteer-post-id.vo";
 import { CreateVolunteerPostDto } from "src/hb-backend-api/volunteer-post/adapters/in/dto/create-volunteer-post.dto";
@@ -62,6 +63,8 @@ export class VolunteerPostController {
     private readonly readVolunteerFeedUseCase: ReadVolunteerFeedUseCase,
     @Inject(DIToken.VolunteerPostModule.CommentVolunteerPostUseCase)
     private readonly commentVolunteerPostUseCase: CommentVolunteerPostUseCase,
+    @Inject(DIToken.VolunteerPostModule.BookmarkVolunteerPostUseCase)
+    private readonly bookmarkVolunteerPostUseCase: BookmarkVolunteerPostUseCase,
     @Inject(DIToken.VolunteerPostModule.VolunteerPostCommentPort)
     private readonly commentPort: VolunteerPostCommentPort,
   ) {}
@@ -182,6 +185,34 @@ export class VolunteerPostController {
     return this.commentVolunteerPostUseCase.delete({
       commentId,
       requesterId: user.userId,
+    });
+  }
+
+  @ApiOperation({ summary: "봉사 후기 저장 (북마크)" })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post(":postId/bookmarks")
+  public bookmark(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("postId") postId: string,
+  ): Promise<void> {
+    return this.bookmarkVolunteerPostUseCase.bookmark({
+      postId,
+      userId: user.userId,
+    });
+  }
+
+  @ApiOperation({ summary: "봉사 후기 저장 취소" })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(":postId/bookmarks")
+  public unbookmark(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("postId") postId: string,
+  ): Promise<void> {
+    return this.bookmarkVolunteerPostUseCase.unbookmark({
+      postId,
+      userId: user.userId,
     });
   }
 

@@ -10,6 +10,7 @@ export interface VolunteerPostRepository {
   /** Atomically adjust the denormalized comment tally. */
   incrementCommentCount(id: Types.ObjectId, delta: number): Promise<void>;
   findById(id: Types.ObjectId): Promise<VolunteerPostEntity | null>;
+  findByIds(ids: Types.ObjectId[]): Promise<VolunteerPostEntity[]>;
   /**
    * The feed, newest first. Returns up to `limit + 1` docs so the caller can
    * detect a next page; `cursorId` is the previous page's last id (exclusive).
