@@ -13,4 +13,12 @@ export interface VolunteerSignupQueryPort {
   ): Promise<VolunteerSignup | null>;
   /** An event's roster (newest first) — for the staff applicant list. */
   findByEvent(eventId: VolunteerEventId): Promise<VolunteerSignup[]>;
+  /**
+   * A volunteer's still-live signups among the given events — hydrates the
+   * per-viewer `mySignupId` on event reads (at most one per event).
+   */
+  findLiveByVolunteer(
+    volunteerId: UserId,
+    eventIds: VolunteerEventId[],
+  ): Promise<VolunteerSignup[]>;
 }

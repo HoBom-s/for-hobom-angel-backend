@@ -65,4 +65,22 @@ export class VolunteerSignupRepositoryImpl implements VolunteerSignupRepository 
   ): Promise<VolunteerSignupEntity[]> {
     return this.model.find({ eventId }).sort({ _id: -1 }).exec();
   }
+
+  public findLiveByVolunteer(
+    volunteerId: Types.ObjectId,
+    eventIds: Types.ObjectId[],
+  ): Promise<VolunteerSignupEntity[]> {
+    if (eventIds.length === 0) {
+      return Promise.resolve([]);
+    }
+    return this.model
+      .find({
+        volunteerId,
+        eventId: { $in: eventIds },
+        status: {
+          $in: [VolunteerSignupStatus.PENDING, VolunteerSignupStatus.APPROVED],
+        },
+      })
+      .exec();
+  }
 }

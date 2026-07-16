@@ -30,8 +30,6 @@ import { DIToken } from "src/shared/di/token.di";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
 import { JwtAuthGuard } from "src/hb-backend-api/auth/adapters/in/rest/guard/jwt-auth.guard";
 import { AuthenticatedUser } from "src/hb-backend-api/auth/domain/model/token-pair";
-import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
-import { VolunteerEventId } from "src/hb-backend-api/volunteer/domain/model/vo/volunteer-event-id.vo";
 import {
   CreateVolunteerEventResult,
   CreateVolunteerEventUseCase,
@@ -43,8 +41,8 @@ import {
 import { WithdrawVolunteerSignupUseCase } from "src/hb-backend-api/volunteer/domain/ports/in/withdraw-volunteer-signup.use-case";
 import { DecideVolunteerSignupUseCase } from "src/hb-backend-api/volunteer/domain/ports/in/decide-volunteer-signup.use-case";
 import { ListEventSignupsUseCase } from "src/hb-backend-api/volunteer/domain/ports/in/list-event-signups.use-case";
+import { ReadVolunteerEventsUseCase } from "src/hb-backend-api/volunteer/domain/ports/in/read-volunteer-events.use-case";
 import { CancelVolunteerEventUseCase } from "src/hb-backend-api/volunteer/domain/ports/in/cancel-volunteer-event.use-case";
-import { VolunteerEventQueryPort } from "src/hb-backend-api/volunteer/domain/ports/out/volunteer-event-query.port";
 import { CreateVolunteerEventDto } from "src/hb-backend-api/volunteer/adapters/in/dto/create-volunteer-event.dto";
 import { DecideVolunteerSignupDto } from "src/hb-backend-api/volunteer/adapters/in/dto/decide-volunteer-signup.dto";
 import { VolunteerEventResponse } from "src/hb-backend-api/volunteer/adapters/in/dto/volunteer-event.response";
@@ -68,10 +66,10 @@ export class VolunteerController {
     private readonly decideVolunteerSignupUseCase: DecideVolunteerSignupUseCase,
     @Inject(DIToken.VolunteerModule.ListEventSignupsUseCase)
     private readonly listEventSignupsUseCase: ListEventSignupsUseCase,
+    @Inject(DIToken.VolunteerModule.ReadVolunteerEventsUseCase)
+    private readonly readVolunteerEventsUseCase: ReadVolunteerEventsUseCase,
     @Inject(DIToken.VolunteerModule.CancelVolunteerEventUseCase)
     private readonly cancelVolunteerEventUseCase: CancelVolunteerEventUseCase,
-    @Inject(DIToken.VolunteerModule.VolunteerEventQueryPort)
-    private readonly eventQueryPort: VolunteerEventQueryPort,
   ) {}
 
   @ApiOperation({ summary: "봉사 일정 개설 (검증된 보호소의 스태프)" })
@@ -89,45 +87,50 @@ export class VolunteerController {
     });
   }
 
-  @ApiOperation({ summary: "보호소 봉사 일정 목록" })
+  @ApiOperation({ summary: "보호소 봉사 일정 목록 (내 신청 상태 포함)" })
   @ApiEnvelopeArray(VolunteerEventResponse)
   @Get("shelters/:shelterId/volunteer-events")
   public async listByShelter(
+    @CurrentUser() user: AuthenticatedUser,
     @Param("shelterId") shelterId: string,
   ): Promise<VolunteerEventResponse[]> {
-    const events = await this.eventQueryPort.findByShelter(
-      ShelterId.fromString(shelterId),
+    const views = await this.readVolunteerEventsUseCase.byShelter(
+      shelterId,
+      user.userId,
     );
-    return events.map((event) => VolunteerEventResponse.from(event));
+    return views.map((view) => VolunteerEventResponse.from(view));
   }
 
-  @ApiOperation({ summary: "다가오는 모집 중 봉사 (탐색)" })
+  @ApiOperation({ summary: "다가오는 모집 중 봉사 (탐색, 내 신청 상태 포함)" })
   @ApiQuery({ name: "limit", required: false, type: Number })
   @ApiEnvelopeArray(VolunteerEventResponse)
   @Get("volunteer-events")
   public async upcoming(
+    @CurrentUser() user: AuthenticatedUser,
     @Query("limit", new DefaultValuePipe(20), ParseIntPipe) limit: number,
   ): Promise<VolunteerEventResponse[]> {
-    const events = await this.eventQueryPort.findUpcoming(
-      new Date(),
+    const views = await this.readVolunteerEventsUseCase.upcoming(
+      user.userId,
       Math.min(Math.max(limit, 1), 50),
     );
-    return events.map((event) => VolunteerEventResponse.from(event));
+    return views.map((view) => VolunteerEventResponse.from(view));
   }
 
-  @ApiOperation({ summary: "봉사 일정 단건 조회" })
+  @ApiOperation({ summary: "봉사 일정 단건 조회 (내 신청 상태 포함)" })
   @ApiEnvelope(VolunteerEventResponse)
   @Get("volunteer-events/:eventId")
   public async getOne(
+    @CurrentUser() user: AuthenticatedUser,
     @Param("eventId") eventId: string,
   ): Promise<VolunteerEventResponse> {
-    const event = await this.eventQueryPort.findById(
-      VolunteerEventId.fromString(eventId),
+    const view = await this.readVolunteerEventsUseCase.one(
+      eventId,
+      user.userId,
     );
-    if (!event) {
+    if (!view) {
       throw new NotFoundException("봉사 일정을 찾을 수 없어요.");
     }
-    return VolunteerEventResponse.from(event);
+    return VolunteerEventResponse.from(view);
   }
 
   @ApiOperation({ summary: "봉사 지원" })
