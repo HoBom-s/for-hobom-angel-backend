@@ -10,4 +10,6 @@ export interface VolunteerPostQueryPort {
     cursor?: string;
     limit: number;
   }): Promise<Page<VolunteerPost>>;
+  /** Fetch posts by id (unordered); missing ids are simply absent. */
+  findByIds(ids: VolunteerPostId[]): Promise<VolunteerPost[]>;
 }

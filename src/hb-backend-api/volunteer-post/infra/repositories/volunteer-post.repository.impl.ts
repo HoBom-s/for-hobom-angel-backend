@@ -53,6 +53,13 @@ export class VolunteerPostRepositoryImpl implements VolunteerPostRepository {
     return this.model.findById(id).exec();
   }
 
+  public findByIds(ids: Types.ObjectId[]): Promise<VolunteerPostEntity[]> {
+    if (ids.length === 0) {
+      return Promise.resolve([]);
+    }
+    return this.model.find({ _id: { $in: ids } }).exec();
+  }
+
   public listFeed(
     cursorId: Types.ObjectId | null,
     limit: number,

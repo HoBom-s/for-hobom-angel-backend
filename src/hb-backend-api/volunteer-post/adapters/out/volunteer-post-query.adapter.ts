@@ -20,6 +20,11 @@ export class VolunteerPostQueryAdapter implements VolunteerPostQueryPort {
     return doc ? toDomain(doc) : null;
   }
 
+  public async findByIds(ids: VolunteerPostId[]): Promise<VolunteerPost[]> {
+    const docs = await this.repository.findByIds(ids.map((id) => id.raw));
+    return docs.map(toDomain);
+  }
+
   public async findFeed(params: {
     cursor?: string;
     limit: number;

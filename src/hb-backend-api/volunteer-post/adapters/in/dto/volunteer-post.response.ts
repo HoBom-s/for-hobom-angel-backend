@@ -26,6 +26,9 @@ export class VolunteerPostResponse {
   @ApiProperty({ description: "내가 좋아요를 눌렀는지" })
   liked: boolean;
 
+  @ApiProperty({ description: "내가 저장(북마크)했는지" })
+  bookmarked: boolean;
+
   @ApiProperty({ nullable: true })
   createdAt: Date | null;
 
@@ -39,6 +42,7 @@ export class VolunteerPostResponse {
     dto.likeCount = item.post.getLikeCount;
     dto.commentCount = item.post.getCommentCount;
     dto.liked = item.liked;
+    dto.bookmarked = item.bookmarked;
     dto.createdAt = item.post.getCreatedAt;
     return dto;
   }
