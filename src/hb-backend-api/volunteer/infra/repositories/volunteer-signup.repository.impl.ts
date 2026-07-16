@@ -83,4 +83,19 @@ export class VolunteerSignupRepositoryImpl implements VolunteerSignupRepository 
       })
       .exec();
   }
+
+  public findByVolunteer(
+    volunteerId: Types.ObjectId,
+    cursorId: Types.ObjectId | null,
+    limit: number,
+  ): Promise<VolunteerSignupEntity[]> {
+    const query = cursorId
+      ? { volunteerId, _id: { $lt: cursorId } }
+      : { volunteerId };
+    return this.model
+      .find(query)
+      .sort({ _id: -1 })
+      .limit(limit + 1)
+      .exec();
+  }
 }

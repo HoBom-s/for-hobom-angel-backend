@@ -23,4 +23,13 @@ export interface VolunteerSignupRepository {
     volunteerId: Types.ObjectId,
     eventIds: Types.ObjectId[],
   ): Promise<VolunteerSignupEntity[]>;
+  /**
+   * A member's signups, newest first. Returns up to `limit + 1` docs;
+   * `cursorId` is the previous page's last signup id (exclusive).
+   */
+  findByVolunteer(
+    volunteerId: Types.ObjectId,
+    cursorId: Types.ObjectId | null,
+    limit: number,
+  ): Promise<VolunteerSignupEntity[]>;
 }

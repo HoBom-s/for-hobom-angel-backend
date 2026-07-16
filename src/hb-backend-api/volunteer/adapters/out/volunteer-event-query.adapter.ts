@@ -19,6 +19,11 @@ export class VolunteerEventQueryAdapter implements VolunteerEventQueryPort {
     return doc ? toDomain(doc) : null;
   }
 
+  public async findByIds(ids: VolunteerEventId[]): Promise<VolunteerEvent[]> {
+    const docs = await this.repository.findByIds(ids.map((id) => id.raw));
+    return docs.map(toDomain);
+  }
+
   public async findByShelter(shelterId: ShelterId): Promise<VolunteerEvent[]> {
     const docs = await this.repository.findByShelterId(shelterId.raw);
     return docs.map(toDomain);

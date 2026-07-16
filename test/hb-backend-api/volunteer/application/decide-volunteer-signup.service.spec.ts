@@ -42,6 +42,7 @@ describe("DecideVolunteerSignupService", () => {
         findLive: jest.fn(),
         findByEvent: jest.fn(),
         findLiveByVolunteer: jest.fn(),
+        findByVolunteer: jest.fn(),
       },
       signupPersistencePort,
       { findById: jest.fn().mockResolvedValue(event) } as never,

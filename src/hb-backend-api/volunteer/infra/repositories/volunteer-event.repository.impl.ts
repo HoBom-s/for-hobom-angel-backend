@@ -45,6 +45,13 @@ export class VolunteerEventRepositoryImpl implements VolunteerEventRepository {
     return this.model.findById(id).exec();
   }
 
+  public findByIds(ids: Types.ObjectId[]): Promise<VolunteerEventEntity[]> {
+    if (ids.length === 0) {
+      return Promise.resolve([]);
+    }
+    return this.model.find({ _id: { $in: ids } }).exec();
+  }
+
   public findByShelterId(
     shelterId: Types.ObjectId,
   ): Promise<VolunteerEventEntity[]> {
