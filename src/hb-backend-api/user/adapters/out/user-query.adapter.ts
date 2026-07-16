@@ -1,5 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { DIToken } from "src/shared/di/token.di";
+import { UserStatus } from "src/hb-backend-api/user/domain/enums/user-status.enum";
 import { User } from "src/hb-backend-api/user/domain/model/user";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-query.port";
@@ -26,5 +27,13 @@ export class UserQueryAdapter implements UserQueryPort {
   public async findByEmail(email: string): Promise<User | null> {
     const doc = await this.userRepository.findByEmail(email);
     return doc ? toDomain(doc) : null;
+  }
+
+  public countByStatus(status: UserStatus): Promise<number> {
+    return this.userRepository.countByStatus(status);
+  }
+
+  public countCreatedBetween(from: Date, to: Date): Promise<number> {
+    return this.userRepository.countCreatedBetween(from, to);
   }
 }

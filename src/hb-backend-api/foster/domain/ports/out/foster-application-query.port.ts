@@ -16,4 +16,6 @@ export interface FosterApplicationQueryPort {
     shelterId: ShelterId,
     status: FosterApplicationStatus,
   ): Promise<number>;
+  /** Platform-wide count in a status (operator stats). */
+  countByStatus(status: FosterApplicationStatus): Promise<number>;
 }

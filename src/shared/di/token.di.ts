@@ -328,6 +328,9 @@ class ShelterStatsModuleToken extends TokenRegistry {
   public readonly GetShelterDashboardUseCase = this.register(
     "shelter-stats.get-dashboard.use-case",
   );
+  public readonly GetAdminStatsUseCase = this.register(
+    "shelter-stats.get-admin-stats.use-case",
+  );
 }
 
 class VolunteerPostModuleToken extends TokenRegistry {

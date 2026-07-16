@@ -77,6 +77,8 @@ describe("AdoptionApprovalCallback", () => {
       countByApplicantAndStatus: jest.fn(),
       countByShelterAndStatus: jest.fn(),
       countByShelterAndStatusBetween: jest.fn(),
+      countByStatus: jest.fn(),
+      countByStatusBetween: jest.fn(),
     };
     applicationPersistencePort = { create: jest.fn(), save: jest.fn() };
     animalQueryPort = {
@@ -84,6 +86,7 @@ describe("AdoptionApprovalCallback", () => {
       findByShelter: jest.fn(),
       search: jest.fn(),
       countByShelterAndStatuses: jest.fn(),
+      countByStatuses: jest.fn(),
     };
     animalPersistencePort = { create: jest.fn(), save: jest.fn() };
     outboxPersistencePort = {

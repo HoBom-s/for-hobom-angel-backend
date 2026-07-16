@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { UserStatus } from "src/hb-backend-api/user/domain/enums/user-status.enum";
 import { UserEntity } from "src/hb-backend-api/user/domain/model/user.entity";
 
 /**
@@ -34,4 +35,6 @@ export interface UserRepository {
   findById(id: Types.ObjectId): Promise<UserEntity | null>;
   findByNickname(nickname: string): Promise<UserEntity | null>;
   findByEmail(email: string): Promise<UserEntity | null>;
+  countByStatus(status: UserStatus): Promise<number>;
+  countCreatedBetween(from: Date, to: Date): Promise<number>;
 }

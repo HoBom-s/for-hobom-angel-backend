@@ -40,6 +40,10 @@ export class AnimalQueryAdapter implements AnimalQueryPort {
     );
   }
 
+  public countByStatuses(statuses: AnimalStatus[]): Promise<number> {
+    return this.animalRepository.countByStatuses(statuses);
+  }
+
   public async search(criteria: AnimalSearchCriteria): Promise<Page<Animal>> {
     const cursorId =
       criteria.cursor && Types.ObjectId.isValid(criteria.cursor)

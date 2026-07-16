@@ -50,4 +50,16 @@ export class AdoptionApplicationQueryAdapter implements AdoptionApplicationQuery
       to,
     );
   }
+
+  public countByStatus(status: AdoptionApplicationStatus): Promise<number> {
+    return this.repository.countByStatus(status);
+  }
+
+  public countByStatusBetween(
+    status: AdoptionApplicationStatus,
+    from: Date,
+    to: Date,
+  ): Promise<number> {
+    return this.repository.countByStatusBetween(status, from, to);
+  }
 }

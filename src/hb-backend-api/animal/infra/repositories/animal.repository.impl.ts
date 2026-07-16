@@ -58,6 +58,12 @@ export class AnimalRepositoryImpl implements AnimalRepository {
       .exec();
   }
 
+  public countByStatuses(statuses: AnimalStatus[]): Promise<number> {
+    return this.animalModel
+      .countDocuments({ status: { $in: statuses } })
+      .exec();
+  }
+
   public search(
     filter: AnimalSearchFilter,
     cursorId: Types.ObjectId | null,

@@ -3,6 +3,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { MongoSessionContext } from "src/infra/mongo/transaction/transaction.context";
 import { OptimisticLockException } from "src/shared/exception/optimistic-lock.exception";
+import { UserStatus } from "src/hb-backend-api/user/domain/enums/user-status.enum";
 import { UserEntity } from "src/hb-backend-api/user/domain/model/user.entity";
 import {
   UserAuthzPatch,
@@ -48,5 +49,15 @@ export class UserRepositoryImpl implements UserRepository {
 
   public findByEmail(email: string): Promise<UserEntity | null> {
     return this.userModel.findOne({ email }).exec();
+  }
+
+  public countByStatus(status: UserStatus): Promise<number> {
+    return this.userModel.countDocuments({ status }).exec();
+  }
+
+  public countCreatedBetween(from: Date, to: Date): Promise<number> {
+    return this.userModel
+      .countDocuments({ createdAt: { $gte: from, $lt: to } })
+      .exec();
   }
 }

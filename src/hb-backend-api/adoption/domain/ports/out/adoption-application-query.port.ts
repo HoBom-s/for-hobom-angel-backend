@@ -23,4 +23,12 @@ export interface AdoptionApplicationQueryPort {
     from: Date,
     to: Date,
   ): Promise<number>;
+  /** Platform-wide count in a status (operator stats). */
+  countByStatus(status: AdoptionApplicationStatus): Promise<number>;
+  /** Platform-wide count of a status last updated within [from, to). */
+  countByStatusBetween(
+    status: AdoptionApplicationStatus,
+    from: Date,
+    to: Date,
+  ): Promise<number>;
 }
