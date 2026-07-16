@@ -37,6 +37,18 @@ export class VolunteerPostRepositoryImpl implements VolunteerPostRepository {
     );
   }
 
+  public async incrementCommentCount(
+    id: Types.ObjectId,
+    delta: number,
+  ): Promise<void> {
+    const session = MongoSessionContext.getSession();
+    await this.model.updateOne(
+      { _id: id },
+      { $inc: { commentCount: delta } },
+      { session },
+    );
+  }
+
   public findById(id: Types.ObjectId): Promise<VolunteerPostEntity | null> {
     return this.model.findById(id).exec();
   }

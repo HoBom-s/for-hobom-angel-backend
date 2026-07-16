@@ -12,6 +12,7 @@ export function toDomain(doc: VolunteerPostEntity): VolunteerPost {
     body: doc.body,
     imageKeys: doc.imageKeys ?? [],
     likeCount: doc.likeCount ?? 0,
+    commentCount: doc.commentCount ?? 0,
     createdAt: doc.createdAt ?? null,
     version: doc.version ?? 0,
   });

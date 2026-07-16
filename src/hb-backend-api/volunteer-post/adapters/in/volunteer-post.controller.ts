@@ -33,10 +33,18 @@ import { CreateVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/do
 import { DeleteVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/delete-volunteer-post.use-case";
 import { LikeVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/like-volunteer-post.use-case";
 import { ReadVolunteerFeedUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/read-volunteer-feed.use-case";
+import { CommentVolunteerPostUseCase } from "src/hb-backend-api/volunteer-post/domain/ports/in/comment-volunteer-post.use-case";
+import { VolunteerPostCommentPort } from "src/hb-backend-api/volunteer-post/domain/ports/out/volunteer-post-comment.port";
+import { VolunteerPostId } from "src/hb-backend-api/volunteer-post/domain/model/vo/volunteer-post-id.vo";
 import { CreateVolunteerPostDto } from "src/hb-backend-api/volunteer-post/adapters/in/dto/create-volunteer-post.dto";
 import { CreateVolunteerPostResponse } from "src/hb-backend-api/volunteer-post/adapters/in/dto/create-volunteer-post.response";
 import { ListVolunteerPostsQueryDto } from "src/hb-backend-api/volunteer-post/adapters/in/dto/list-volunteer-posts.query.dto";
 import { VolunteerPostResponse } from "src/hb-backend-api/volunteer-post/adapters/in/dto/volunteer-post.response";
+import { CreateCommentDto } from "src/hb-backend-api/volunteer-post/adapters/in/dto/create-comment.dto";
+import {
+  CommentResponse,
+  CreateCommentResponse,
+} from "src/hb-backend-api/volunteer-post/adapters/in/dto/comment.response";
 
 @ApiTags("Volunteer")
 @ApiBearerAuth()
@@ -52,6 +60,10 @@ export class VolunteerPostController {
     private readonly likeVolunteerPostUseCase: LikeVolunteerPostUseCase,
     @Inject(DIToken.VolunteerPostModule.ReadVolunteerFeedUseCase)
     private readonly readVolunteerFeedUseCase: ReadVolunteerFeedUseCase,
+    @Inject(DIToken.VolunteerPostModule.CommentVolunteerPostUseCase)
+    private readonly commentVolunteerPostUseCase: CommentVolunteerPostUseCase,
+    @Inject(DIToken.VolunteerPostModule.VolunteerPostCommentPort)
+    private readonly commentPort: VolunteerPostCommentPort,
   ) {}
 
   @ApiOperation({ summary: "봉사 후기 작성 (§05)" })
@@ -123,6 +135,53 @@ export class VolunteerPostController {
     return this.likeVolunteerPostUseCase.unlike({
       postId,
       userId: user.userId,
+    });
+  }
+
+  @ApiOperation({ summary: "봉사 후기 댓글 작성" })
+  @ApiCreatedEnvelope(CreateCommentResponse)
+  @Post(":postId/comments")
+  public async comment(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("postId") postId: string,
+    @Body() body: CreateCommentDto,
+  ): Promise<CreateCommentResponse> {
+    const result = await this.commentVolunteerPostUseCase.create({
+      postId,
+      authorId: user.userId,
+      body: body.body,
+    });
+    return CreateCommentResponse.from(result);
+  }
+
+  @ApiOperation({ summary: "봉사 후기 댓글 목록 (오래된 순·커서)" })
+  @ApiEnvelopeCursor(CommentResponse)
+  @Get(":postId/comments")
+  public async comments(
+    @Param("postId") postId: string,
+    @Query() query: ListVolunteerPostsQueryDto,
+  ): Promise<CursorPageResponse<CommentResponse>> {
+    const page = await this.commentPort.listByPost({
+      postId: VolunteerPostId.fromString(postId),
+      cursor: query.cursor,
+      limit: query.limit ?? 20,
+    });
+    return CursorPageResponse.of(page, (comment) =>
+      CommentResponse.from(comment),
+    );
+  }
+
+  @ApiOperation({ summary: "봉사 후기 댓글 삭제 (작성자)" })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(":postId/comments/:commentId")
+  public deleteComment(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("commentId") commentId: string,
+  ): Promise<void> {
+    return this.commentVolunteerPostUseCase.delete({
+      commentId,
+      requesterId: user.userId,
     });
   }
 

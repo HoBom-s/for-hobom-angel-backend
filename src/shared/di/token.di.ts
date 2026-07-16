@@ -340,6 +340,9 @@ class VolunteerPostModuleToken extends TokenRegistry {
   public readonly ReadVolunteerFeedUseCase = this.register(
     "volunteer-post.read-feed.use-case",
   );
+  public readonly CommentVolunteerPostUseCase = this.register(
+    "volunteer-post.comment.use-case",
+  );
   public readonly VolunteerPostPersistencePort = this.register(
     "volunteer-post.persistence.port",
   );
@@ -349,11 +352,17 @@ class VolunteerPostModuleToken extends TokenRegistry {
   public readonly VolunteerPostLikePort = this.register(
     "volunteer-post.like.port",
   );
+  public readonly VolunteerPostCommentPort = this.register(
+    "volunteer-post.comment.port",
+  );
   public readonly VolunteerPostRepository = this.register(
     "volunteer-post.repository",
   );
   public readonly VolunteerPostLikeRepository = this.register(
     "volunteer-post.like.repository",
+  );
+  public readonly VolunteerPostCommentRepository = this.register(
+    "volunteer-post.comment.repository",
   );
 }
 

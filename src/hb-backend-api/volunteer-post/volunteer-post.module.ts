@@ -6,16 +6,21 @@ import { VolunteerPostEntity } from "src/hb-backend-api/volunteer-post/domain/mo
 import { VolunteerPostSchema } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post.schema";
 import { VolunteerPostLikeEntity } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post-like.entity";
 import { VolunteerPostLikeSchema } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post-like.schema";
+import { VolunteerPostCommentEntity } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post-comment.entity";
+import { VolunteerPostCommentSchema } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post-comment.schema";
 import { VolunteerPostController } from "src/hb-backend-api/volunteer-post/adapters/in/volunteer-post.controller";
 import { VolunteerPostPersistenceAdapter } from "src/hb-backend-api/volunteer-post/adapters/out/volunteer-post-persistence.adapter";
 import { VolunteerPostQueryAdapter } from "src/hb-backend-api/volunteer-post/adapters/out/volunteer-post-query.adapter";
 import { VolunteerPostLikeAdapter } from "src/hb-backend-api/volunteer-post/adapters/out/volunteer-post-like.adapter";
+import { VolunteerPostCommentAdapter } from "src/hb-backend-api/volunteer-post/adapters/out/volunteer-post-comment.adapter";
 import { VolunteerPostRepositoryImpl } from "src/hb-backend-api/volunteer-post/infra/repositories/volunteer-post.repository.impl";
 import { VolunteerPostLikeRepositoryImpl } from "src/hb-backend-api/volunteer-post/infra/repositories/volunteer-post-like.repository.impl";
+import { VolunteerPostCommentRepositoryImpl } from "src/hb-backend-api/volunteer-post/infra/repositories/volunteer-post-comment.repository.impl";
 import { CreateVolunteerPostService } from "src/hb-backend-api/volunteer-post/application/use-cases/create-volunteer-post.service";
 import { DeleteVolunteerPostService } from "src/hb-backend-api/volunteer-post/application/use-cases/delete-volunteer-post.service";
 import { LikeVolunteerPostService } from "src/hb-backend-api/volunteer-post/application/use-cases/like-volunteer-post.service";
 import { ReadVolunteerFeedService } from "src/hb-backend-api/volunteer-post/application/use-cases/read-volunteer-feed.service";
+import { CommentVolunteerPostService } from "src/hb-backend-api/volunteer-post/application/use-cases/comment-volunteer-post.service";
 
 /**
  * §05 volunteer review/promo feed. Member-authored posts (independent of the
@@ -26,6 +31,10 @@ import { ReadVolunteerFeedService } from "src/hb-backend-api/volunteer-post/appl
     MongooseModule.forFeature([
       { name: VolunteerPostEntity.name, schema: VolunteerPostSchema },
       { name: VolunteerPostLikeEntity.name, schema: VolunteerPostLikeSchema },
+      {
+        name: VolunteerPostCommentEntity.name,
+        schema: VolunteerPostCommentSchema,
+      },
     ]),
     UserModule,
   ],
@@ -48,12 +57,20 @@ import { ReadVolunteerFeedService } from "src/hb-backend-api/volunteer-post/appl
       useClass: ReadVolunteerFeedService,
     },
     {
+      provide: DIToken.VolunteerPostModule.CommentVolunteerPostUseCase,
+      useClass: CommentVolunteerPostService,
+    },
+    {
       provide: DIToken.VolunteerPostModule.VolunteerPostRepository,
       useClass: VolunteerPostRepositoryImpl,
     },
     {
       provide: DIToken.VolunteerPostModule.VolunteerPostLikeRepository,
       useClass: VolunteerPostLikeRepositoryImpl,
+    },
+    {
+      provide: DIToken.VolunteerPostModule.VolunteerPostCommentRepository,
+      useClass: VolunteerPostCommentRepositoryImpl,
     },
     {
       provide: DIToken.VolunteerPostModule.VolunteerPostPersistencePort,
@@ -66,6 +83,10 @@ import { ReadVolunteerFeedService } from "src/hb-backend-api/volunteer-post/appl
     {
       provide: DIToken.VolunteerPostModule.VolunteerPostLikePort,
       useClass: VolunteerPostLikeAdapter,
+    },
+    {
+      provide: DIToken.VolunteerPostModule.VolunteerPostCommentPort,
+      useClass: VolunteerPostCommentAdapter,
     },
   ],
 })

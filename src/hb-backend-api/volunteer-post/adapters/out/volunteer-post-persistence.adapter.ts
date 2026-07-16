@@ -28,4 +28,11 @@ export class VolunteerPostPersistenceAdapter implements VolunteerPostPersistence
   ): Promise<void> {
     await this.repository.incrementLikeCount(postId.raw, delta);
   }
+
+  public async adjustCommentCount(
+    postId: VolunteerPostId,
+    delta: number,
+  ): Promise<void> {
+    await this.repository.incrementCommentCount(postId.raw, delta);
+  }
 }
