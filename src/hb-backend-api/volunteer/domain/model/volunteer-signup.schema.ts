@@ -8,6 +8,8 @@ export const VolunteerSignupSchema = SchemaFactory.createForClass(
 
 // "My signups" and an event's roster.
 VolunteerSignupSchema.index({ volunteerId: 1, createdAt: -1 });
+// "My signups" list — a member's signups, newest first (keyset on _id).
+VolunteerSignupSchema.index({ volunteerId: 1, _id: -1 });
 VolunteerSignupSchema.index({ eventId: 1, status: 1 });
 // Enforce at most one PENDING signup per (event, volunteer) at the database.
 // The insert race is a first-time double-submit (both PENDING); once a signup

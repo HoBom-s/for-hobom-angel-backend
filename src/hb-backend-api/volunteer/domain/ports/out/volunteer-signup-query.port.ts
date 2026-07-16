@@ -1,3 +1,4 @@
+import { Page } from "src/shared/pagination/page";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { VolunteerSignup } from "src/hb-backend-api/volunteer/domain/model/volunteer-signup";
 import { VolunteerEventId } from "src/hb-backend-api/volunteer/domain/model/vo/volunteer-event-id.vo";
@@ -6,6 +7,12 @@ import { VolunteerSignupId } from "src/hb-backend-api/volunteer/domain/model/vo/
 /** Read-side port for volunteer signups. */
 export interface VolunteerSignupQueryPort {
   findById(id: VolunteerSignupId): Promise<VolunteerSignup | null>;
+  /** A member's own signups (all statuses), newest first, cursor-paged. */
+  findByVolunteer(params: {
+    volunteerId: UserId;
+    cursor?: string;
+    limit: number;
+  }): Promise<Page<VolunteerSignup>>;
   /** A volunteer's still-live (PENDING or APPROVED) signup for an event, if any. */
   findLive(
     eventId: VolunteerEventId,
