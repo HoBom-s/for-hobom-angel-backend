@@ -26,4 +26,5 @@ export interface FosterApplicationRepository {
     shelterId: Types.ObjectId,
     status: FosterApplicationStatus,
   ): Promise<number>;
+  countByStatus(status: FosterApplicationStatus): Promise<number>;
 }

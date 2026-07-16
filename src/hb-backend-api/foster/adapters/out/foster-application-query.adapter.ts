@@ -36,4 +36,8 @@ export class FosterApplicationQueryAdapter implements FosterApplicationQueryPort
   ): Promise<number> {
     return this.repository.countByShelterAndStatus(shelterId.raw, status);
   }
+
+  public countByStatus(status: FosterApplicationStatus): Promise<number> {
+    return this.repository.countByStatus(status);
+  }
 }

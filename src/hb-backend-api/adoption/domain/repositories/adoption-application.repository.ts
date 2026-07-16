@@ -32,4 +32,10 @@ export interface AdoptionApplicationRepository {
     from: Date,
     to: Date,
   ): Promise<number>;
+  countByStatus(status: AdoptionApplicationStatus): Promise<number>;
+  countByStatusBetween(
+    status: AdoptionApplicationStatus,
+    from: Date,
+    to: Date,
+  ): Promise<number>;
 }

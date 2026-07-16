@@ -30,4 +30,6 @@ export interface AnimalQueryPort {
     shelterId: ShelterId,
     statuses: AnimalStatus[],
   ): Promise<number>;
+  /** Platform-wide count of animals in any of the given statuses (operator stats). */
+  countByStatuses(statuses: AnimalStatus[]): Promise<number>;
 }

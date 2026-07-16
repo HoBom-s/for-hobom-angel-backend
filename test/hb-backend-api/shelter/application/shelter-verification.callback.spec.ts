@@ -100,12 +100,15 @@ describe("ShelterVerificationCallback", () => {
       findBySlug: jest.fn(),
       findMappable: jest.fn(),
       findVerified: jest.fn(),
+      countByStatus: jest.fn(),
     };
     shelterPersistencePort = { create: jest.fn(), save: jest.fn() };
     userQueryPort = {
       findById: jest.fn().mockResolvedValue(registrant),
       findByNickname: jest.fn(),
       findByEmail: jest.fn(),
+      countByStatus: jest.fn(),
+      countCreatedBetween: jest.fn(),
     };
     userPersistencePort = { register: jest.fn(), save: jest.fn() };
     outboxPersistencePort = {

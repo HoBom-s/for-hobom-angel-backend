@@ -72,6 +72,8 @@ describe("StaffPromotionCallback", () => {
       findById: jest.fn().mockResolvedValue(candidate),
       findByNickname: jest.fn(),
       findByEmail: jest.fn(),
+      countByStatus: jest.fn(),
+      countCreatedBetween: jest.fn(),
     };
     userPersistencePort = { register: jest.fn(), save: jest.fn() };
     outboxPersistencePort = {

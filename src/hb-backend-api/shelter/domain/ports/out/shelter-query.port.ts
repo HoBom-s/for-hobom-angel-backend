@@ -1,4 +1,5 @@
 import { Page } from "src/shared/pagination/page";
+import { ShelterStatus } from "src/hb-backend-api/shelter/domain/enums/shelter-status.enum";
 import { Shelter } from "src/hb-backend-api/shelter/domain/model/shelter";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { ShelterSlug } from "src/hb-backend-api/shelter/domain/model/vo/shelter-slug.vo";
@@ -6,6 +7,8 @@ import { ShelterSlug } from "src/hb-backend-api/shelter/domain/model/vo/shelter-
 /** Read-side port. Returns hydrated {@link Shelter} aggregates. */
 export interface ShelterQueryPort {
   findById(id: ShelterId): Promise<Shelter | null>;
+  /** Platform-wide count in a status (operator stats). */
+  countByStatus(status: ShelterStatus): Promise<number>;
   findBySlug(slug: ShelterSlug): Promise<Shelter | null>;
   /**
    * Map-visible shelters (verified, address not hidden, coordinates present),

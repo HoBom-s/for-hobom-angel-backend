@@ -68,4 +68,18 @@ export class AdoptionApplicationRepositoryImpl implements AdoptionApplicationRep
       .countDocuments({ shelterId, status, updatedAt: { $gte: from, $lt: to } })
       .exec();
   }
+
+  public countByStatus(status: AdoptionApplicationStatus): Promise<number> {
+    return this.model.countDocuments({ status }).exec();
+  }
+
+  public countByStatusBetween(
+    status: AdoptionApplicationStatus,
+    from: Date,
+    to: Date,
+  ): Promise<number> {
+    return this.model
+      .countDocuments({ status, updatedAt: { $gte: from, $lt: to } })
+      .exec();
+  }
 }

@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { ShelterStatus } from "src/hb-backend-api/shelter/domain/enums/shelter-status.enum";
 import { ShelterEntity } from "src/hb-backend-api/shelter/domain/model/shelter.entity";
 
 /** Mutable fields the aggregate can change after registration. */
@@ -31,6 +32,7 @@ export interface ShelterRepository {
   ): Promise<void>;
   findById(id: Types.ObjectId): Promise<ShelterEntity | null>;
   findBySlug(slug: string): Promise<ShelterEntity | null>;
+  countByStatus(status: ShelterStatus): Promise<number>;
   /** Verified, non-hidden shelters with coordinates; optionally by region. */
   findMappable(region?: string): Promise<ShelterEntity[]>;
   /**

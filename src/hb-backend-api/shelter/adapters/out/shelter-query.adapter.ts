@@ -2,6 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { Types } from "mongoose";
 import { Page } from "src/shared/pagination/page";
 import { DIToken } from "src/shared/di/token.di";
+import { ShelterStatus } from "src/hb-backend-api/shelter/domain/enums/shelter-status.enum";
 import { Shelter } from "src/hb-backend-api/shelter/domain/model/shelter";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { ShelterSlug } from "src/hb-backend-api/shelter/domain/model/vo/shelter-slug.vo";
@@ -24,6 +25,10 @@ export class ShelterQueryAdapter implements ShelterQueryPort {
   public async findBySlug(slug: ShelterSlug): Promise<Shelter | null> {
     const doc = await this.shelterRepository.findBySlug(slug.raw);
     return doc ? toDomain(doc) : null;
+  }
+
+  public countByStatus(status: ShelterStatus): Promise<number> {
+    return this.shelterRepository.countByStatus(status);
   }
 
   public async findMappable(region?: string): Promise<Shelter[]> {

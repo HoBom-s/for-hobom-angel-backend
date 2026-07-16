@@ -40,6 +40,10 @@ export class ShelterRepositoryImpl implements ShelterRepository {
     }
   }
 
+  public countByStatus(status: ShelterStatus): Promise<number> {
+    return this.shelterModel.countDocuments({ status }).exec();
+  }
+
   public findById(id: Types.ObjectId): Promise<ShelterEntity | null> {
     return this.shelterModel.findById(id).exec();
   }
