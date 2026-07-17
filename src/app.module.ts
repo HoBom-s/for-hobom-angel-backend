@@ -4,6 +4,7 @@ import { APP_INTERCEPTOR } from "@nestjs/core";
 import { MongooseModule } from "@nestjs/mongoose";
 import { ScheduleModule } from "@nestjs/schedule";
 import { ThrottlerModule } from "@nestjs/throttler";
+import { context, trace } from "@opentelemetry/api";
 import { randomUUID } from "crypto";
 import { IncomingMessage } from "http";
 import { LoggerModule } from "nestjs-pino";
@@ -13,6 +14,7 @@ import { validate } from "src/shared/config/env.validation";
 import { buildMongooseOptions } from "src/shared/config/mongoose-options";
 import { DiscordModule } from "src/shared/discord/discord.module";
 import { HttpLogInterceptor } from "src/shared/observability/http-log.interceptor";
+import { TelemetryLifecycle } from "src/shared/observability/telemetry.lifecycle";
 import { TraceContext } from "src/shared/trace/trace.context";
 import { TraceInterceptor } from "src/shared/trace/trace.interceptor";
 import { AdopterHistoryModule } from "src/hb-backend-api/adopter-history/adopter-history.module";
@@ -53,6 +55,16 @@ import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
             ? { target: "pino-pretty", options: { singleLine: true } }
             : undefined,
         redact: ["req.headers.authorization", "req.headers.cookie"],
+        // Correlate logs with traces: stamp the active OTel span's ids onto
+        // every log line. Empty (no cost) when OTel is dormant.
+        mixin() {
+          const span = trace.getSpan(context.active());
+          if (!span) {
+            return {};
+          }
+          const { traceId, spanId } = span.spanContext();
+          return { trace_id: traceId, span_id: spanId };
+        },
       },
     }),
     ThrottlerModule.forRoot({
@@ -94,6 +106,7 @@ import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
   ],
   providers: [
     TraceContext,
+    TelemetryLifecycle,
     // Order matters: trace id is bound first, then the access log can read it.
     { provide: APP_INTERCEPTOR, useClass: TraceInterceptor },
     { provide: APP_INTERCEPTOR, useClass: HttpLogInterceptor },
