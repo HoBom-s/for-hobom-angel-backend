@@ -18,6 +18,8 @@ a new ADR that supersedes the old one.
 | [0006](0006-mongodb-and-pii.md) | MongoDB, no RRN, field-level PII encryption | Accepted |
 | [0007](0007-index-management.md) | Index management: autoIndex off + syncIndexes | Accepted |
 | [0008](0008-two-tier-logging-and-audit.md) | Two-tier logging: access log vs audit trail | Accepted |
+| [0009](0009-adoption-questionnaire-and-application.md) | Adoption questionnaire + application | Accepted |
+| [0010](0010-opentelemetry-and-graceful-shutdown.md) | OpenTelemetry tracing/metrics + graceful shutdown | Accepted |
 
 To add one: `docs/adr/000N-title.md`, copy the shape of an existing record, add
 a row here.

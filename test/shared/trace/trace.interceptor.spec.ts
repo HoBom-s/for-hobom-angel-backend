@@ -1,4 +1,5 @@
 import { CallHandler, ExecutionContext } from "@nestjs/common";
+import { trace } from "@opentelemetry/api";
 import { firstValueFrom, of } from "rxjs";
 import { TraceContext } from "src/shared/trace/trace.context";
 import { TraceInterceptor } from "src/shared/trace/trace.interceptor";
@@ -37,6 +38,22 @@ describe("TraceInterceptor", () => {
     };
     await firstValueFrom(interceptor.intercept(httpCtx({}), next));
     expect(seen).toBeDefined();
+  });
+
+  it("stamps hobom.trace_id onto the active OTel span when one exists", async () => {
+    const setAttribute = jest.fn();
+    jest
+      .spyOn(trace, "getActiveSpan")
+      .mockReturnValue({ setAttribute } as never);
+
+    await firstValueFrom(
+      interceptor.intercept(httpCtx({ "x-hobom-trace-id": "abc" }), {
+        handle: () => of("ok"),
+      } as CallHandler),
+    );
+
+    expect(setAttribute).toHaveBeenCalledWith("hobom.trace_id", "abc");
+    jest.restoreAllMocks();
   });
 
   it("passes non-http contexts through untouched", async () => {
