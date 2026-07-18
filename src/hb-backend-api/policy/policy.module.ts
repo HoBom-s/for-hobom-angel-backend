@@ -53,5 +53,6 @@ import { AdminPolicyController } from "src/hb-backend-api/policy/adapters/in/adm
       useClass: PolicyQueryAdapter,
     },
   ],
+  exports: [DIToken.PolicyModule.PolicyQueryPort],
 })
 export class PolicyModule {}
