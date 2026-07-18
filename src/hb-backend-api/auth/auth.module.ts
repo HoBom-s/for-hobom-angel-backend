@@ -1,10 +1,13 @@
-import { Module } from "@nestjs/common";
+import { Module, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
 import { MongooseModule } from "@nestjs/mongoose";
 import { PassportModule } from "@nestjs/passport";
 import { DIToken } from "src/shared/di/token.di";
+import { DestroyerRegistry } from "src/shared/erasure/destroyer.registry";
+import { ErasureModule } from "src/shared/erasure/erasure.module";
 import { JwtAuthAdapter } from "src/infra/adapters/jwt/jwt-auth.adapter";
+import { CredentialsDestroyer } from "src/hb-backend-api/auth/adapters/erasure/credentials.destroyer";
 import { UserModule } from "src/hb-backend-api/user/user.module";
 import { RefreshTokenService } from "src/hb-backend-api/auth/application/use-cases/refresh-token.service";
 import { SignUpService } from "src/hb-backend-api/auth/application/use-cases/sign-up.service";
@@ -39,6 +42,7 @@ import { RolesGuard } from "src/hb-backend-api/auth/adapters/in/rest/guard/roles
       { name: RefreshTokenEntity.name, schema: RefreshTokenSchema },
     ]),
     UserModule,
+    ErasureModule,
   ],
   controllers: [AuthController],
   providers: [
@@ -46,6 +50,7 @@ import { RolesGuard } from "src/hb-backend-api/auth/adapters/in/rest/guard/roles
     RolesGuard,
     RefreshTokenService,
     AuthCookieService,
+    CredentialsDestroyer,
     {
       provide: DIToken.AuthModule.SignUpUseCase,
       useClass: SignUpService,
@@ -71,4 +76,13 @@ import { RolesGuard } from "src/hb-backend-api/auth/adapters/in/rest/guard/roles
     DIToken.AuthModule.JwtAuthPort,
   ],
 })
-export class AuthModule {}
+export class AuthModule implements OnModuleInit {
+  constructor(
+    private readonly destroyerRegistry: DestroyerRegistry,
+    private readonly credentialsDestroyer: CredentialsDestroyer,
+  ) {}
+
+  public onModuleInit(): void {
+    this.destroyerRegistry.register(this.credentialsDestroyer);
+  }
+}

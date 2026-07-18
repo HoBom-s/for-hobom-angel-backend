@@ -19,6 +19,7 @@ import { TraceContext } from "src/shared/trace/trace.context";
 import { TraceInterceptor } from "src/shared/trace/trace.interceptor";
 import { AdopterHistoryModule } from "src/hb-backend-api/adopter-history/adopter-history.module";
 import { AdoptionModule } from "src/hb-backend-api/adoption/adoption.module";
+import { DsarModule } from "src/hb-backend-api/dsar/dsar.module";
 import { AnimalModule } from "src/hb-backend-api/animal/animal.module";
 import { AnnouncementModule } from "src/hb-backend-api/announcement/announcement.module";
 import { ApprovalModule } from "src/hb-backend-api/approval/approval.module";
@@ -103,6 +104,7 @@ import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
     MediaModule,
     ShelterStatsModule,
     VolunteerPostModule,
+    DsarModule,
   ],
   providers: [
     TraceContext,

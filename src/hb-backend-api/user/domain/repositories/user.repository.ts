@@ -17,6 +17,20 @@ export type UserAuthzPatch = Partial<
 };
 
 /**
+ * The tombstone written by an erasure. All identifiable PII (real name, phone,
+ * email, nickname) is overwritten; the row survives for referential integrity.
+ */
+export interface UserAnonymizePatch {
+  realNameEnc: string;
+  phoneEnc: string;
+  email: string;
+  nickname: string;
+  status: UserStatus;
+  withdrawnAt: Date;
+  purgeAfter: null;
+}
+
+/**
  * Persistence contract over the users collection. Works with raw (already
  * encrypted) documents; PII crypto and domain mapping live in the adapter.
  */
@@ -37,4 +51,13 @@ export interface UserRepository {
   findByEmail(email: string): Promise<UserEntity | null>;
   countByStatus(status: UserStatus): Promise<number>;
   countCreatedBetween(from: Date, to: Date): Promise<number>;
+  /**
+   * Idempotent PII tombstone (DSAR erasure). No-op if already anonymized
+   * (guarded on `realNameEnc`), so a retry/resume returns 0 rows modified.
+   */
+  anonymize(id: Types.ObjectId, patch: UserAnonymizePatch): Promise<number>;
+  /** Rows for this id still holding identifiable PII (residual check). */
+  countUnanonymized(id: Types.ObjectId, tombstone: string): Promise<number>;
+  /** Ids of withdrawn accounts whose purge grace has elapsed (daily sweep). */
+  findWithdrawnToPurge(now: Date, limit: number): Promise<Types.ObjectId[]>;
 }
