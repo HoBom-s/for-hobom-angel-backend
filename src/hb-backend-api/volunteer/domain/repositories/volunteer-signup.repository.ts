@@ -19,6 +19,10 @@ export interface VolunteerSignupRepository {
     volunteerId: Types.ObjectId,
   ): Promise<VolunteerSignupEntity | null>;
   findByEvent(eventId: Types.ObjectId): Promise<VolunteerSignupEntity[]>;
+  /** A member's APPROVED signups (for the volunteer-service certificate). */
+  findApprovedByVolunteer(
+    volunteerId: Types.ObjectId,
+  ): Promise<VolunteerSignupEntity[]>;
   findLiveByVolunteer(
     volunteerId: Types.ObjectId,
     eventIds: Types.ObjectId[],

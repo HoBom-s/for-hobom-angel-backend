@@ -275,6 +275,24 @@ class VolunteerModuleToken extends TokenRegistry {
   public readonly VolunteerSignupRepository = this.register(
     "volunteer.signup.repository",
   );
+  public readonly VolunteerCertificatePersistencePort = this.register(
+    "volunteer.certificate.persistence.port",
+  );
+  public readonly VolunteerCertificateQueryPort = this.register(
+    "volunteer.certificate.query.port",
+  );
+  public readonly VolunteerCertificateRepository = this.register(
+    "volunteer.certificate.repository",
+  );
+  public readonly IssueVolunteerCertificateUseCase = this.register(
+    "volunteer.issue-certificate.use-case",
+  );
+  public readonly GetMyCertificatesUseCase = this.register(
+    "volunteer.get-my-certificates.use-case",
+  );
+  public readonly VerifyCertificateUseCase = this.register(
+    "volunteer.verify-certificate.use-case",
+  );
 }
 
 class MessagingModuleToken extends TokenRegistry {
