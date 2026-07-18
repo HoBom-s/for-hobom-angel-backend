@@ -11,4 +11,10 @@ export interface UserQueryPort {
   countByStatus(status: UserStatus): Promise<number>;
   /** Sign-ups created within [from, to) (operator stats). */
   countCreatedBetween(from: Date, to: Date): Promise<number>;
+  /**
+   * Ids of withdrawn accounts whose purge grace has elapsed (`purgeAfter <= now`)
+   * — the daily 3am erasure sweep's work-list. Already-anonymized rows drop out
+   * (their `purgeAfter` is cleared on erasure).
+   */
+  findWithdrawnToPurge(now: Date, limit: number): Promise<string[]>;
 }

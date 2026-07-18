@@ -109,6 +109,7 @@ describe("ShelterVerificationCallback", () => {
       findByEmail: jest.fn(),
       countByStatus: jest.fn(),
       countCreatedBetween: jest.fn(),
+      findWithdrawnToPurge: jest.fn(),
     };
     userPersistencePort = { register: jest.fn(), save: jest.fn() };
     outboxPersistencePort = {

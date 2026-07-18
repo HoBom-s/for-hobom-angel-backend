@@ -36,4 +36,12 @@ export class UserQueryAdapter implements UserQueryPort {
   public countCreatedBetween(from: Date, to: Date): Promise<number> {
     return this.userRepository.countCreatedBetween(from, to);
   }
+
+  public async findWithdrawnToPurge(
+    now: Date,
+    limit: number,
+  ): Promise<string[]> {
+    const ids = await this.userRepository.findWithdrawnToPurge(now, limit);
+    return ids.map((id) => id.toString());
+  }
 }

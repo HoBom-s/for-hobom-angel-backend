@@ -53,4 +53,8 @@ export interface RefreshTokenRepository {
   findByJti(jti: string): Promise<StoredRefreshToken | null>;
   markRotated(jti: string): Promise<void>;
   revokeFamily(familyId: string): Promise<void>;
+  /** Hard-delete every session for a user (DSAR erasure). Returns rows removed. */
+  deleteByUserId(userId: string): Promise<number>;
+  /** Sessions still stored for a user (residual check). */
+  countByUserId(userId: string): Promise<number>;
 }

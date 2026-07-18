@@ -35,6 +35,28 @@ class UserModuleToken extends TokenRegistry {
   public readonly ReinstateUserUseCase = this.register(
     "user.reinstate.use-case",
   );
+  /** Reads (decrypts) / anonymizes a subject's PII for DSAR export & erasure. */
+  public readonly PersonalDataPort = this.register("user.personal-data.port");
+}
+
+/** Erasure framework core (Destroyer engine, request store). */
+class ErasureModuleToken extends TokenRegistry {
+  public readonly ErasureRequestRepository = this.register(
+    "erasure.request.repository",
+  );
+}
+
+/** DSAR operator surface — read-only: PII access (export) + erasure lookup. */
+class DsarModuleToken extends TokenRegistry {
+  public readonly ExportPersonalDataUseCase = this.register(
+    "dsar.export-personal-data.use-case",
+  );
+  public readonly GetErasureRequestUseCase = this.register(
+    "dsar.get-erasure-request.use-case",
+  );
+  public readonly ListSubjectErasuresUseCase = this.register(
+    "dsar.list-subject-erasures.use-case",
+  );
 }
 
 class AuthModuleToken extends TokenRegistry {
@@ -407,4 +429,6 @@ export const DIToken = {
   AdopterHistoryModule: new AdopterHistoryModuleToken(),
   ShelterStatsModule: new ShelterStatsModuleToken(),
   VolunteerPostModule: new VolunteerPostModuleToken(),
+  ErasureModule: new ErasureModuleToken(),
+  DsarModule: new DsarModuleToken(),
 } as const;
