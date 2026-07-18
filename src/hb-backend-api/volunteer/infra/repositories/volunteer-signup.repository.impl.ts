@@ -25,6 +25,15 @@ export class VolunteerSignupRepositoryImpl implements VolunteerSignupRepository 
     return created;
   }
 
+  public findApprovedByVolunteer(
+    volunteerId: Types.ObjectId,
+  ): Promise<VolunteerSignupEntity[]> {
+    return this.model
+      .find({ volunteerId, status: VolunteerSignupStatus.APPROVED })
+      .sort({ _id: -1 })
+      .exec();
+  }
+
   public async update(
     id: Types.ObjectId,
     expectedVersion: number,

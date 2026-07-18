@@ -66,6 +66,13 @@ export class VolunteerSignupQueryAdapter implements VolunteerSignupQueryPort {
     return docs.map(toDomain);
   }
 
+  public async findApprovedByVolunteer(
+    volunteerId: UserId,
+  ): Promise<VolunteerSignup[]> {
+    const docs = await this.repository.findApprovedByVolunteer(volunteerId.raw);
+    return docs.map(toDomain);
+  }
+
   public async findLiveByVolunteer(
     volunteerId: UserId,
     eventIds: VolunteerEventId[],
