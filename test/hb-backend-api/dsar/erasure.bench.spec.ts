@@ -10,6 +10,7 @@ import { VerifiedChannel } from "src/hb-backend-api/user/domain/enums/verified-c
 import { UserEntity } from "src/hb-backend-api/user/domain/model/user.entity";
 import { RefreshTokenStatus } from "src/hb-backend-api/auth/domain/enums/refresh-token-status.enum";
 import { RefreshTokenEntity } from "src/hb-backend-api/auth/domain/model/refresh-token.entity";
+import { DestroyerRegistry } from "src/shared/erasure/destroyer.registry";
 import { ErasureWorker } from "src/hb-backend-api/dsar/schedule/erasure.worker";
 
 /**
@@ -26,6 +27,7 @@ describe("ErasureWorker throughput (bench)", () => {
   let app: INestApplication;
   let mongo: MongoMemoryReplSet;
   let worker: ErasureWorker;
+  let registry: DestroyerRegistry;
   let userModel: Model<UserEntity>;
   let refreshTokenModel: Model<RefreshTokenEntity>;
   const seededIds: Types.ObjectId[] = [];
@@ -49,6 +51,7 @@ describe("ErasureWorker throughput (bench)", () => {
     await app.init();
 
     worker = app.get(ErasureWorker, { strict: false });
+    registry = app.get(DestroyerRegistry, { strict: false });
     userModel = app.get(getModelToken(UserEntity.name));
     refreshTokenModel = app.get(getModelToken(RefreshTokenEntity.name));
 
@@ -85,6 +88,23 @@ describe("ErasureWorker throughput (bench)", () => {
   afterAll(async () => {
     await app?.close();
     await mongo?.stop();
+  });
+
+  it("registers every content + identity destroyer via the DI graph", () => {
+    const keys = registry.ordered().map((d) => d.key);
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        "user.identity",
+        "auth.credentials",
+        "adoption.applications",
+        "foster.applications",
+        "messaging.messages",
+        "review.reviews",
+        "volunteer-post.posts",
+        "volunteer-post.comments",
+        "report.reports",
+      ]),
+    );
   });
 
   it(`drains ${N} withdrawn accounts and anonymizes every one`, async () => {

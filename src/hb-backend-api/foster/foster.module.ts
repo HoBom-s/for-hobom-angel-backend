@@ -1,10 +1,13 @@
 import { Module, OnModuleInit } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { DIToken } from "src/shared/di/token.di";
+import { DestroyerRegistry } from "src/shared/erasure/destroyer.registry";
+import { ErasureModule } from "src/shared/erasure/erasure.module";
 import { AdoptionModule } from "src/hb-backend-api/adoption/adoption.module";
 import { AnimalModule } from "src/hb-backend-api/animal/animal.module";
 import { ApprovalModule } from "src/hb-backend-api/approval/approval.module";
 import { ApprovalCallbackRegistry } from "src/hb-backend-api/approval/application/approval-callback.registry";
+import { FosterApplicationDestroyer } from "src/hb-backend-api/foster/adapters/erasure/foster-application.destroyer";
 import { MessagingModule } from "src/hb-backend-api/messaging/messaging.module";
 import { MessageSubjectResolverRegistry } from "src/hb-backend-api/messaging/application/message-subject-resolver.registry";
 import { OutboxModule } from "src/hb-backend-api/outbox/outbox.module";
@@ -41,9 +44,11 @@ import { FosterController } from "src/hb-backend-api/foster/adapters/in/foster.c
     OutboxModule,
     QuestionnaireModule,
     MessagingModule,
+    ErasureModule,
   ],
   controllers: [FosterController],
   providers: [
+    FosterApplicationDestroyer,
     {
       provide: DIToken.FosterModule.SubmitFosterApplicationUseCase,
       useClass: SubmitFosterApplicationService,
@@ -83,10 +88,13 @@ export class FosterModule implements OnModuleInit {
     private readonly fosterApprovalCallback: FosterApprovalCallback,
     private readonly resolverRegistry: MessageSubjectResolverRegistry,
     private readonly fosterMessageSubjectResolver: FosterMessageSubjectResolver,
+    private readonly destroyerRegistry: DestroyerRegistry,
+    private readonly fosterApplicationDestroyer: FosterApplicationDestroyer,
   ) {}
 
   public onModuleInit(): void {
     this.callbackRegistry.register(this.fosterApprovalCallback);
     this.resolverRegistry.register(this.fosterMessageSubjectResolver);
+    this.destroyerRegistry.register(this.fosterApplicationDestroyer);
   }
 }
