@@ -5,6 +5,10 @@ import { VolunteerEventId } from "src/hb-backend-api/volunteer/domain/model/vo/v
 /** Read-side port for volunteer events. */
 export interface VolunteerEventQueryPort {
   findById(id: VolunteerEventId): Promise<VolunteerEvent | null>;
+  /** Fetch events by id (unordered); missing ids are simply absent. */
+  findByIds(ids: VolunteerEventId[]): Promise<VolunteerEvent[]>;
   findByShelter(shelterId: ShelterId): Promise<VolunteerEvent[]>;
   findUpcoming(now: Date, limit: number): Promise<VolunteerEvent[]>;
+  /** OPEN events past their end time — the auto-close sweep's candidates. */
+  findExpiredOpen(now: Date, limit: number): Promise<VolunteerEvent[]>;
 }

@@ -140,7 +140,7 @@ describe("REST API (e2e)", () => {
       .post(`${PREFIX}/approvals/${approvalId}/decision`)
       .set(auth(registrant.token))
       .send({ decision: "APPROVE", metadata: { trustTier: "A" } })
-      .expect(201);
+      .expect(204);
 
     // shelter is now VERIFIED
     const shelterRes = await request(app.getHttpServer())
@@ -212,7 +212,7 @@ describe("REST API (e2e)", () => {
       .post(`${PREFIX}/approvals/${approvalId}/decision`)
       .set(auth(token))
       .send({ decision: "APPROVE", metadata: { trustTier: "A" } })
-      .expect(201);
+      .expect(204);
     return shelterId as string;
   };
 
@@ -251,6 +251,157 @@ describe("REST API (e2e)", () => {
       .set(auth(admin.token))
       .expect(200);
     expect(miss.body.items.items).toHaveLength(0);
+  });
+
+  it("returns animal detail with weight and the owning-shelter summary", async () => {
+    const admin = await seedUser();
+    const slug = `detail-${Date.now()}`;
+    const shelterId = await registerAndApproveShelter(admin.token, slug);
+
+    const reg = await request(app.getHttpServer())
+      .post(`${PREFIX}/shelters/${shelterId}/animals`)
+      .set(auth(admin.token))
+      .send({
+        name: `보리-${Date.now()}`,
+        species: AnimalSpecies.DOG,
+        traits: {
+          sex: AnimalSex.MALE,
+          size: AnimalSize.SMALL,
+          weightKg: 4.2,
+        },
+        health: { neutered: true, vaccinated: true },
+        intake: { intakeDate: "2026-01-02T00:00:00.000Z" },
+      })
+      .expect(201);
+    const { animalId } = reg.body.items;
+
+    const detail = await request(app.getHttpServer())
+      .get(`${PREFIX}/animals/${animalId}`)
+      .set(auth(admin.token))
+      .expect(200);
+
+    expect(detail.body.items.traits.weightKg).toBe(4.2);
+    expect(detail.body.items.shelter).toMatchObject({
+      slug,
+      name: "행복한 발자국",
+      region: "서울",
+      city: "강남구",
+    });
+  });
+
+  it("exposes the About profile on GET /shelters/:slug and stats on /stats", async () => {
+    const admin = await seedUser();
+    const slug = `about-${Date.now()}`;
+    const shelterId = await registerAndApproveShelter(admin.token, slug);
+
+    // Profile is written by the §07 About editor (PATCH), not raw DB seeding.
+    await request(app.getHttpServer())
+      .patch(`${PREFIX}/shelters/${shelterId}/profile`)
+      .set(auth(admin.token))
+      .send({
+        intro: "# 안녕하세요\n행복한 발자국입니다.",
+        operatingSince: "2015-03-01T00:00:00.000Z",
+        representativeName: "김보호",
+      })
+      .expect(204);
+
+    const about = await request(app.getHttpServer())
+      .get(`${PREFIX}/shelters/${slug}`)
+      .set(auth(admin.token))
+      .expect(200);
+    expect(about.body.items.intro).toContain("행복한 발자국");
+    expect(about.body.items.operatingSince).toBe("2015-03-01T00:00:00.000Z");
+    expect(about.body.items.representativeName).toBe("김보호");
+    expect(about.body.items.visitGuide).toBeNull();
+
+    // Two AVAILABLE animals → shelteredCount 2, availableCount 2, adoptedCount 0.
+    for (const name of [`s1-${Date.now()}`, `s2-${Date.now()}`]) {
+      await request(app.getHttpServer())
+        .post(`${PREFIX}/shelters/${shelterId}/animals`)
+        .set(auth(admin.token))
+        .send({
+          name,
+          species: AnimalSpecies.CAT,
+          traits: { sex: AnimalSex.FEMALE, size: AnimalSize.SMALL },
+          health: { neutered: true, vaccinated: true },
+          intake: { intakeDate: "2026-01-02T00:00:00.000Z" },
+        })
+        .expect(201);
+    }
+
+    const stats = await request(app.getHttpServer())
+      .get(`${PREFIX}/shelters/${shelterId}/stats`)
+      .set(auth(admin.token))
+      .expect(200);
+    expect(stats.body.items).toEqual({
+      adoptedCount: 0,
+      shelteredCount: 2,
+      availableCount: 2,
+    });
+  });
+
+  it("saves a cover image via PATCH, surfaces it on the directory card, and refuses non-staff", async () => {
+    const admin = await seedUser();
+    const region = `cover-${Date.now()}`;
+    const slug = `cover-${Date.now()}`;
+    const shelterId = await registerAndApproveShelter(admin.token, slug, {
+      region,
+      city: "강남구",
+      roadAddress: "테헤란로 5",
+      visibility: AddressVisibility.PARTIAL,
+    });
+
+    // A non-staff member cannot edit the profile.
+    const outsider = await seedUser();
+    await request(app.getHttpServer())
+      .patch(`${PREFIX}/shelters/${shelterId}/profile`)
+      .set(auth(outsider.token))
+      .send({ coverImageKey: "shelters/nope.webp" })
+      .expect(403);
+
+    // The shelter's admin sets the cover image.
+    await request(app.getHttpServer())
+      .patch(`${PREFIX}/shelters/${shelterId}/profile`)
+      .set(auth(admin.token))
+      .send({ coverImageKey: "shelters/hero.webp" })
+      .expect(204);
+
+    // It now rides along on the §04 directory card.
+    const list = await request(app.getHttpServer())
+      .get(`${PREFIX}/shelters`)
+      .query({ region, limit: 10 })
+      .set(auth(admin.token))
+      .expect(200);
+    expect(list.body.items.items).toHaveLength(1);
+    expect(list.body.items.items[0].coverImageKey).toBe("shelters/hero.webp");
+  });
+
+  it("lists verified shelters in the directory, filtered by region", async () => {
+    const admin = await seedUser();
+    const region = `dir-${Date.now()}`;
+    const shelterId = await registerAndApproveShelter(
+      admin.token,
+      `dir-list-${Date.now()}`,
+      {
+        region,
+        city: "강남구",
+        roadAddress: "테헤란로 9",
+        visibility: AddressVisibility.PARTIAL,
+      },
+    );
+
+    const res = await request(app.getHttpServer())
+      .get(`${PREFIX}/shelters`)
+      .query({ region, limit: 10 })
+      .set(auth(admin.token))
+      .expect(200);
+
+    expect(res.body.items.items).toHaveLength(1);
+    expect(res.body.items.items[0].id).toBe(shelterId);
+    expect(res.body.items.items[0].region).toBe(region);
+    expect(res.body.items.items[0].status).toBe("VERIFIED");
+    expect(res.body.items.hasNext).toBe(false);
+    expect(res.body.items.nextCursor).toBeNull();
   });
 
   it("returns map markers only for shelters with disclosed coordinates", async () => {

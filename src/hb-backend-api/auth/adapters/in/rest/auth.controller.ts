@@ -9,7 +9,8 @@ import {
   Res,
   UnauthorizedException,
 } from "@nestjs/common";
-import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { ApiNoContentResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiCreatedEnvelope } from "src/shared/response/api-envelope.decorator";
 import { Request, Response } from "express";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
@@ -45,7 +46,7 @@ export class AuthController {
   ) {}
 
   @ApiOperation({ summary: "회원가입 (이메일+비밀번호 + 세션 쿠키 발급)" })
-  @ApiResponse({ type: SessionResponse })
+  @ApiCreatedEnvelope(SessionResponse)
   @Post("signup")
   public async signup(
     @Body() body: SignUpDto,
@@ -63,7 +64,7 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: "로그인 (이메일+비밀번호 + 세션 쿠키 발급)" })
-  @ApiResponse({ type: SessionResponse })
+  @ApiCreatedEnvelope(SessionResponse)
   @Post("login")
   public async login(
     @Body() body: LoginDto,
@@ -78,6 +79,7 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: "토큰 재발급 (쿠키의 refresh 회전 + 재사용 탐지)" })
+  @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Post("refresh")
   public async refresh(
@@ -91,6 +93,7 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: "로그아웃 (토큰 패밀리 폐기 + 쿠키 삭제)" })
+  @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Post("logout")
   public async logout(

@@ -49,6 +49,35 @@ class EnvironmentVariables {
   @IsOptional()
   @IsString()
   FIELD_ENCRYPTION_KEY?: string;
+
+  // Shared secret the outbox relay (hobom-event-processor) presents as the
+  // `x-api-key` gRPC header. Enforced as required in production below.
+  @IsOptional()
+  @IsString()
+  HOBOM_GRPC_API_KEY?: string;
+
+  // Object storage for image uploads (Cloudflare R2 / any S3-compatible bucket).
+  // Validated at the media endpoint via `getOrThrow`, so the app boots without
+  // them; only issuing an upload URL requires them.
+  @IsOptional()
+  @IsString()
+  HOBOM_R2_ENDPOINT?: string;
+
+  @IsOptional()
+  @IsString()
+  HOBOM_R2_BUCKET?: string;
+
+  @IsOptional()
+  @IsString()
+  HOBOM_R2_ACCESS_KEY_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  HOBOM_R2_SECRET_ACCESS_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  HOBOM_R2_PUBLIC_BASE_URL?: string;
 }
 
 /**
@@ -71,6 +100,9 @@ export function validate(
   }
   if (parsed.NODE_ENV === NodeEnv.Production && !config.FIELD_ENCRYPTION_KEY) {
     throw new Error("FIELD_ENCRYPTION_KEY is required in production");
+  }
+  if (parsed.NODE_ENV === NodeEnv.Production && !config.HOBOM_GRPC_API_KEY) {
+    throw new Error("HOBOM_GRPC_API_KEY is required in production");
   }
   return config;
 }

@@ -3,6 +3,7 @@ import { Types } from "mongoose";
 import { Page } from "src/shared/pagination/page";
 import { DIToken } from "src/shared/di/token.di";
 import { Animal } from "src/hb-backend-api/animal/domain/model/animal";
+import { AnimalStatus } from "src/hb-backend-api/animal/domain/enums/animal-status.enum";
 import { AnimalId } from "src/hb-backend-api/animal/domain/model/vo/animal-id.vo";
 import {
   AnimalQueryPort,
@@ -29,6 +30,20 @@ export class AnimalQueryAdapter implements AnimalQueryPort {
     return docs.map(toDomain);
   }
 
+  public countByShelterAndStatuses(
+    shelterId: ShelterId,
+    statuses: AnimalStatus[],
+  ): Promise<number> {
+    return this.animalRepository.countByShelterAndStatuses(
+      shelterId.raw,
+      statuses,
+    );
+  }
+
+  public countByStatuses(statuses: AnimalStatus[]): Promise<number> {
+    return this.animalRepository.countByStatuses(statuses);
+  }
+
   public async search(criteria: AnimalSearchCriteria): Promise<Page<Animal>> {
     const cursorId =
       criteria.cursor && Types.ObjectId.isValid(criteria.cursor)
@@ -45,6 +60,7 @@ export class AnimalQueryAdapter implements AnimalQueryPort {
       },
       cursorId,
       criteria.limit,
+      criteria.sort,
     );
 
     const hasNext = docs.length > criteria.limit;

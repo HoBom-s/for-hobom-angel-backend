@@ -14,10 +14,17 @@ import {
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
+  ApiNoContentResponse,
   ApiOperation,
-  ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import {
+  ApiCreatedEnvelope,
+  ApiEnvelope,
+  ApiEnvelopeArray,
+  ApiEnvelopeCursor,
+} from "src/shared/response/api-envelope.decorator";
+import { RegisterAnimalResponse } from "src/hb-backend-api/animal/adapters/in/dto/register-animal.response";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
 import { CursorPageResponse } from "src/shared/pagination/cursor-page.response";
@@ -31,8 +38,11 @@ import {
 } from "src/hb-backend-api/animal/domain/ports/in/register-animal.use-case";
 import { UpdateAnimalProfileUseCase } from "src/hb-backend-api/animal/domain/ports/in/update-animal-profile.use-case";
 import { RelistAnimalUseCase } from "src/hb-backend-api/animal/domain/ports/in/relist-animal.use-case";
+import { SetAnimalBlindUseCase } from "src/hb-backend-api/animal/domain/ports/in/set-animal-blind.use-case";
+import { AnimalSort } from "src/hb-backend-api/animal/domain/enums/animal-sort.enum";
 import { AnimalQueryPort } from "src/hb-backend-api/animal/domain/ports/out/animal-query.port";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
+import { ShelterQueryPort } from "src/hb-backend-api/shelter/domain/ports/out/shelter-query.port";
 import { RegisterAnimalDto } from "src/hb-backend-api/animal/adapters/in/dto/register-animal.dto";
 import { UpdateAnimalProfileDto } from "src/hb-backend-api/animal/adapters/in/dto/update-animal-profile.dto";
 import { SearchAnimalsQueryDto } from "src/hb-backend-api/animal/adapters/in/dto/search-animals.query.dto";
@@ -50,11 +60,16 @@ export class AnimalController {
     private readonly updateAnimalProfileUseCase: UpdateAnimalProfileUseCase,
     @Inject(DIToken.AnimalModule.RelistAnimalUseCase)
     private readonly relistAnimalUseCase: RelistAnimalUseCase,
+    @Inject(DIToken.AnimalModule.SetAnimalBlindUseCase)
+    private readonly setAnimalBlindUseCase: SetAnimalBlindUseCase,
     @Inject(DIToken.AnimalModule.AnimalQueryPort)
     private readonly animalQueryPort: AnimalQueryPort,
+    @Inject(DIToken.ShelterModule.ShelterQueryPort)
+    private readonly shelterQueryPort: ShelterQueryPort,
   ) {}
 
   @ApiOperation({ summary: "동물 등록 (검증된 보호소의 스태프)" })
+  @ApiCreatedEnvelope(RegisterAnimalResponse)
   @Post("shelters/:shelterId/animals")
   public register(
     @CurrentUser() user: AuthenticatedUser,
@@ -69,6 +84,8 @@ export class AnimalController {
   }
 
   @ApiOperation({ summary: "동물 프로필 수정 (스태프)" })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Patch("animals/:animalId")
   public async update(
     @CurrentUser() user: AuthenticatedUser,
@@ -83,6 +100,7 @@ export class AnimalController {
   }
 
   @ApiOperation({ summary: "동물 탐색/검색 (필터 + 커서 페이지네이션)" })
+  @ApiEnvelopeCursor(AnimalResponse)
   @Get("animals")
   public async search(
     @Query() query: SearchAnimalsQueryDto,
@@ -95,12 +113,13 @@ export class AnimalController {
       keyword: query.keyword,
       cursor: query.cursor,
       limit: query.limit ?? 20,
+      sort: query.sort ?? AnimalSort.LATEST,
     });
     return CursorPageResponse.of(page, (animal) => AnimalResponse.from(animal));
   }
 
   @ApiOperation({ summary: "동물 단건 조회" })
-  @ApiResponse({ type: AnimalResponse })
+  @ApiEnvelope(AnimalResponse)
   @Get("animals/:animalId")
   public async getOne(
     @Param("animalId") animalId: string,
@@ -111,11 +130,12 @@ export class AnimalController {
     if (!animal) {
       throw new NotFoundException("동물을 찾을 수 없어요.");
     }
-    return AnimalResponse.from(animal);
+    const shelter = await this.shelterQueryPort.findById(animal.getShelterId);
+    return AnimalResponse.withShelter(animal, shelter);
   }
 
   @ApiOperation({ summary: "보호소 동물 목록" })
-  @ApiResponse({ type: [AnimalResponse] })
+  @ApiEnvelopeArray(AnimalResponse)
   @Get("shelters/:shelterId/animals")
   public async listByShelter(
     @Param("shelterId") shelterId: string,
@@ -127,6 +147,7 @@ export class AnimalController {
   }
 
   @ApiOperation({ summary: "반환된 동물 재등록 (스태프) — 다시 입양 가능으로" })
+  @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Post("animals/:animalId/relist")
   public async relist(
@@ -136,6 +157,36 @@ export class AnimalController {
     await this.relistAnimalUseCase.invoke({
       animalId,
       actorId: user.userId,
+    });
+  }
+
+  @ApiOperation({ summary: "동물 블라인드 (운영자) — 탐색에서 숨김" })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post("animals/:animalId/blind")
+  public async blind(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("animalId") animalId: string,
+  ): Promise<void> {
+    await this.setAnimalBlindUseCase.invoke({
+      animalId,
+      actorId: user.userId,
+      blinded: true,
+    });
+  }
+
+  @ApiOperation({ summary: "동물 블라인드 해제 (운영자)" })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post("animals/:animalId/unblind")
+  public async unblind(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("animalId") animalId: string,
+  ): Promise<void> {
+    await this.setAnimalBlindUseCase.invoke({
+      animalId,
+      actorId: user.userId,
+      blinded: false,
     });
   }
 }

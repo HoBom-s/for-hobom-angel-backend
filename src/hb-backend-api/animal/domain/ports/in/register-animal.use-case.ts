@@ -9,6 +9,7 @@ export interface AnimalTraitsInput {
   breed?: string;
   color?: string;
   personality?: string;
+  weightKg?: number;
 }
 
 export interface AnimalHealthInput {

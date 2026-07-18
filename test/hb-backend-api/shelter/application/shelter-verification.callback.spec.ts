@@ -99,15 +99,24 @@ describe("ShelterVerificationCallback", () => {
       findById: jest.fn().mockResolvedValue(shelter),
       findBySlug: jest.fn(),
       findMappable: jest.fn(),
+      findVerified: jest.fn(),
+      countByStatus: jest.fn(),
     };
     shelterPersistencePort = { create: jest.fn(), save: jest.fn() };
     userQueryPort = {
       findById: jest.fn().mockResolvedValue(registrant),
       findByNickname: jest.fn(),
       findByEmail: jest.fn(),
+      countByStatus: jest.fn(),
+      countCreatedBetween: jest.fn(),
+      findWithdrawnToPurge: jest.fn(),
     };
     userPersistencePort = { register: jest.fn(), save: jest.fn() };
-    outboxPersistencePort = { save: jest.fn() };
+    outboxPersistencePort = {
+      save: jest.fn(),
+      markAsSent: jest.fn(),
+      markAsFailed: jest.fn(),
+    };
     callback = new ShelterVerificationCallback(
       shelterQueryPort,
       shelterPersistencePort,

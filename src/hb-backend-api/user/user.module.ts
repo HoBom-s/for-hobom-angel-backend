@@ -1,10 +1,14 @@
-import { Module } from "@nestjs/common";
+import { Module, OnModuleInit } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { DIToken } from "src/shared/di/token.di";
+import { DestroyerRegistry } from "src/shared/erasure/destroyer.registry";
+import { ErasureModule } from "src/shared/erasure/erasure.module";
 import { UserEntity } from "src/hb-backend-api/user/domain/model/user.entity";
 import { UserSchema } from "src/hb-backend-api/user/domain/model/user.schema";
+import { PersonalDataAdapter } from "src/hb-backend-api/user/adapters/out/personal-data.adapter";
 import { UserPersistenceAdapter } from "src/hb-backend-api/user/adapters/out/user-persistence.adapter";
 import { UserQueryAdapter } from "src/hb-backend-api/user/adapters/out/user-query.adapter";
+import { IdentityDestroyer } from "src/hb-backend-api/user/adapters/erasure/identity.destroyer";
 import { UserRepositoryImpl } from "src/hb-backend-api/user/infra/repositories/user.repository.impl";
 import { ChangeNicknameService } from "src/hb-backend-api/user/application/use-cases/change-nickname.service";
 import { WithdrawAccountService } from "src/hb-backend-api/user/application/use-cases/withdraw-account.service";
@@ -16,11 +20,14 @@ import { UserController } from "src/hb-backend-api/user/adapters/in/user.control
  * User store. Owns member records (encrypted PII, roles) and the self-service
  * profile surface (view / rename / withdraw), plus operator moderation
  * (sanction / reinstate). Exposes query/persistence ports; the auth layer
- * consumes UserQueryPort for authorization decisions.
+ * consumes UserQueryPort for authorization decisions. Owns the IDENTITY
+ * destroyer (self-registered into the erasure engine) and the PII port that
+ * backs DSAR export.
  */
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: UserEntity.name, schema: UserSchema }]),
+    ErasureModule,
   ],
   controllers: [UserController],
   providers: [
@@ -52,10 +59,25 @@ import { UserController } from "src/hb-backend-api/user/adapters/in/user.control
       provide: DIToken.UserModule.UserQueryPort,
       useClass: UserQueryAdapter,
     },
+    {
+      provide: DIToken.UserModule.PersonalDataPort,
+      useClass: PersonalDataAdapter,
+    },
+    IdentityDestroyer,
   ],
   exports: [
     DIToken.UserModule.UserPersistencePort,
     DIToken.UserModule.UserQueryPort,
+    DIToken.UserModule.PersonalDataPort,
   ],
 })
-export class UserModule {}
+export class UserModule implements OnModuleInit {
+  constructor(
+    private readonly destroyerRegistry: DestroyerRegistry,
+    private readonly identityDestroyer: IdentityDestroyer,
+  ) {}
+
+  public onModuleInit(): void {
+    this.destroyerRegistry.register(this.identityDestroyer);
+  }
+}

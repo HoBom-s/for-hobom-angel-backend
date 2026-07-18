@@ -3,6 +3,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { MongoSessionContext } from "src/infra/mongo/transaction/transaction.context";
 import { OptimisticLockException } from "src/shared/exception/optimistic-lock.exception";
+import { AdoptionApplicationStatus } from "src/hb-backend-api/adoption/domain/enums/adoption-application-status.enum";
 import { AdoptionApplicationEntity } from "src/hb-backend-api/adoption/domain/model/adoption-application.entity";
 import {
   AdoptionApplicationRepository,
@@ -41,5 +42,44 @@ export class AdoptionApplicationRepositoryImpl implements AdoptionApplicationRep
     id: Types.ObjectId,
   ): Promise<AdoptionApplicationEntity | null> {
     return this.model.findById(id).exec();
+  }
+
+  public countByApplicantAndStatus(
+    applicantId: Types.ObjectId,
+    status: AdoptionApplicationStatus,
+  ): Promise<number> {
+    return this.model.countDocuments({ applicantId, status }).exec();
+  }
+
+  public countByShelterAndStatus(
+    shelterId: Types.ObjectId,
+    status: AdoptionApplicationStatus,
+  ): Promise<number> {
+    return this.model.countDocuments({ shelterId, status }).exec();
+  }
+
+  public countByShelterAndStatusBetween(
+    shelterId: Types.ObjectId,
+    status: AdoptionApplicationStatus,
+    from: Date,
+    to: Date,
+  ): Promise<number> {
+    return this.model
+      .countDocuments({ shelterId, status, updatedAt: { $gte: from, $lt: to } })
+      .exec();
+  }
+
+  public countByStatus(status: AdoptionApplicationStatus): Promise<number> {
+    return this.model.countDocuments({ status }).exec();
+  }
+
+  public countByStatusBetween(
+    status: AdoptionApplicationStatus,
+    from: Date,
+    to: Date,
+  ): Promise<number> {
+    return this.model
+      .countDocuments({ status, updatedAt: { $gte: from, $lt: to } })
+      .exec();
   }
 }

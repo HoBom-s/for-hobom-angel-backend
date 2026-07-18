@@ -3,6 +3,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { MongoSessionContext } from "src/infra/mongo/transaction/transaction.context";
 import { OptimisticLockException } from "src/shared/exception/optimistic-lock.exception";
+import { FosterApplicationStatus } from "src/hb-backend-api/foster/domain/enums/foster-application-status.enum";
 import { FosterApplicationEntity } from "src/hb-backend-api/foster/domain/model/foster-application.entity";
 import {
   FosterApplicationMutablePatch,
@@ -39,5 +40,23 @@ export class FosterApplicationRepositoryImpl implements FosterApplicationReposit
 
   public findById(id: Types.ObjectId): Promise<FosterApplicationEntity | null> {
     return this.model.findById(id).exec();
+  }
+
+  public countByApplicantAndStatus(
+    applicantId: Types.ObjectId,
+    status: FosterApplicationStatus,
+  ): Promise<number> {
+    return this.model.countDocuments({ applicantId, status }).exec();
+  }
+
+  public countByShelterAndStatus(
+    shelterId: Types.ObjectId,
+    status: FosterApplicationStatus,
+  ): Promise<number> {
+    return this.model.countDocuments({ shelterId, status }).exec();
+  }
+
+  public countByStatus(status: FosterApplicationStatus): Promise<number> {
+    return this.model.countDocuments({ status }).exec();
   }
 }

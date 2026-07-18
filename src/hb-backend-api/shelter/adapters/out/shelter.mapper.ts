@@ -2,6 +2,7 @@ import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { Address } from "src/hb-backend-api/shelter/domain/model/address";
 import { FacilityPhoto } from "src/hb-backend-api/shelter/domain/model/facility-photo";
 import { Shelter } from "src/hb-backend-api/shelter/domain/model/shelter";
+import { ShelterProfile } from "src/hb-backend-api/shelter/domain/model/shelter-profile";
 import { ShelterEntity } from "src/hb-backend-api/shelter/domain/model/shelter.entity";
 import { BusinessNumber } from "src/hb-backend-api/shelter/domain/model/vo/business-number.vo";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
@@ -45,6 +46,14 @@ export function toDomain(doc: ShelterEntity): Shelter {
     rejectionReason: doc.rejectionReason ?? null,
     verificationSignals: doc.verificationSignals ?? null,
     version: doc.version ?? 0,
+    profile: ShelterProfile.of({
+      intro: doc.profile?.intro,
+      operatingSince: doc.profile?.operatingSince,
+      representativeName: doc.profile?.representativeName,
+      visitGuide: doc.profile?.visitGuide,
+      supportGuide: doc.profile?.supportGuide,
+      coverImageKey: doc.profile?.coverImageKey,
+    }),
   });
 }
 
@@ -72,6 +81,14 @@ export function toInsertDoc(shelter: Shelter): Partial<ShelterEntity> {
     rejectionReason: shelter.getRejectionReason ?? undefined,
     verificationSignals: shelter.getVerificationSignals ?? undefined,
     version: shelter.getVersion,
+    profile: {
+      intro: shelter.getProfile.getIntro,
+      operatingSince: shelter.getProfile.getOperatingSince,
+      representativeName: shelter.getProfile.getRepresentativeName,
+      visitGuide: shelter.getProfile.getVisitGuide,
+      supportGuide: shelter.getProfile.getSupportGuide,
+      coverImageKey: shelter.getProfile.getCoverImageKey,
+    },
   };
 }
 
@@ -85,5 +102,13 @@ export function toMutablePatch(shelter: Shelter): ShelterMutablePatch {
     representatives: shelter.getRepresentatives.map((r) => r.raw),
     facilityPhotos: shelter.getFacilityPhotos.map((p) => p.toPlain()),
     verificationSignals: shelter.getVerificationSignals ?? undefined,
+    profile: {
+      intro: shelter.getProfile.getIntro,
+      operatingSince: shelter.getProfile.getOperatingSince,
+      representativeName: shelter.getProfile.getRepresentativeName,
+      visitGuide: shelter.getProfile.getVisitGuide,
+      supportGuide: shelter.getProfile.getSupportGuide,
+      coverImageKey: shelter.getProfile.getCoverImageKey,
+    },
   };
 }

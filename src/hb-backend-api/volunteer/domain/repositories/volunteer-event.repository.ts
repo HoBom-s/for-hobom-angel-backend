@@ -17,7 +17,10 @@ export interface VolunteerEventRepository {
     patch: VolunteerEventMutablePatch,
   ): Promise<void>;
   findById(id: Types.ObjectId): Promise<VolunteerEventEntity | null>;
+  findByIds(ids: Types.ObjectId[]): Promise<VolunteerEventEntity[]>;
   findByShelterId(shelterId: Types.ObjectId): Promise<VolunteerEventEntity[]>;
   /** OPEN events starting after `now`, soonest first (discovery). */
   findUpcoming(now: Date, limit: number): Promise<VolunteerEventEntity[]>;
+  /** OPEN events whose end time has passed — candidates for auto-close. */
+  findExpiredOpen(now: Date, limit: number): Promise<VolunteerEventEntity[]>;
 }

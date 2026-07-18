@@ -1,7 +1,10 @@
-import { Module } from "@nestjs/common";
+import { Module, OnModuleInit } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { DIToken } from "src/shared/di/token.di";
+import { DestroyerRegistry } from "src/shared/erasure/destroyer.registry";
+import { ErasureModule } from "src/shared/erasure/erasure.module";
 import { UserModule } from "src/hb-backend-api/user/user.module";
+import { ReportDestroyer } from "src/hb-backend-api/report/adapters/erasure/report.destroyer";
 import { ReportEntity } from "src/hb-backend-api/report/domain/model/report.entity";
 import { ReportSchema } from "src/hb-backend-api/report/domain/model/report.schema";
 import { ReportPersistenceAdapter } from "src/hb-backend-api/report/adapters/out/report-persistence.adapter";
@@ -24,9 +27,11 @@ import { ReportController } from "src/hb-backend-api/report/adapters/in/report.c
       { name: ReportEntity.name, schema: ReportSchema },
     ]),
     UserModule,
+    ErasureModule,
   ],
   controllers: [ReportController],
   providers: [
+    ReportDestroyer,
     {
       provide: DIToken.ReportModule.SubmitReportUseCase,
       useClass: SubmitReportService,
@@ -53,4 +58,13 @@ import { ReportController } from "src/hb-backend-api/report/adapters/in/report.c
     },
   ],
 })
-export class ReportModule {}
+export class ReportModule implements OnModuleInit {
+  constructor(
+    private readonly destroyerRegistry: DestroyerRegistry,
+    private readonly reportDestroyer: ReportDestroyer,
+  ) {}
+
+  public onModuleInit(): void {
+    this.destroyerRegistry.register(this.reportDestroyer);
+  }
+}

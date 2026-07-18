@@ -1,12 +1,22 @@
 import {
   Body,
   Controller,
+  HttpCode,
+  HttpStatus,
   Inject,
   Param,
   Post,
   UseGuards,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiNoContentResponse,
+  ApiOperation,
+  ApiTags,
+} from "@nestjs/swagger";
+import { ApiCreatedEnvelope } from "src/shared/response/api-envelope.decorator";
+import { SubmitFosterResponse } from "src/hb-backend-api/foster/adapters/in/dto/submit-foster.response";
+import { ConvertFosterResponse } from "src/hb-backend-api/foster/adapters/in/dto/convert-foster.response";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
@@ -39,6 +49,7 @@ export class FosterController {
   ) {}
 
   @ApiOperation({ summary: "임시보호 신청 (동물이 예약되고 심사가 열림)" })
+  @ApiCreatedEnvelope(SubmitFosterResponse)
   @Post("animals/:animalId/foster-applications")
   public submit(
     @CurrentUser() user: AuthenticatedUser,
@@ -54,6 +65,8 @@ export class FosterController {
   }
 
   @ApiOperation({ summary: "임시보호 종료 (보호소 담당자 또는 임시보호자)" })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Post("foster-applications/:fosterApplicationId/termination")
   public async terminate(
     @CurrentUser() user: AuthenticatedUser,
@@ -68,6 +81,7 @@ export class FosterController {
   }
 
   @ApiOperation({ summary: "임시보호 → 입양 전환 (보호소 담당자)" })
+  @ApiCreatedEnvelope(ConvertFosterResponse)
   @Post("foster-applications/:fosterApplicationId/adoption-conversion")
   public convertToAdoption(
     @CurrentUser() user: AuthenticatedUser,

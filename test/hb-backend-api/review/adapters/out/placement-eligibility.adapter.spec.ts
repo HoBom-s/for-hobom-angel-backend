@@ -27,8 +27,20 @@ describe("PlacementEligibilityAdapter", () => {
   let adapter: PlacementEligibilityAdapter;
 
   beforeEach(() => {
-    adoptionQueryPort = { findById: jest.fn() };
-    fosterQueryPort = { findById: jest.fn() };
+    adoptionQueryPort = {
+      findById: jest.fn(),
+      countByApplicantAndStatus: jest.fn(),
+      countByShelterAndStatus: jest.fn(),
+      countByShelterAndStatusBetween: jest.fn(),
+      countByStatus: jest.fn(),
+      countByStatusBetween: jest.fn(),
+    };
+    fosterQueryPort = {
+      findById: jest.fn(),
+      countByApplicantAndStatus: jest.fn(),
+      countByShelterAndStatus: jest.fn(),
+      countByStatus: jest.fn(),
+    };
     adapter = new PlacementEligibilityAdapter(
       adoptionQueryPort,
       fosterQueryPort,

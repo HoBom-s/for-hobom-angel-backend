@@ -30,6 +30,8 @@ describe("RefreshTokenService", () => {
       findByJti: jest.fn(),
       markRotated: jest.fn(),
       revokeFamily: jest.fn(),
+      deleteByUserId: jest.fn(),
+      countByUserId: jest.fn(),
     };
     const txRunner = {
       run: jest.fn((cb: () => Promise<unknown>) => cb()),

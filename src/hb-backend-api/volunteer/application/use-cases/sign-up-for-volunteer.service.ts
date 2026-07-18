@@ -64,7 +64,7 @@ export class SignUpForVolunteerService implements SignUpForVolunteerUseCase {
       throw new ForbiddenException("활성 회원만 봉사에 지원할 수 있어요.");
     }
 
-    const existing = await this.signupQueryPort.findActive(
+    const existing = await this.signupQueryPort.findLive(
       eventId,
       volunteer.getId,
     );

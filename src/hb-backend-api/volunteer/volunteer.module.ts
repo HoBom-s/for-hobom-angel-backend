@@ -16,8 +16,14 @@ import { VolunteerSignupRepositoryImpl } from "src/hb-backend-api/volunteer/infr
 import { CreateVolunteerEventService } from "src/hb-backend-api/volunteer/application/use-cases/create-volunteer-event.service";
 import { SignUpForVolunteerService } from "src/hb-backend-api/volunteer/application/use-cases/sign-up-for-volunteer.service";
 import { WithdrawVolunteerSignupService } from "src/hb-backend-api/volunteer/application/use-cases/withdraw-volunteer-signup.service";
+import { DecideVolunteerSignupService } from "src/hb-backend-api/volunteer/application/use-cases/decide-volunteer-signup.service";
+import { ListEventSignupsService } from "src/hb-backend-api/volunteer/application/use-cases/list-event-signups.service";
+import { ReadVolunteerEventsService } from "src/hb-backend-api/volunteer/application/use-cases/read-volunteer-events.service";
+import { ListMySignupsService } from "src/hb-backend-api/volunteer/application/use-cases/list-my-signups.service";
 import { CancelVolunteerEventService } from "src/hb-backend-api/volunteer/application/use-cases/cancel-volunteer-event.service";
+import { CloseExpiredVolunteerEventsService } from "src/hb-backend-api/volunteer/application/use-cases/close-expired-volunteer-events.service";
 import { VolunteerController } from "src/hb-backend-api/volunteer/adapters/in/volunteer.controller";
+import { VolunteerExpirySchedule } from "src/hb-backend-api/volunteer/adapters/in/schedule/volunteer-expiry.schedule";
 
 /**
  * Volunteer domain — a shelter's scheduled volunteering with a capacity-capped
@@ -48,9 +54,30 @@ import { VolunteerController } from "src/hb-backend-api/volunteer/adapters/in/vo
       useClass: WithdrawVolunteerSignupService,
     },
     {
+      provide: DIToken.VolunteerModule.DecideVolunteerSignupUseCase,
+      useClass: DecideVolunteerSignupService,
+    },
+    {
+      provide: DIToken.VolunteerModule.ListEventSignupsUseCase,
+      useClass: ListEventSignupsService,
+    },
+    {
+      provide: DIToken.VolunteerModule.ReadVolunteerEventsUseCase,
+      useClass: ReadVolunteerEventsService,
+    },
+    {
+      provide: DIToken.VolunteerModule.ListMySignupsUseCase,
+      useClass: ListMySignupsService,
+    },
+    {
       provide: DIToken.VolunteerModule.CancelVolunteerEventUseCase,
       useClass: CancelVolunteerEventService,
     },
+    {
+      provide: DIToken.VolunteerModule.CloseExpiredVolunteerEventsUseCase,
+      useClass: CloseExpiredVolunteerEventsService,
+    },
+    VolunteerExpirySchedule,
     {
       provide: DIToken.VolunteerModule.VolunteerEventRepository,
       useClass: VolunteerEventRepositoryImpl,

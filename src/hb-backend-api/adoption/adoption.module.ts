@@ -1,9 +1,12 @@
 import { Module, OnModuleInit } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { DIToken } from "src/shared/di/token.di";
+import { DestroyerRegistry } from "src/shared/erasure/destroyer.registry";
+import { ErasureModule } from "src/shared/erasure/erasure.module";
 import { AnimalModule } from "src/hb-backend-api/animal/animal.module";
 import { ApprovalModule } from "src/hb-backend-api/approval/approval.module";
 import { ApprovalCallbackRegistry } from "src/hb-backend-api/approval/application/approval-callback.registry";
+import { AdoptionApplicationDestroyer } from "src/hb-backend-api/adoption/adapters/erasure/adoption-application.destroyer";
 import { MessagingModule } from "src/hb-backend-api/messaging/messaging.module";
 import { MessageSubjectResolverRegistry } from "src/hb-backend-api/messaging/application/message-subject-resolver.registry";
 import { OutboxModule } from "src/hb-backend-api/outbox/outbox.module";
@@ -41,9 +44,11 @@ import { AdoptionController } from "src/hb-backend-api/adoption/adapters/in/adop
     OutboxModule,
     QuestionnaireModule,
     MessagingModule,
+    ErasureModule,
   ],
   controllers: [AdoptionController],
   providers: [
+    AdoptionApplicationDestroyer,
     {
       provide: DIToken.AdoptionModule.SubmitAdoptionApplicationUseCase,
       useClass: SubmitAdoptionApplicationService,
@@ -79,10 +84,13 @@ export class AdoptionModule implements OnModuleInit {
     private readonly adoptionApprovalCallback: AdoptionApprovalCallback,
     private readonly resolverRegistry: MessageSubjectResolverRegistry,
     private readonly adoptionMessageSubjectResolver: AdoptionMessageSubjectResolver,
+    private readonly destroyerRegistry: DestroyerRegistry,
+    private readonly adoptionApplicationDestroyer: AdoptionApplicationDestroyer,
   ) {}
 
   public onModuleInit(): void {
     this.callbackRegistry.register(this.adoptionApprovalCallback);
     this.resolverRegistry.register(this.adoptionMessageSubjectResolver);
+    this.destroyerRegistry.register(this.adoptionApplicationDestroyer);
   }
 }

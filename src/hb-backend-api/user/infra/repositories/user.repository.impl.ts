@@ -3,8 +3,10 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { MongoSessionContext } from "src/infra/mongo/transaction/transaction.context";
 import { OptimisticLockException } from "src/shared/exception/optimistic-lock.exception";
+import { UserStatus } from "src/hb-backend-api/user/domain/enums/user-status.enum";
 import { UserEntity } from "src/hb-backend-api/user/domain/model/user.entity";
 import {
+  UserAnonymizePatch,
   UserAuthzPatch,
   UserRepository,
 } from "src/hb-backend-api/user/domain/repositories/user.repository";
@@ -48,5 +50,50 @@ export class UserRepositoryImpl implements UserRepository {
 
   public findByEmail(email: string): Promise<UserEntity | null> {
     return this.userModel.findOne({ email }).exec();
+  }
+
+  public countByStatus(status: UserStatus): Promise<number> {
+    return this.userModel.countDocuments({ status }).exec();
+  }
+
+  public countCreatedBetween(from: Date, to: Date): Promise<number> {
+    return this.userModel
+      .countDocuments({ createdAt: { $gte: from, $lt: to } })
+      .exec();
+  }
+
+  public async anonymize(
+    id: Types.ObjectId,
+    patch: UserAnonymizePatch,
+  ): Promise<number> {
+    const session = MongoSessionContext.getSession();
+    // Guard on realNameEnc so a re-run on an already-tombstoned row is a no-op.
+    const result = await this.userModel.updateOne(
+      { _id: id, realNameEnc: { $ne: patch.realNameEnc } },
+      { $set: patch, $inc: { version: 1 } },
+      { session },
+    );
+    return result.modifiedCount;
+  }
+
+  public countUnanonymized(
+    id: Types.ObjectId,
+    tombstone: string,
+  ): Promise<number> {
+    return this.userModel
+      .countDocuments({ _id: id, realNameEnc: { $ne: tombstone } })
+      .exec();
+  }
+
+  public async findWithdrawnToPurge(
+    now: Date,
+    limit: number,
+  ): Promise<Types.ObjectId[]> {
+    const docs = await this.userModel
+      .find({ status: UserStatus.WITHDRAWN, purgeAfter: { $lte: now } })
+      .select("_id")
+      .limit(limit)
+      .exec();
+    return docs.map((doc) => doc._id);
   }
 }

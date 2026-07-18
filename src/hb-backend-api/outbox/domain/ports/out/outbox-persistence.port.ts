@@ -8,4 +8,17 @@ import { CreateOutboxEntity } from "src/hb-backend-api/outbox/domain/model/creat
  */
 export interface OutboxPersistencePort {
   save(entity: CreateOutboxEntity): Promise<void>;
+
+  /**
+   * Advance a row to SENT after the relay publishes it. Idempotent: a no-op if
+   * the row is already SENT or does not exist. Returns whether a row changed.
+   */
+  markAsSent(eventId: string): Promise<boolean>;
+
+  /**
+   * Advance a row to FAILED after a failed publish attempt, recording the error
+   * and bumping `retryCount` so the relay can retry. Returns whether a row
+   * changed.
+   */
+  markAsFailed(eventId: string, errorMessage: string): Promise<boolean>;
 }

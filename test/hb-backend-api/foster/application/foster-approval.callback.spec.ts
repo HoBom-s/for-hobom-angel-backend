@@ -75,15 +75,24 @@ describe("FosterApprovalCallback", () => {
     });
     applicationQueryPort = {
       findById: jest.fn().mockResolvedValue(application),
+      countByApplicantAndStatus: jest.fn(),
+      countByShelterAndStatus: jest.fn(),
+      countByStatus: jest.fn(),
     };
     applicationPersistencePort = { create: jest.fn(), save: jest.fn() };
     animalQueryPort = {
       findById: jest.fn().mockResolvedValue(animal),
       findByShelter: jest.fn(),
       search: jest.fn(),
+      countByShelterAndStatuses: jest.fn(),
+      countByStatuses: jest.fn(),
     };
     animalPersistencePort = { create: jest.fn(), save: jest.fn() };
-    outboxPersistencePort = { save: jest.fn() };
+    outboxPersistencePort = {
+      save: jest.fn(),
+      markAsSent: jest.fn(),
+      markAsFailed: jest.fn(),
+    };
     callback = new FosterApprovalCallback(
       applicationQueryPort,
       applicationPersistencePort,

@@ -8,7 +8,14 @@ import {
   Post,
   UseGuards,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiNoContentResponse,
+  ApiOperation,
+  ApiTags,
+} from "@nestjs/swagger";
+import { ApiCreatedEnvelope } from "src/shared/response/api-envelope.decorator";
+import { SubmitAdoptionResponse } from "src/hb-backend-api/adoption/adapters/in/dto/submit-adoption.response";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
@@ -35,6 +42,7 @@ export class AdoptionController {
   ) {}
 
   @ApiOperation({ summary: "입양 신청 (동물이 예약되고 심사가 열림)" })
+  @ApiCreatedEnvelope(SubmitAdoptionResponse)
   @Post("animals/:animalId/adoption-applications")
   public submit(
     @CurrentUser() user: AuthenticatedUser,
@@ -49,6 +57,7 @@ export class AdoptionController {
   }
 
   @ApiOperation({ summary: "입양 반환/파양 처리 (보호소 담당자)" })
+  @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Post("adoption-applications/:adoptionId/return")
   public async return(

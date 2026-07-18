@@ -4,6 +4,7 @@ import { ShelterStatus } from "src/hb-backend-api/shelter/domain/enums/shelter-s
 import { TrustTier } from "src/hb-backend-api/shelter/domain/enums/trust-tier.enum";
 import { Address } from "src/hb-backend-api/shelter/domain/model/address";
 import { FacilityPhoto } from "src/hb-backend-api/shelter/domain/model/facility-photo";
+import { ShelterProfile } from "src/hb-backend-api/shelter/domain/model/shelter-profile";
 import { VerificationSignals } from "src/hb-backend-api/shelter/domain/model/verification-signals";
 import { BusinessNumber } from "src/hb-backend-api/shelter/domain/model/vo/business-number.vo";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
@@ -37,6 +38,7 @@ export class Shelter {
     private rejectionReason: string | null,
     private readonly verificationSignals: VerificationSignals | null,
     private readonly version: number,
+    private profile: ShelterProfile,
   ) {}
 
   private static readonly MAX_FACILITY_PHOTOS = 20;
@@ -80,6 +82,7 @@ export class Shelter {
       null,
       params.verificationSignals ?? null,
       0,
+      ShelterProfile.empty(),
     );
   }
 
@@ -98,6 +101,7 @@ export class Shelter {
     rejectionReason: string | null;
     verificationSignals: VerificationSignals | null;
     version: number;
+    profile?: ShelterProfile;
   }): Shelter {
     return new Shelter(
       params.id,
@@ -114,6 +118,7 @@ export class Shelter {
       params.rejectionReason,
       params.verificationSignals,
       params.version,
+      params.profile ?? ShelterProfile.empty(),
     );
   }
 
@@ -178,6 +183,36 @@ export class Shelter {
     this.facilityPhotos = this.facilityPhotos.filter(
       (p) => !p.hasKey(objectKey),
     );
+  }
+
+  // ── About profile (§07 content editor) ──────────────────────────
+  /**
+   * Partial edit of the public About content. Only fields present in `patch`
+   * change; an explicit empty string clears one (trimmed to null by the VO),
+   * while an omitted (`undefined`) field keeps its current value.
+   */
+  public editProfile(patch: {
+    intro?: string | null;
+    operatingSince?: Date | null;
+    representativeName?: string | null;
+    visitGuide?: string | null;
+    supportGuide?: string | null;
+    coverImageKey?: string | null;
+  }): void {
+    const keep = <T>(next: T | undefined, current: T): T =>
+      next !== undefined ? next : current;
+    const p = this.profile;
+    this.profile = ShelterProfile.of({
+      intro: keep(patch.intro, p.getIntro),
+      operatingSince: keep(patch.operatingSince, p.getOperatingSince),
+      representativeName: keep(
+        patch.representativeName,
+        p.getRepresentativeName,
+      ),
+      visitGuide: keep(patch.visitGuide, p.getVisitGuide),
+      supportGuide: keep(patch.supportGuide, p.getSupportGuide),
+      coverImageKey: keep(patch.coverImageKey, p.getCoverImageKey),
+    });
   }
 
   // ── predicates ──────────────────────────────────────────────────
@@ -250,5 +285,8 @@ export class Shelter {
   }
   public get getVersion(): number {
     return this.version;
+  }
+  public get getProfile(): ShelterProfile {
+    return this.profile;
   }
 }

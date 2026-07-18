@@ -40,6 +40,10 @@ export class ShelterRepositoryImpl implements ShelterRepository {
     }
   }
 
+  public countByStatus(status: ShelterStatus): Promise<number> {
+    return this.shelterModel.countDocuments({ status }).exec();
+  }
+
   public findById(id: Types.ObjectId): Promise<ShelterEntity | null> {
     return this.shelterModel.findById(id).exec();
   }
@@ -60,4 +64,37 @@ export class ShelterRepositoryImpl implements ShelterRepository {
     }
     return this.shelterModel.find(query).exec();
   }
+
+  public listVerified(
+    region: string | undefined,
+    keyword: string | undefined,
+    cursorId: Types.ObjectId | null,
+    limit: number,
+  ): Promise<ShelterEntity[]> {
+    const query: Record<string, unknown> = {
+      status: ShelterStatus.VERIFIED,
+    };
+    if (region) {
+      query["address.region"] = region;
+    }
+    const trimmed = keyword?.trim();
+    if (trimmed) {
+      // Case-insensitive substring match on name; escape user input so
+      // regex metacharacters are treated literally.
+      query.name = { $regex: escapeRegExp(trimmed), $options: "i" };
+    }
+    if (cursorId) {
+      query._id = { $lt: cursorId };
+    }
+    return this.shelterModel
+      .find(query)
+      .sort({ _id: -1 })
+      .limit(limit + 1)
+      .exec();
+  }
+}
+
+/** Escapes regex metacharacters so a user keyword matches literally. */
+function escapeRegExp(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

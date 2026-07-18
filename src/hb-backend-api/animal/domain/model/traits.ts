@@ -3,8 +3,9 @@ import { AnimalSize } from "src/hb-backend-api/animal/domain/enums/animal-size.e
 
 /**
  * Descriptive characteristics used for display and discovery filters (성별·크기·
- * 나이·품종·털색·성격). Age is an *estimate* in months (rescues rarely have an exact
- * birthdate); breed and color are best-guess free text. Immutable.
+ * 나이·몸무게·품종·털색·성격). Age is an *estimate* in months (rescues rarely have an
+ * exact birthdate); weight is in kilograms and may be fractional; breed and color
+ * are best-guess free text. Immutable.
  */
 export class Traits {
   constructor(
@@ -14,6 +15,7 @@ export class Traits {
     private readonly breed: string | null,
     private readonly color: string | null,
     private readonly personality: string | null,
+    private readonly weightKg: number | null,
   ) {
     Object.freeze(this);
   }
@@ -25,9 +27,13 @@ export class Traits {
     breed?: string | null;
     color?: string | null;
     personality?: string | null;
+    weightKg?: number | null;
   }): Traits {
     if (params.ageMonths != null && params.ageMonths < 0) {
       throw new Error("나이(개월)는 음수일 수 없어요.");
+    }
+    if (params.weightKg != null && params.weightKg < 0) {
+      throw new Error("몸무게(kg)는 음수일 수 없어요.");
     }
     return new Traits(
       params.sex,
@@ -36,6 +42,7 @@ export class Traits {
       params.breed?.trim() || null,
       params.color?.trim() || null,
       params.personality?.trim() || null,
+      params.weightKg ?? null,
     );
   }
 
@@ -56,5 +63,8 @@ export class Traits {
   }
   public get getPersonality(): string | null {
     return this.personality;
+  }
+  public get getWeightKg(): number | null {
+    return this.weightKg;
   }
 }

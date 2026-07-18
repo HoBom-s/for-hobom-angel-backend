@@ -207,4 +207,42 @@ describe("Shelter aggregate", () => {
       expect(shelter.getFacilityPhotos).toHaveLength(1);
     });
   });
+
+  describe("editProfile", () => {
+    it("sets About fields from an empty profile", () => {
+      const shelter = reconstitute();
+      expect(shelter.getProfile.getCoverImageKey).toBeNull();
+
+      shelter.editProfile({
+        coverImageKey: "shelters/cover.webp",
+        intro: "안녕하세요",
+        operatingSince: new Date("2015-03-01T00:00:00.000Z"),
+      });
+
+      expect(shelter.getProfile.getCoverImageKey).toBe("shelters/cover.webp");
+      expect(shelter.getProfile.getIntro).toBe("안녕하세요");
+      expect(shelter.getProfile.getOperatingSince).toEqual(
+        new Date("2015-03-01T00:00:00.000Z"),
+      );
+    });
+
+    it("keeps omitted fields and only changes provided ones", () => {
+      const shelter = reconstitute();
+      shelter.editProfile({ coverImageKey: "cover.webp", intro: "첫 소개" });
+
+      shelter.editProfile({ intro: "새 소개" });
+
+      expect(shelter.getProfile.getIntro).toBe("새 소개");
+      expect(shelter.getProfile.getCoverImageKey).toBe("cover.webp");
+    });
+
+    it("clears a field with an empty string", () => {
+      const shelter = reconstitute();
+      shelter.editProfile({ coverImageKey: "cover.webp" });
+
+      shelter.editProfile({ coverImageKey: "" });
+
+      expect(shelter.getProfile.getCoverImageKey).toBeNull();
+    });
+  });
 });

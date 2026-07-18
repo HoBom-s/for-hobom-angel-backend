@@ -45,6 +45,13 @@ export class VolunteerEventRepositoryImpl implements VolunteerEventRepository {
     return this.model.findById(id).exec();
   }
 
+  public findByIds(ids: Types.ObjectId[]): Promise<VolunteerEventEntity[]> {
+    if (ids.length === 0) {
+      return Promise.resolve([]);
+    }
+    return this.model.find({ _id: { $in: ids } }).exec();
+  }
+
   public findByShelterId(
     shelterId: Types.ObjectId,
   ): Promise<VolunteerEventEntity[]> {
@@ -58,6 +65,17 @@ export class VolunteerEventRepositoryImpl implements VolunteerEventRepository {
     return this.model
       .find({ status: VolunteerEventStatus.OPEN, startAt: { $gt: now } })
       .sort({ startAt: 1 })
+      .limit(limit)
+      .exec();
+  }
+
+  public findExpiredOpen(
+    now: Date,
+    limit: number,
+  ): Promise<VolunteerEventEntity[]> {
+    return this.model
+      .find({ status: VolunteerEventStatus.OPEN, endAt: { $lt: now } })
+      .sort({ endAt: 1 })
       .limit(limit)
       .exec();
   }

@@ -10,7 +10,15 @@ class OutboxModuleToken extends TokenRegistry {
   public readonly OutboxPersistencePort = this.register(
     "outbox.persistence.port",
   );
+  public readonly OutboxQueryPort = this.register("outbox.query.port");
   public readonly OutboxRepository = this.register("outbox.repository");
+  public readonly FindOutboxUseCase = this.register("outbox.find.use-case");
+  public readonly MarkOutboxSentUseCase = this.register(
+    "outbox.mark-sent.use-case",
+  );
+  public readonly MarkOutboxFailedUseCase = this.register(
+    "outbox.mark-failed.use-case",
+  );
 }
 
 class UserModuleToken extends TokenRegistry {
@@ -26,6 +34,62 @@ class UserModuleToken extends TokenRegistry {
   public readonly SanctionUserUseCase = this.register("user.sanction.use-case");
   public readonly ReinstateUserUseCase = this.register(
     "user.reinstate.use-case",
+  );
+  /** Reads (decrypts) / anonymizes a subject's PII for DSAR export & erasure. */
+  public readonly PersonalDataPort = this.register("user.personal-data.port");
+}
+
+/** Erasure framework core (Destroyer engine, request store). */
+class ErasureModuleToken extends TokenRegistry {
+  public readonly ErasureRequestRepository = this.register(
+    "erasure.request.repository",
+  );
+}
+
+/** Legal/policy document CMS (privacy policy, terms, operating policy). */
+class PolicyModuleToken extends TokenRegistry {
+  public readonly PolicyPersistencePort = this.register(
+    "policy.persistence.port",
+  );
+  public readonly PolicyQueryPort = this.register("policy.query.port");
+  public readonly PolicyRepository = this.register("policy.repository");
+  public readonly PublishPolicyUseCase = this.register(
+    "policy.publish.use-case",
+  );
+  public readonly GetCurrentPolicyUseCase = this.register(
+    "policy.get-current.use-case",
+  );
+  public readonly ListPolicyVersionsUseCase = this.register(
+    "policy.list-versions.use-case",
+  );
+}
+
+/** User consent to policy versions (grant / withdraw / list). */
+class ConsentModuleToken extends TokenRegistry {
+  public readonly ConsentPersistencePort = this.register(
+    "consent.persistence.port",
+  );
+  public readonly ConsentQueryPort = this.register("consent.query.port");
+  public readonly ConsentRepository = this.register("consent.repository");
+  public readonly GrantConsentUseCase = this.register("consent.grant.use-case");
+  public readonly WithdrawConsentUseCase = this.register(
+    "consent.withdraw.use-case",
+  );
+  public readonly ListMyConsentsUseCase = this.register(
+    "consent.list-mine.use-case",
+  );
+}
+
+/** DSAR operator surface — read-only: PII access (export) + erasure lookup. */
+class DsarModuleToken extends TokenRegistry {
+  public readonly ExportPersonalDataUseCase = this.register(
+    "dsar.export-personal-data.use-case",
+  );
+  public readonly GetErasureRequestUseCase = this.register(
+    "dsar.get-erasure-request.use-case",
+  );
+  public readonly ListSubjectErasuresUseCase = this.register(
+    "dsar.list-subject-erasures.use-case",
   );
 }
 
@@ -73,6 +137,10 @@ class ShelterModuleToken extends TokenRegistry {
   public readonly RequestStaffPromotionUseCase = this.register(
     "shelter.request-staff-promotion.use-case",
   );
+  public readonly ListSheltersUseCase = this.register("shelter.list.use-case");
+  public readonly EditShelterProfileUseCase = this.register(
+    "shelter.edit-profile.use-case",
+  );
   public readonly ShelterPersistencePort = this.register(
     "shelter.persistence.port",
   );
@@ -94,6 +162,12 @@ class AnimalModuleToken extends TokenRegistry {
     "animal.update-profile.use-case",
   );
   public readonly RelistAnimalUseCase = this.register("animal.relist.use-case");
+  public readonly SetAnimalBlindUseCase = this.register(
+    "animal.set-blind.use-case",
+  );
+  public readonly GetShelterStatsUseCase = this.register(
+    "animal.get-shelter-stats.use-case",
+  );
   public readonly AnimalPersistencePort = this.register(
     "animal.persistence.port",
   );
@@ -165,8 +239,23 @@ class VolunteerModuleToken extends TokenRegistry {
   public readonly WithdrawVolunteerSignupUseCase = this.register(
     "volunteer.withdraw-signup.use-case",
   );
+  public readonly DecideVolunteerSignupUseCase = this.register(
+    "volunteer.decide-signup.use-case",
+  );
+  public readonly ListEventSignupsUseCase = this.register(
+    "volunteer.list-event-signups.use-case",
+  );
+  public readonly ReadVolunteerEventsUseCase = this.register(
+    "volunteer.read-events.use-case",
+  );
+  public readonly ListMySignupsUseCase = this.register(
+    "volunteer.list-my-signups.use-case",
+  );
   public readonly CancelVolunteerEventUseCase = this.register(
     "volunteer.cancel-event.use-case",
+  );
+  public readonly CloseExpiredVolunteerEventsUseCase = this.register(
+    "volunteer.close-expired-events.use-case",
   );
   public readonly VolunteerEventPersistencePort = this.register(
     "volunteer.event.persistence.port",
@@ -253,6 +342,12 @@ class AnnouncementModuleToken extends TokenRegistry {
   );
 }
 
+class AdopterHistoryModuleToken extends TokenRegistry {
+  public readonly GetAdopterHistoryUseCase = this.register(
+    "adopter-history.get.use-case",
+  );
+}
+
 class FaqModuleToken extends TokenRegistry {
   public readonly PostFaqUseCase = this.register("faq.post.use-case");
   public readonly EditFaqUseCase = this.register("faq.edit.use-case");
@@ -276,8 +371,78 @@ class ReviewModuleToken extends TokenRegistry {
   );
 }
 
+class MediaModuleToken extends TokenRegistry {
+  public readonly ObjectStoragePort = this.register(
+    "media.object-storage.port",
+  );
+  public readonly CreateUploadUrlUseCase = this.register(
+    "media.create-upload-url.use-case",
+  );
+}
+
+class ShelterStatsModuleToken extends TokenRegistry {
+  public readonly GetShelterDashboardUseCase = this.register(
+    "shelter-stats.get-dashboard.use-case",
+  );
+  public readonly GetAdminStatsUseCase = this.register(
+    "shelter-stats.get-admin-stats.use-case",
+  );
+}
+
+class VolunteerPostModuleToken extends TokenRegistry {
+  public readonly CreateVolunteerPostUseCase = this.register(
+    "volunteer-post.create.use-case",
+  );
+  public readonly DeleteVolunteerPostUseCase = this.register(
+    "volunteer-post.delete.use-case",
+  );
+  public readonly LikeVolunteerPostUseCase = this.register(
+    "volunteer-post.like.use-case",
+  );
+  public readonly ReadVolunteerFeedUseCase = this.register(
+    "volunteer-post.read-feed.use-case",
+  );
+  public readonly CommentVolunteerPostUseCase = this.register(
+    "volunteer-post.comment.use-case",
+  );
+  public readonly BookmarkVolunteerPostUseCase = this.register(
+    "volunteer-post.bookmark.use-case",
+  );
+  public readonly ListMyBookmarksUseCase = this.register(
+    "volunteer-post.list-my-bookmarks.use-case",
+  );
+  public readonly VolunteerPostPersistencePort = this.register(
+    "volunteer-post.persistence.port",
+  );
+  public readonly VolunteerPostQueryPort = this.register(
+    "volunteer-post.query.port",
+  );
+  public readonly VolunteerPostLikePort = this.register(
+    "volunteer-post.like.port",
+  );
+  public readonly VolunteerPostCommentPort = this.register(
+    "volunteer-post.comment.port",
+  );
+  public readonly VolunteerPostBookmarkPort = this.register(
+    "volunteer-post.bookmark.port",
+  );
+  public readonly VolunteerPostRepository = this.register(
+    "volunteer-post.repository",
+  );
+  public readonly VolunteerPostLikeRepository = this.register(
+    "volunteer-post.like.repository",
+  );
+  public readonly VolunteerPostCommentRepository = this.register(
+    "volunteer-post.comment.repository",
+  );
+  public readonly VolunteerPostBookmarkRepository = this.register(
+    "volunteer-post.bookmark.repository",
+  );
+}
+
 export const DIToken = {
   OutboxModule: new OutboxModuleToken(),
+  MediaModule: new MediaModuleToken(),
   UserModule: new UserModuleToken(),
   AuthModule: new AuthModuleToken(),
   AuditModule: new AuditModuleToken(),
@@ -295,4 +460,11 @@ export const DIToken = {
   ReviewModule: new ReviewModuleToken(),
   AnnouncementModule: new AnnouncementModuleToken(),
   FaqModule: new FaqModuleToken(),
+  AdopterHistoryModule: new AdopterHistoryModuleToken(),
+  ShelterStatsModule: new ShelterStatsModuleToken(),
+  VolunteerPostModule: new VolunteerPostModuleToken(),
+  ErasureModule: new ErasureModuleToken(),
+  DsarModule: new DsarModuleToken(),
+  PolicyModule: new PolicyModuleToken(),
+  ConsentModule: new ConsentModuleToken(),
 } as const;
