@@ -64,6 +64,22 @@ class PolicyModuleToken extends TokenRegistry {
   );
 }
 
+/** User consent to policy versions (grant / withdraw / list). */
+class ConsentModuleToken extends TokenRegistry {
+  public readonly ConsentPersistencePort = this.register(
+    "consent.persistence.port",
+  );
+  public readonly ConsentQueryPort = this.register("consent.query.port");
+  public readonly ConsentRepository = this.register("consent.repository");
+  public readonly GrantConsentUseCase = this.register("consent.grant.use-case");
+  public readonly WithdrawConsentUseCase = this.register(
+    "consent.withdraw.use-case",
+  );
+  public readonly ListMyConsentsUseCase = this.register(
+    "consent.list-mine.use-case",
+  );
+}
+
 /** DSAR operator surface — read-only: PII access (export) + erasure lookup. */
 class DsarModuleToken extends TokenRegistry {
   public readonly ExportPersonalDataUseCase = this.register(
@@ -450,4 +466,5 @@ export const DIToken = {
   ErasureModule: new ErasureModuleToken(),
   DsarModule: new DsarModuleToken(),
   PolicyModule: new PolicyModuleToken(),
+  ConsentModule: new ConsentModuleToken(),
 } as const;
