@@ -1,8 +1,12 @@
-import { Module } from "@nestjs/common";
+import { Module, OnModuleInit } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { DIToken } from "src/shared/di/token.di";
+import { DestroyerRegistry } from "src/shared/erasure/destroyer.registry";
+import { ErasureModule } from "src/shared/erasure/erasure.module";
 import { ShelterModule } from "src/hb-backend-api/shelter/shelter.module";
 import { UserModule } from "src/hb-backend-api/user/user.module";
+import { VolunteerPostDestroyer } from "src/hb-backend-api/volunteer-post/adapters/erasure/volunteer-post.destroyer";
+import { VolunteerPostCommentDestroyer } from "src/hb-backend-api/volunteer-post/adapters/erasure/volunteer-post-comment.destroyer";
 import { VolunteerPostEntity } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post.entity";
 import { VolunteerPostSchema } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post.schema";
 import { VolunteerPostLikeEntity } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post-like.entity";
@@ -50,9 +54,12 @@ import { ListMyBookmarksService } from "src/hb-backend-api/volunteer-post/applic
     ]),
     ShelterModule,
     UserModule,
+    ErasureModule,
   ],
   controllers: [VolunteerPostController, MyBookmarksController],
   providers: [
+    VolunteerPostDestroyer,
+    VolunteerPostCommentDestroyer,
     {
       provide: DIToken.VolunteerPostModule.CreateVolunteerPostUseCase,
       useClass: CreateVolunteerPostService,
@@ -119,4 +126,15 @@ import { ListMyBookmarksService } from "src/hb-backend-api/volunteer-post/applic
     },
   ],
 })
-export class VolunteerPostModule {}
+export class VolunteerPostModule implements OnModuleInit {
+  constructor(
+    private readonly destroyerRegistry: DestroyerRegistry,
+    private readonly volunteerPostDestroyer: VolunteerPostDestroyer,
+    private readonly volunteerPostCommentDestroyer: VolunteerPostCommentDestroyer,
+  ) {}
+
+  public onModuleInit(): void {
+    this.destroyerRegistry.register(this.volunteerPostDestroyer);
+    this.destroyerRegistry.register(this.volunteerPostCommentDestroyer);
+  }
+}

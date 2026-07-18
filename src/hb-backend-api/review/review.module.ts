@@ -1,9 +1,12 @@
-import { Module } from "@nestjs/common";
+import { Module, OnModuleInit } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { DIToken } from "src/shared/di/token.di";
+import { DestroyerRegistry } from "src/shared/erasure/destroyer.registry";
+import { ErasureModule } from "src/shared/erasure/erasure.module";
 import { AdoptionModule } from "src/hb-backend-api/adoption/adoption.module";
 import { FosterModule } from "src/hb-backend-api/foster/foster.module";
 import { UserModule } from "src/hb-backend-api/user/user.module";
+import { ReviewDestroyer } from "src/hb-backend-api/review/adapters/erasure/review.destroyer";
 import { ReviewEntity } from "src/hb-backend-api/review/domain/model/review.entity";
 import { ReviewSchema } from "src/hb-backend-api/review/domain/model/review.schema";
 import { ReviewRepositoryImpl } from "src/hb-backend-api/review/infra/repositories/review.repository.impl";
@@ -29,9 +32,11 @@ import { ReviewController } from "src/hb-backend-api/review/adapters/in/review.c
     UserModule,
     AdoptionModule,
     FosterModule,
+    ErasureModule,
   ],
   controllers: [ReviewController],
   providers: [
+    ReviewDestroyer,
     {
       provide: DIToken.ReviewModule.SubmitReviewUseCase,
       useClass: SubmitReviewService,
@@ -62,4 +67,13 @@ import { ReviewController } from "src/hb-backend-api/review/adapters/in/review.c
     },
   ],
 })
-export class ReviewModule {}
+export class ReviewModule implements OnModuleInit {
+  constructor(
+    private readonly destroyerRegistry: DestroyerRegistry,
+    private readonly reviewDestroyer: ReviewDestroyer,
+  ) {}
+
+  public onModuleInit(): void {
+    this.destroyerRegistry.register(this.reviewDestroyer);
+  }
+}
