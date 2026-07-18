@@ -9,6 +9,13 @@ import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-que
 const PAGE_SIZE = 200;
 /** Safety ceiling per daily run — bounds the work even with a huge backlog. */
 const MAX_PER_RUN = 5_000;
+/**
+ * How many subjects to erase at once. Different subjects touch disjoint
+ * documents (own row, own tokens, own request/audit inserts), so there is no
+ * write conflict between them — bounded concurrency just cuts wall-clock. Kept
+ * well under the Mongoose pool size to avoid starving it.
+ */
+const CONCURRENCY = 8;
 const PURGE_REASON = "scheduled purge after withdrawal grace";
 
 /**
@@ -51,23 +58,13 @@ export class ErasureWorker {
       if (fresh.length === 0) {
         break; // drained, or only poison accounts remain
       }
+      fresh.forEach((id) => seen.add(id));
 
-      for (const subjectId of fresh) {
-        seen.add(subjectId);
-        try {
-          await this.engine.erase({
-            actorId: SYSTEM_ACTOR,
-            subjectId,
-            reason: PURGE_REASON,
-          });
-          purged += 1;
-        } catch (error) {
-          this.logger.error(
-            `daily purge failed for ${subjectId}: ${
-              error instanceof Error ? error.message : String(error)
-            }`,
-          );
-        }
+      // Erase the page in bounded-concurrency chunks.
+      for (let i = 0; i < fresh.length; i += CONCURRENCY) {
+        const chunk = fresh.slice(i, i + CONCURRENCY);
+        const results = await Promise.all(chunk.map((id) => this.eraseOne(id)));
+        purged += results.filter(Boolean).length;
       }
 
       if (page.length < PAGE_SIZE) {
@@ -85,6 +82,24 @@ export class ErasureWorker {
       this.logger.warn(
         `erasure ceiling ${MAX_PER_RUN} reached — backlog remains, resuming next run`,
       );
+    }
+  }
+
+  private async eraseOne(subjectId: string): Promise<boolean> {
+    try {
+      await this.engine.erase({
+        actorId: SYSTEM_ACTOR,
+        subjectId,
+        reason: PURGE_REASON,
+      });
+      return true;
+    } catch (error) {
+      this.logger.error(
+        `daily purge failed for ${subjectId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      return false;
     }
   }
 }

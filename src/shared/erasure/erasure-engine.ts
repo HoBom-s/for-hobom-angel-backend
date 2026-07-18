@@ -103,41 +103,48 @@ export class ErasureEngine {
     requestId: Types.ObjectId,
     command: ErasureCommand,
   ): Promise<ErasureRequestEntity> {
-    await this.repo.markInProgress(requestId);
-    const request = await this.repo.findById(requestId);
+    // One round trip: claim PENDING → IN_PROGRESS and read the tasks.
+    const request = await this.repo.claimInProgress(requestId);
     if (!request) {
       throw new Error("파기 요청을 찾을 수 없어요.");
     }
 
     const ctx = ErasureContext.of(command.actorId, command.reason ?? null);
-    const ordered = [...request.tasks].sort((a, b) => a.priority - b.priority);
+    const pending = [...request.tasks]
+      .filter((task) => task.status !== ErasureTaskStatus.DONE)
+      .sort((a, b) => a.priority - b.priority);
 
-    for (const task of ordered) {
-      if (task.status === ErasureTaskStatus.DONE) {
-        continue; // resume-safe: already erased
+    // Bundle consecutive light categories into one transaction (fewer commits);
+    // flush the bundle before each heavy category, which gets its own tx.
+    let bundle: string[] = [];
+    const flushBundle = async (): Promise<void> => {
+      if (bundle.length === 0) {
+        return;
       }
-      try {
-        await this.runTask(requestId, command.subjectId, task.key, ctx);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        await this.repo.recordTask(requestId, task.key, {
-          status: ErasureTaskStatus.FAILED,
-          affected: 0,
-          retained: 0,
-          lastError: message,
-        });
-        await this.repo.finalize(
-          requestId,
-          ErasureRequestStatus.FAILED,
-          null,
-          message,
-        );
-        this.metrics.recordFailure();
-        this.logger.error(
-          `Erasure ${requestId.toString()} failed at ${task.key}: ${message}`,
-        );
-        throw error;
+      const keys = bundle;
+      bundle = [];
+      this.markDoneInMemory(
+        request,
+        await this.runBundle(requestId, command.subjectId, keys, ctx),
+      );
+    };
+
+    try {
+      for (const task of pending) {
+        if (this.registry.byKey(task.key).rule.heavy) {
+          await flushBundle();
+          this.markDoneInMemory(
+            request,
+            await this.runBundle(requestId, command.subjectId, [task.key], ctx),
+          );
+        } else {
+          bundle.push(task.key);
+        }
       }
+      await flushBundle();
+    } catch (error) {
+      await this.fail(requestId, request, error);
+      throw error;
     }
 
     const { clean, residual } = await this.reconciler.scan(command.subjectId);
@@ -153,36 +160,95 @@ export class ErasureEngine {
       throw new Error(message);
     }
 
+    const completedAt = new Date();
     await this.repo.finalize(
       requestId,
       ErasureRequestStatus.COMPLETED,
-      new Date(),
+      completedAt,
       null,
     );
     this.metrics.recordCompletion();
 
-    const finalized = await this.repo.findById(requestId);
-    return finalized ?? request;
+    // Return the in-memory request (mutated as tasks completed) — no re-read.
+    request.status = ErasureRequestStatus.COMPLETED;
+    request.completedAt = completedAt;
+    return request;
   }
 
   /**
-   * One category's disposition + its task marker, in a single bounded tx. If the
-   * destroyer throws, the whole task rolls back (no partial erasure) and the
-   * caller records the FAILED marker outside the aborted transaction.
+   * Runs one or more categories' dispositions + their task markers in a SINGLE
+   * bounded transaction (all-or-nothing). A single-key bundle is how a heavy
+   * category runs isolated. Returns per-key outcomes to sync the in-memory doc.
    */
   @Transactional()
-  private async runTask(
+  private async runBundle(
     requestId: Types.ObjectId,
     subjectId: string,
-    key: string,
+    keys: string[],
     ctx: ErasureContext,
-  ): Promise<void> {
-    const receipt = await this.registry.byKey(key).erase(subjectId, ctx);
-    await this.repo.recordTask(requestId, key, {
-      status: ErasureTaskStatus.DONE,
-      affected: receipt.affected,
-      retained: receipt.retained,
-      note: receipt.note,
-    });
+  ): Promise<TaskOutcomeRef[]> {
+    const outcomes: TaskOutcomeRef[] = [];
+    for (const key of keys) {
+      const receipt = await this.registry.byKey(key).erase(subjectId, ctx);
+      await this.repo.recordTask(requestId, key, {
+        status: ErasureTaskStatus.DONE,
+        affected: receipt.affected,
+        retained: receipt.retained,
+        note: receipt.note,
+      });
+      outcomes.push({
+        key,
+        affected: receipt.affected,
+        retained: receipt.retained,
+      });
+    }
+    return outcomes;
   }
+
+  private markDoneInMemory(
+    request: ErasureRequestEntity,
+    outcomes: TaskOutcomeRef[],
+  ): void {
+    for (const outcome of outcomes) {
+      const task = request.tasks.find((t) => t.key === outcome.key);
+      if (task) {
+        task.status = ErasureTaskStatus.DONE;
+        task.affected = outcome.affected;
+        task.retained = outcome.retained;
+      }
+    }
+  }
+
+  private async fail(
+    requestId: Types.ObjectId,
+    request: ErasureRequestEntity,
+    error: unknown,
+  ): Promise<void> {
+    const message = error instanceof Error ? error.message : String(error);
+    // Mark whatever hadn't committed as FAILED (outside the aborted tx).
+    for (const task of request.tasks) {
+      if (task.status !== ErasureTaskStatus.DONE) {
+        await this.repo.recordTask(requestId, task.key, {
+          status: ErasureTaskStatus.FAILED,
+          affected: 0,
+          retained: 0,
+          lastError: message,
+        });
+      }
+    }
+    await this.repo.finalize(
+      requestId,
+      ErasureRequestStatus.FAILED,
+      null,
+      message,
+    );
+    this.metrics.recordFailure();
+    this.logger.error(`Erasure ${requestId.toString()} failed: ${message}`);
+  }
+}
+
+interface TaskOutcomeRef {
+  key: string;
+  affected: number;
+  retained: number;
 }

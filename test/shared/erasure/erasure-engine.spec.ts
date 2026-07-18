@@ -25,7 +25,7 @@ class FakeDestroyer extends Destroyer {
     super();
     this.rule = {
       category,
-      disposition: Disposition.HARD_DELETE,
+      disposition: Disposition.ANONYMIZE,
       legalBasis: "test",
     };
   }
@@ -73,9 +73,9 @@ class FakeRepo {
   findById(): Promise<Record<string, unknown> | null> {
     return Promise.resolve(this.request);
   }
-  markInProgress(): Promise<void> {
+  claimInProgress(): Promise<Record<string, unknown> | null> {
     this.request!.status = ErasureRequestStatus.IN_PROGRESS;
-    return Promise.resolve();
+    return Promise.resolve(this.request);
   }
   recordTask(
     _id: Types.ObjectId,

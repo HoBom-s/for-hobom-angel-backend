@@ -13,4 +13,11 @@ export interface RetentionRule {
   readonly legalBasis: string;
   /** For PURGE_WINDOW / retention sweeps — the window before destruction. */
   readonly retentionDays?: number;
+  /**
+   * True when this category can touch many rows for one subject (e.g. a power
+   * user's messages/likes) and so must run in its OWN bounded transaction to
+   * stay under Mongo's 60s/16MB limit. Light categories (default) are bundled
+   * into a single transaction to cut commit round-trips.
+   */
+  readonly heavy?: boolean;
 }

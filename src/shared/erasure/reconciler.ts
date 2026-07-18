@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { DestroyerRegistry } from "src/shared/erasure/destroyer.registry";
+import { Disposition } from "src/shared/erasure/disposition.enum";
 
 export interface ReconcileResult {
   clean: boolean;
@@ -7,20 +8,25 @@ export interface ReconcileResult {
 }
 
 /**
- * The proof behind an erasure report: after the destroyers run, asks each one to
- * count identifiable PII still present for the subject. RETAINED categories keep
- * data lawfully and report 0, so a non-zero total means a genuine leak — the
- * request is failed rather than falsely marked complete.
+ * The proof behind an erasure report. Only ANONYMIZE categories are scanned:
+ * HARD_DELETE is self-verifying (its `deletedCount` is the evidence) and RETAIN
+ * lawfully keeps data, so both would only add empty round-trips. The remaining
+ * residual checks run in parallel — a non-zero total means a genuine leak, so
+ * the request is failed rather than falsely marked complete.
  */
 @Injectable()
 export class Reconciler {
   constructor(private readonly registry: DestroyerRegistry) {}
 
   public async scan(subjectId: string): Promise<ReconcileResult> {
-    let residual = 0;
-    for (const destroyer of this.registry.ordered()) {
-      residual += await destroyer.verifyResidual(subjectId);
-    }
+    const toVerify = this.registry
+      .ordered()
+      .filter((d) => d.rule.disposition === Disposition.ANONYMIZE);
+
+    const residuals = await Promise.all(
+      toVerify.map((d) => d.verifyResidual(subjectId)),
+    );
+    const residual = residuals.reduce((sum, count) => sum + count, 0);
     return { clean: residual === 0, residual };
   }
 }

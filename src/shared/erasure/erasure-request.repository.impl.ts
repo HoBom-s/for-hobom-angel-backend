@@ -57,13 +57,16 @@ export class ErasureRequestRepositoryImpl implements ErasureRequestRepository {
     return this.model.find({ subjectId }).sort({ _id: -1 }).exec();
   }
 
-  public async markInProgress(id: Types.ObjectId): Promise<void> {
-    const session = MongoSessionContext.getSession();
-    await this.model.updateOne(
-      { _id: id },
-      { $set: { status: ErasureRequestStatus.IN_PROGRESS } },
-      { session },
-    );
+  public claimInProgress(
+    id: Types.ObjectId,
+  ): Promise<ErasureRequestEntity | null> {
+    return this.model
+      .findOneAndUpdate(
+        { _id: id, status: ErasureRequestStatus.PENDING },
+        { $set: { status: ErasureRequestStatus.IN_PROGRESS } },
+        { new: true },
+      )
+      .exec();
   }
 
   public async recordTask(

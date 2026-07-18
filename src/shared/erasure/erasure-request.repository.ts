@@ -40,7 +40,12 @@ export interface ErasureRequestRepository {
   findById(id: Types.ObjectId): Promise<ErasureRequestEntity | null>;
   /** A subject's erasure requests, newest first (operator lookup). */
   findBySubject(subjectId: Types.ObjectId): Promise<ErasureRequestEntity[]>;
-  markInProgress(id: Types.ObjectId): Promise<void>;
+  /**
+   * Atomically claim a PENDING request → IN_PROGRESS and return it (one round
+   * trip instead of update + read). Returns null if it was not PENDING (already
+   * claimed) — the CAS that guards concurrent workers.
+   */
+  claimInProgress(id: Types.ObjectId): Promise<ErasureRequestEntity | null>;
   /** Upsert the outcome of one task (matched by key); bumps its attempt count. */
   recordTask(
     id: Types.ObjectId,
