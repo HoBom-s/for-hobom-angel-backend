@@ -46,6 +46,24 @@ class ErasureModuleToken extends TokenRegistry {
   );
 }
 
+/** Legal/policy document CMS (privacy policy, terms, operating policy). */
+class PolicyModuleToken extends TokenRegistry {
+  public readonly PolicyPersistencePort = this.register(
+    "policy.persistence.port",
+  );
+  public readonly PolicyQueryPort = this.register("policy.query.port");
+  public readonly PolicyRepository = this.register("policy.repository");
+  public readonly PublishPolicyUseCase = this.register(
+    "policy.publish.use-case",
+  );
+  public readonly GetCurrentPolicyUseCase = this.register(
+    "policy.get-current.use-case",
+  );
+  public readonly ListPolicyVersionsUseCase = this.register(
+    "policy.list-versions.use-case",
+  );
+}
+
 /** DSAR operator surface — read-only: PII access (export) + erasure lookup. */
 class DsarModuleToken extends TokenRegistry {
   public readonly ExportPersonalDataUseCase = this.register(
@@ -431,4 +449,5 @@ export const DIToken = {
   VolunteerPostModule: new VolunteerPostModuleToken(),
   ErasureModule: new ErasureModuleToken(),
   DsarModule: new DsarModuleToken(),
+  PolicyModule: new PolicyModuleToken(),
 } as const;
