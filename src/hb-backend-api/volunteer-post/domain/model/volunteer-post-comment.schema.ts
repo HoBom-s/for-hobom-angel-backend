@@ -7,3 +7,5 @@ export const VolunteerPostCommentSchema = SchemaFactory.createForClass(
 
 // A post's comment thread, oldest first (keyset on _id ascending).
 VolunteerPostCommentSchema.index({ postId: 1, _id: 1 });
+// The erasure sweep tombstones an author's comments by authorId.
+VolunteerPostCommentSchema.index({ authorId: 1 });

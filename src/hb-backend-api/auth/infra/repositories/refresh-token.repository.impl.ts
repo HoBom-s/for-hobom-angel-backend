@@ -63,4 +63,14 @@ export class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
       { session },
     );
   }
+
+  public async deleteByUserId(userId: string): Promise<number> {
+    const session = MongoSessionContext.getSession();
+    const result = await this.model.deleteMany({ userId }, { session });
+    return result.deletedCount ?? 0;
+  }
+
+  public countByUserId(userId: string): Promise<number> {
+    return this.model.countDocuments({ userId }).exec();
+  }
 }

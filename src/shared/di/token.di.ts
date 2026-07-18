@@ -35,6 +35,62 @@ class UserModuleToken extends TokenRegistry {
   public readonly ReinstateUserUseCase = this.register(
     "user.reinstate.use-case",
   );
+  /** Reads (decrypts) / anonymizes a subject's PII for DSAR export & erasure. */
+  public readonly PersonalDataPort = this.register("user.personal-data.port");
+}
+
+/** Erasure framework core (Destroyer engine, request store). */
+class ErasureModuleToken extends TokenRegistry {
+  public readonly ErasureRequestRepository = this.register(
+    "erasure.request.repository",
+  );
+}
+
+/** Legal/policy document CMS (privacy policy, terms, operating policy). */
+class PolicyModuleToken extends TokenRegistry {
+  public readonly PolicyPersistencePort = this.register(
+    "policy.persistence.port",
+  );
+  public readonly PolicyQueryPort = this.register("policy.query.port");
+  public readonly PolicyRepository = this.register("policy.repository");
+  public readonly PublishPolicyUseCase = this.register(
+    "policy.publish.use-case",
+  );
+  public readonly GetCurrentPolicyUseCase = this.register(
+    "policy.get-current.use-case",
+  );
+  public readonly ListPolicyVersionsUseCase = this.register(
+    "policy.list-versions.use-case",
+  );
+}
+
+/** User consent to policy versions (grant / withdraw / list). */
+class ConsentModuleToken extends TokenRegistry {
+  public readonly ConsentPersistencePort = this.register(
+    "consent.persistence.port",
+  );
+  public readonly ConsentQueryPort = this.register("consent.query.port");
+  public readonly ConsentRepository = this.register("consent.repository");
+  public readonly GrantConsentUseCase = this.register("consent.grant.use-case");
+  public readonly WithdrawConsentUseCase = this.register(
+    "consent.withdraw.use-case",
+  );
+  public readonly ListMyConsentsUseCase = this.register(
+    "consent.list-mine.use-case",
+  );
+}
+
+/** DSAR operator surface — read-only: PII access (export) + erasure lookup. */
+class DsarModuleToken extends TokenRegistry {
+  public readonly ExportPersonalDataUseCase = this.register(
+    "dsar.export-personal-data.use-case",
+  );
+  public readonly GetErasureRequestUseCase = this.register(
+    "dsar.get-erasure-request.use-case",
+  );
+  public readonly ListSubjectErasuresUseCase = this.register(
+    "dsar.list-subject-erasures.use-case",
+  );
 }
 
 class AuthModuleToken extends TokenRegistry {
@@ -407,4 +463,8 @@ export const DIToken = {
   AdopterHistoryModule: new AdopterHistoryModuleToken(),
   ShelterStatsModule: new ShelterStatsModuleToken(),
   VolunteerPostModule: new VolunteerPostModuleToken(),
+  ErasureModule: new ErasureModuleToken(),
+  DsarModule: new DsarModuleToken(),
+  PolicyModule: new PolicyModuleToken(),
+  ConsentModule: new ConsentModuleToken(),
 } as const;
