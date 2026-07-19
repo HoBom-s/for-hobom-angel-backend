@@ -1,3 +1,4 @@
+import { Page } from "src/shared/pagination/page";
 import { VolunteerSignupStatus } from "src/hb-backend-api/volunteer/domain/enums/volunteer-signup-status.enum";
 import { VolunteerEvent } from "src/hb-backend-api/volunteer/domain/model/volunteer-event";
 
@@ -14,7 +15,12 @@ export interface VolunteerEventView {
 
 /** Viewer-aware reads of volunteer events (attach the caller's signup state). */
 export interface ReadVolunteerEventsUseCase {
-  byShelter(shelterId: string, viewerId: string): Promise<VolunteerEventView[]>;
+  byShelter(
+    shelterId: string,
+    viewerId: string,
+    cursor: string | undefined,
+    limit: number,
+  ): Promise<Page<VolunteerEventView>>;
   upcoming(viewerId: string, limit: number): Promise<VolunteerEventView[]>;
   one(eventId: string, viewerId: string): Promise<VolunteerEventView | null>;
 }

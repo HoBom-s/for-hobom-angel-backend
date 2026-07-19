@@ -16,10 +16,10 @@ import {
   ApiBearerAuth,
   ApiNoContentResponse,
   ApiOperation,
-  ApiQuery,
   ApiTags,
 } from "@nestjs/swagger";
-import { ApiEnvelopeArray } from "src/shared/response/api-envelope.decorator";
+import { ApiEnvelopeCursor } from "src/shared/response/api-envelope.decorator";
+import { CursorPageResponse } from "src/shared/pagination/cursor-page.response";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
@@ -30,6 +30,7 @@ import { AddFavoriteUseCase } from "src/hb-backend-api/favorite/domain/ports/in/
 import { RemoveFavoriteUseCase } from "src/hb-backend-api/favorite/domain/ports/in/remove-favorite.use-case";
 import { ListFavoritesUseCase } from "src/hb-backend-api/favorite/domain/ports/in/list-favorites.use-case";
 import { AddFavoriteDto } from "src/hb-backend-api/favorite/adapters/in/dto/add-favorite.dto";
+import { ListFavoritesQueryDto } from "src/hb-backend-api/favorite/adapters/in/dto/list-favorites.query.dto";
 import { FavoriteResponse } from "src/hb-backend-api/favorite/adapters/in/dto/favorite.response";
 
 @ApiTags("Favorites")
@@ -78,19 +79,21 @@ export class FavoriteController {
     });
   }
 
-  @ApiOperation({ summary: "내 찜/팔로우 목록" })
-  @ApiQuery({ name: "targetType", required: false, enum: FavoriteTargetType })
-  @ApiEnvelopeArray(FavoriteResponse)
+  @ApiOperation({ summary: "내 찜/팔로우 목록 (최신순, 커서 페이지네이션)" })
+  @ApiEnvelopeCursor(FavoriteResponse)
   @Get()
   public async list(
     @CurrentUser() user: AuthenticatedUser,
-    @Query("targetType") targetType?: FavoriteTargetType,
-  ): Promise<FavoriteResponse[]> {
-    const favorites = await this.listFavoritesUseCase.invoke({
+    @Query() query: ListFavoritesQueryDto,
+  ): Promise<CursorPageResponse<FavoriteResponse>> {
+    const page = await this.listFavoritesUseCase.invoke({
       userId: user.userId,
-      targetType:
-        targetType && FavoriteTargetType[targetType] ? targetType : undefined,
+      targetType: query.targetType,
+      cursor: query.cursor,
+      limit: query.limit ?? 20,
     });
-    return favorites.map((favorite) => FavoriteResponse.from(favorite));
+    return CursorPageResponse.of(page, (favorite) =>
+      FavoriteResponse.from(favorite),
+    );
   }
 }

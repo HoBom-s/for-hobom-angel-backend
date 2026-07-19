@@ -54,8 +54,17 @@ export class VolunteerEventRepositoryImpl implements VolunteerEventRepository {
 
   public findByShelterId(
     shelterId: Types.ObjectId,
+    cursorId: Types.ObjectId | null,
+    limit: number,
   ): Promise<VolunteerEventEntity[]> {
-    return this.model.find({ shelterId }).sort({ startAt: 1 }).exec();
+    const query = cursorId
+      ? { shelterId, _id: { $lt: cursorId } }
+      : { shelterId };
+    return this.model
+      .find(query)
+      .sort({ _id: -1 })
+      .limit(limit + 1)
+      .exec();
   }
 
   public findUpcoming(
