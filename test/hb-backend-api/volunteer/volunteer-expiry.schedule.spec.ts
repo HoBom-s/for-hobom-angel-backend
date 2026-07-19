@@ -5,7 +5,13 @@ const make = (closed: number) => {
   const useCase = {
     invoke: jest.fn().mockResolvedValue({ closed }),
   } as unknown as CloseExpiredVolunteerEventsUseCase;
-  return { schedule: new VolunteerExpirySchedule(useCase), useCase };
+  const lock = {
+    runExclusive: (_k: string, _t: number, fn: () => Promise<unknown>) => fn(),
+  };
+  return {
+    schedule: new VolunteerExpirySchedule(useCase, lock as never),
+    useCase,
+  };
 };
 
 describe("VolunteerExpirySchedule", () => {

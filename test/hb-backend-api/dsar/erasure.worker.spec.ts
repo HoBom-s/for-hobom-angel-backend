@@ -1,12 +1,21 @@
 import { ErasureWorker } from "src/hb-backend-api/dsar/schedule/erasure.worker";
 
+// Fake lock that always "acquires" and runs the wrapped work.
+const fakeLock = {
+  runExclusive: (_k: string, _t: number, fn: () => Promise<unknown>) => fn(),
+};
+
 describe("ErasureWorker (daily 3am sweep)", () => {
   const build = (subjectIds: string[]) => {
     const userQueryPort = {
       findWithdrawnToPurge: jest.fn().mockResolvedValue(subjectIds),
     };
     const engine = { erase: jest.fn().mockResolvedValue({}) };
-    const worker = new ErasureWorker(userQueryPort as never, engine as never);
+    const worker = new ErasureWorker(
+      userQueryPort as never,
+      engine as never,
+      fakeLock as never,
+    );
     return { worker, engine };
   };
 
@@ -47,7 +56,11 @@ describe("ErasureWorker (daily 3am sweep)", () => {
         .mockResolvedValue([]),
     };
     const engine = { erase: jest.fn().mockResolvedValue({}) };
-    const worker = new ErasureWorker(userQueryPort as never, engine as never);
+    const worker = new ErasureWorker(
+      userQueryPort as never,
+      engine as never,
+      fakeLock as never,
+    );
 
     await worker.handle();
 
@@ -63,7 +76,11 @@ describe("ErasureWorker (daily 3am sweep)", () => {
     const engine = {
       erase: jest.fn().mockRejectedValue(new Error("poison")),
     };
-    const worker = new ErasureWorker(userQueryPort as never, engine as never);
+    const worker = new ErasureWorker(
+      userQueryPort as never,
+      engine as never,
+      fakeLock as never,
+    );
 
     await worker.handle();
 

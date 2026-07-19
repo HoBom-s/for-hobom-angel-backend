@@ -2,9 +2,13 @@ import { Inject, Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { DIToken } from "src/shared/di/token.di";
 import { HOBOM_TIME_ZONE } from "src/shared/constants/time-zone.constant";
+import { DistributedLock } from "src/shared/lock/distributed-lock";
 import { ErasureEngine, SYSTEM_ACTOR } from "src/shared/erasure/erasure-engine";
 import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-query.port";
 
+const LOCK_KEY = "erasure.daily-sweep";
+/** Lock lifetime — generous enough for a full drain; frees a crashed holder. */
+const LOCK_TTL_MS = 30 * 60_000;
 /** Accounts fetched per scan query. */
 const PAGE_SIZE = 200;
 /** Safety ceiling per daily run — bounds the work even with a huge backlog. */
@@ -30,9 +34,9 @@ const PURGE_REASON = "scheduled purge after withdrawal grace";
  * `seen` so a failing account can't spin the loop — or at the {@link MAX_PER_RUN}
  * ceiling, which is logged (never a silent cap; the remainder is taken next run).
  *
- * Per-subject erasure is idempotent, so this is safe to run on every instance;
- * a distributed lock for exactly-once is a later refinement (mirrors
- * {@link VolunteerExpirySchedule}). One subject's failure never aborts the batch.
+ * A distributed lock keeps it to one instance per run; per-subject erasure is
+ * idempotent regardless, so a lock miss is harmless. One subject's failure never
+ * aborts the batch.
  */
 @Injectable()
 export class ErasureWorker {
@@ -42,10 +46,15 @@ export class ErasureWorker {
     @Inject(DIToken.UserModule.UserQueryPort)
     private readonly userQueryPort: UserQueryPort,
     private readonly engine: ErasureEngine,
+    private readonly lock: DistributedLock,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_3AM, { timeZone: HOBOM_TIME_ZONE })
   public async handle(): Promise<void> {
+    await this.lock.runExclusive(LOCK_KEY, LOCK_TTL_MS, () => this.sweep());
+  }
+
+  private async sweep(): Promise<void> {
     const seen = new Set<string>();
     let purged = 0;
 

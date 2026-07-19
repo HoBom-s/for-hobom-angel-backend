@@ -10,6 +10,7 @@ import { IncomingMessage } from "http";
 import { LoggerModule } from "nestjs-pino";
 import { TransactionModule } from "src/infra/mongo/transaction/transaction.module";
 import { CryptoModule } from "src/shared/crypto/crypto.module";
+import { LockModule } from "src/shared/lock/lock.module";
 import { validate } from "src/shared/config/env.validation";
 import { buildMongooseOptions } from "src/shared/config/mongoose-options";
 import { DiscordModule } from "src/shared/discord/discord.module";
@@ -85,6 +86,7 @@ import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
     // Global infra
     TransactionModule,
     CryptoModule,
+    LockModule,
     DiscordModule,
     // Feature modules
     HealthModule,
