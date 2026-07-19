@@ -1,6 +1,9 @@
-import { Module } from "@nestjs/common";
+import { Module, OnModuleInit } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { DIToken } from "src/shared/di/token.di";
+import { DestroyerRegistry } from "src/shared/erasure/destroyer.registry";
+import { ErasureModule } from "src/shared/erasure/erasure.module";
+import { FavoriteDestroyer } from "src/hb-backend-api/favorite/adapters/erasure/favorite.destroyer";
 import { FavoriteEntity } from "src/hb-backend-api/favorite/domain/model/favorite.entity";
 import { FavoriteSchema } from "src/hb-backend-api/favorite/domain/model/favorite.schema";
 import { FavoritePersistenceAdapter } from "src/hb-backend-api/favorite/adapters/out/favorite-persistence.adapter";
@@ -21,6 +24,7 @@ import { FavoriteController } from "src/hb-backend-api/favorite/adapters/in/favo
     MongooseModule.forFeature([
       { name: FavoriteEntity.name, schema: FavoriteSchema },
     ]),
+    ErasureModule,
   ],
   controllers: [FavoriteController],
   providers: [
@@ -48,6 +52,16 @@ import { FavoriteController } from "src/hb-backend-api/favorite/adapters/in/favo
       provide: DIToken.FavoriteModule.FavoriteQueryPort,
       useClass: FavoriteQueryAdapter,
     },
+    FavoriteDestroyer,
   ],
 })
-export class FavoriteModule {}
+export class FavoriteModule implements OnModuleInit {
+  constructor(
+    private readonly destroyerRegistry: DestroyerRegistry,
+    private readonly favoriteDestroyer: FavoriteDestroyer,
+  ) {}
+
+  public onModuleInit(): void {
+    this.destroyerRegistry.register(this.favoriteDestroyer);
+  }
+}
