@@ -1,4 +1,5 @@
 import { Controller, Get } from "@nestjs/common";
+import { SkipThrottle } from "@nestjs/throttler";
 import {
   HealthCheck,
   HealthCheckService,
@@ -13,6 +14,9 @@ import {
  *  - `GET /health/ready` readiness — can it serve traffic? Checks dependencies
  *                        (Mongo now; Kafka/gateway indicators plug in here).
  */
+// Never throttle health probes — k8s hits them constantly and a 429 would look
+// like an outage (and could get the container killed).
+@SkipThrottle()
 @Controller()
 export class HealthController {
   constructor(

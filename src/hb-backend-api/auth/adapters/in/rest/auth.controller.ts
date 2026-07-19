@@ -10,6 +10,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { ApiNoContentResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { Throttle } from "@nestjs/throttler";
+import { ThrottleConfig } from "src/shared/throttle/throttle.config";
 import { ApiCreatedEnvelope } from "src/shared/response/api-envelope.decorator";
 import { Request, Response } from "express";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
@@ -33,6 +35,11 @@ import { SessionResponse } from "src/hb-backend-api/auth/adapters/in/rest/dto/se
  * body carries only `userId`. Signup/login open a session, refresh rotates with
  * reuse detection, logout revokes the family and clears the cookies.
  */
+// Tighter than the global default: signup/login are the brute-force targets, so
+// cap auth attempts per client IP (see ThrottleConfig.authLimit).
+@Throttle({
+  default: { limit: ThrottleConfig.authLimit, ttl: ThrottleConfig.windowMs },
+})
 @ApiTags("Auth")
 @Controller(`${EndPointPrefixConstant}/auth`)
 export class AuthController {
