@@ -7,7 +7,14 @@ describe("AuditRetentionSchedule", () => {
       save: jest.fn(),
       purgeOlderThan: jest.fn().mockResolvedValue(purged),
     };
-    return { schedule: new AuditRetentionSchedule(repo), repo };
+    const lock = {
+      runExclusive: (_k: string, _t: number, fn: () => Promise<unknown>) =>
+        fn(),
+    };
+    return {
+      schedule: new AuditRetentionSchedule(repo, lock as never),
+      repo,
+    };
   };
 
   it("purges audit logs older than the retention window", async () => {

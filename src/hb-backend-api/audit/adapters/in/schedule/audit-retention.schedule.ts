@@ -2,8 +2,12 @@ import { Inject, Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { DIToken } from "src/shared/di/token.di";
 import { HOBOM_TIME_ZONE } from "src/shared/constants/time-zone.constant";
+import { DistributedLock } from "src/shared/lock/distributed-lock";
 import { RetentionPolicy } from "src/shared/erasure/retention-policy";
 import { AuditRepository } from "src/hb-backend-api/audit/domain/repositories/audit.repository";
+
+const LOCK_KEY = "audit.retention-sweep";
+const LOCK_TTL_MS = 10 * 60_000;
 
 /**
  * Legal-retention sweep for the audit trail. The trail is RETAINED (it proves
@@ -19,10 +23,15 @@ export class AuditRetentionSchedule {
   constructor(
     @Inject(DIToken.AuditModule.AuditRepository)
     private readonly auditRepository: AuditRepository,
+    private readonly lock: DistributedLock,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_4AM, { timeZone: HOBOM_TIME_ZONE })
   public async handle(): Promise<void> {
+    await this.lock.runExclusive(LOCK_KEY, LOCK_TTL_MS, () => this.sweep());
+  }
+
+  private async sweep(): Promise<void> {
     const cutoff = new Date();
     cutoff.setFullYear(cutoff.getFullYear() - RetentionPolicy.auditLogYears);
 
