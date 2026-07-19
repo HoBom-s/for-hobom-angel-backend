@@ -1,5 +1,6 @@
 import { Controller, Inject, UseGuards } from "@nestjs/common";
 import { GrpcMethod } from "@nestjs/microservices";
+import { SkipThrottle } from "@nestjs/throttler";
 import { DIToken } from "src/shared/di/token.di";
 import { GrpcApiKeyGuard } from "src/infra/grpc/grpc-api-key.guard";
 import { FindOutboxUseCase } from "src/hb-backend-api/outbox/domain/ports/in/find-outbox.use-case";
@@ -18,6 +19,9 @@ interface FindRequest {
  * gRPC read side of the outbox (proto service `FindHoBomAngelOutboxController`).
  * hobom-event-processor polls this to fetch rows to publish to Kafka.
  */
+// gRPC runs in a non-HTTP context (the throttler tracks by client IP) and is
+// already gated by the API-key guard — opt out of HTTP rate limiting.
+@SkipThrottle()
 @Controller()
 @UseGuards(GrpcApiKeyGuard)
 export class FindOutboxGrpcController {

@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
-import { APP_INTERCEPTOR } from "@nestjs/core";
+import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { MongooseModule } from "@nestjs/mongoose";
 import { ScheduleModule } from "@nestjs/schedule";
 import { ThrottlerModule } from "@nestjs/throttler";
@@ -15,6 +15,8 @@ import { buildMongooseOptions } from "src/shared/config/mongoose-options";
 import { DiscordModule } from "src/shared/discord/discord.module";
 import { HttpLogInterceptor } from "src/shared/observability/http-log.interceptor";
 import { TelemetryLifecycle } from "src/shared/observability/telemetry.lifecycle";
+import { HobomThrottlerGuard } from "src/shared/throttle/hobom-throttler.guard";
+import { ThrottleConfig } from "src/shared/throttle/throttle.config";
 import { TraceContext } from "src/shared/trace/trace.context";
 import { TraceInterceptor } from "src/shared/trace/trace.interceptor";
 import { AdopterHistoryModule } from "src/hb-backend-api/adopter-history/adopter-history.module";
@@ -71,7 +73,9 @@ import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
       },
     }),
     ThrottlerModule.forRoot({
-      throttlers: [{ ttl: 60_000, limit: 100 }],
+      throttlers: [
+        { ttl: ThrottleConfig.windowMs, limit: ThrottleConfig.globalLimit },
+      ],
     }),
     ScheduleModule.forRoot(),
     MongooseModule.forRootAsync({
@@ -113,6 +117,9 @@ import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
   providers: [
     TraceContext,
     TelemetryLifecycle,
+    // App-level rate limiting (defense-in-depth behind the gateway). Global so it
+    // covers every HTTP route; health probes + gRPC opt out via @SkipThrottle.
+    { provide: APP_GUARD, useClass: HobomThrottlerGuard },
     // Order matters: trace id is bound first, then the access log can read it.
     { provide: APP_INTERCEPTOR, useClass: TraceInterceptor },
     { provide: APP_INTERCEPTOR, useClass: HttpLogInterceptor },
