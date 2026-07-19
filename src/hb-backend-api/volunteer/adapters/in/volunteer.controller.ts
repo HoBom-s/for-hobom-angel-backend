@@ -49,6 +49,7 @@ import { CancelVolunteerEventUseCase } from "src/hb-backend-api/volunteer/domain
 import { CreateVolunteerEventDto } from "src/hb-backend-api/volunteer/adapters/in/dto/create-volunteer-event.dto";
 import { DecideVolunteerSignupDto } from "src/hb-backend-api/volunteer/adapters/in/dto/decide-volunteer-signup.dto";
 import { ListMySignupsQueryDto } from "src/hb-backend-api/volunteer/adapters/in/dto/list-my-signups.query.dto";
+import { CursorQueryDto } from "src/shared/pagination/cursor-query.dto";
 import { VolunteerEventResponse } from "src/hb-backend-api/volunteer/adapters/in/dto/volunteer-event.response";
 import { CreateVolunteerEventResponse } from "src/hb-backend-api/volunteer/adapters/in/dto/create-volunteer-event.response";
 import { VolunteerSignupResponse } from "src/hb-backend-api/volunteer/adapters/in/dto/volunteer-signup.response";
@@ -93,18 +94,25 @@ export class VolunteerController {
     });
   }
 
-  @ApiOperation({ summary: "보호소 봉사 일정 목록 (내 신청 상태 포함)" })
-  @ApiEnvelopeArray(VolunteerEventResponse)
+  @ApiOperation({
+    summary: "보호소 봉사 일정 목록 (내 신청 상태 포함, 최신순)",
+  })
+  @ApiEnvelopeCursor(VolunteerEventResponse)
   @Get("shelters/:shelterId/volunteer-events")
   public async listByShelter(
     @CurrentUser() user: AuthenticatedUser,
     @Param("shelterId") shelterId: string,
-  ): Promise<VolunteerEventResponse[]> {
-    const views = await this.readVolunteerEventsUseCase.byShelter(
+    @Query() query: CursorQueryDto,
+  ): Promise<CursorPageResponse<VolunteerEventResponse>> {
+    const page = await this.readVolunteerEventsUseCase.byShelter(
       shelterId,
       user.userId,
+      query.cursor,
+      query.limit ?? 20,
     );
-    return views.map((view) => VolunteerEventResponse.from(view));
+    return CursorPageResponse.of(page, (view) =>
+      VolunteerEventResponse.from(view),
+    );
   }
 
   @ApiOperation({ summary: "다가오는 모집 중 봉사 (탐색, 내 신청 상태 포함)" })

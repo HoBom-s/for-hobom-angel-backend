@@ -102,19 +102,42 @@ describe("Favorites (flow)", () => {
       targetRef: shelter,
     });
 
-    expect(await listFavorites.invoke({ userId })).toHaveLength(3);
     expect(
-      await listFavorites.invoke({
-        userId,
-        targetType: FavoriteTargetType.ANIMAL,
-      }),
+      (await listFavorites.invoke({ userId, limit: 20 })).items,
+    ).toHaveLength(3);
+    expect(
+      (
+        await listFavorites.invoke({
+          userId,
+          targetType: FavoriteTargetType.ANIMAL,
+          limit: 20,
+        })
+      ).items,
     ).toHaveLength(2);
     expect(
-      await listFavorites.invoke({
-        userId,
-        targetType: FavoriteTargetType.SHELTER,
-      }),
+      (
+        await listFavorites.invoke({
+          userId,
+          targetType: FavoriteTargetType.SHELTER,
+          limit: 20,
+        })
+      ).items,
     ).toHaveLength(1);
+
+    // Cursor pagination: 3 favorites, page size 2 → a full page + a cursor, then
+    // the remaining one with no next page.
+    const firstPage = await listFavorites.invoke({ userId, limit: 2 });
+    expect(firstPage.items).toHaveLength(2);
+    expect(firstPage.hasNext).toBe(true);
+    expect(firstPage.nextCursor).not.toBeNull();
+    const secondPage = await listFavorites.invoke({
+      userId,
+      cursor: firstPage.nextCursor ?? undefined,
+      limit: 2,
+    });
+    expect(secondPage.items).toHaveLength(1);
+    expect(secondPage.hasNext).toBe(false);
+    expect(secondPage.nextCursor).toBeNull();
 
     await removeFavorite.invoke({
       userId,
@@ -122,10 +145,13 @@ describe("Favorites (flow)", () => {
       targetRef: animal,
     });
     expect(
-      await listFavorites.invoke({
-        userId,
-        targetType: FavoriteTargetType.ANIMAL,
-      }),
+      (
+        await listFavorites.invoke({
+          userId,
+          targetType: FavoriteTargetType.ANIMAL,
+          limit: 20,
+        })
+      ).items,
     ).toHaveLength(1);
   });
 });

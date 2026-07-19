@@ -1,4 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
+import { Page } from "src/shared/pagination/page";
 import { DIToken } from "src/shared/di/token.di";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { Favorite } from "src/hb-backend-api/favorite/domain/model/favorite";
@@ -16,10 +17,12 @@ export class ListFavoritesService implements ListFavoritesUseCase {
     private readonly queryPort: FavoriteQueryPort,
   ) {}
 
-  public invoke(query: ListFavoritesQuery): Promise<Favorite[]> {
+  public invoke(query: ListFavoritesQuery): Promise<Page<Favorite>> {
     return this.queryPort.findByUser(
       UserId.fromString(query.userId),
       query.targetType,
+      query.cursor,
+      query.limit,
     );
   }
 }

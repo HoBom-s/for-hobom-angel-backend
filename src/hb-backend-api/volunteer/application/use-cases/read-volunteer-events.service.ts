@@ -1,4 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
+import { Page } from "src/shared/pagination/page";
 import { DIToken } from "src/shared/di/token.di";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
@@ -29,11 +30,16 @@ export class ReadVolunteerEventsService implements ReadVolunteerEventsUseCase {
   public async byShelter(
     shelterId: string,
     viewerId: string,
-  ): Promise<VolunteerEventView[]> {
-    const events = await this.eventQueryPort.findByShelter(
+    cursor: string | undefined,
+    limit: number,
+  ): Promise<Page<VolunteerEventView>> {
+    const page = await this.eventQueryPort.findByShelter(
       ShelterId.fromString(shelterId),
+      cursor,
+      limit,
     );
-    return this.attachViewerSignups(events, viewerId);
+    const items = await this.attachViewerSignups(page.items, viewerId);
+    return { items, hasNext: page.hasNext, nextCursor: page.nextCursor };
   }
 
   public async upcoming(
