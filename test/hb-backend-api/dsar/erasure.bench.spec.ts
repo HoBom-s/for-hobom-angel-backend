@@ -102,6 +102,9 @@ describe("ErasureWorker throughput (bench)", () => {
         "review.reviews",
         "volunteer-post.posts",
         "volunteer-post.comments",
+        "volunteer-post.likes",
+        "volunteer-post.bookmarks",
+        "favorite.favorites",
         "report.reports",
       ]),
     );

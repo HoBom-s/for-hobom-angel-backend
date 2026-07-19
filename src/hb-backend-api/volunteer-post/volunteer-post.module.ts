@@ -7,6 +7,8 @@ import { ShelterModule } from "src/hb-backend-api/shelter/shelter.module";
 import { UserModule } from "src/hb-backend-api/user/user.module";
 import { VolunteerPostDestroyer } from "src/hb-backend-api/volunteer-post/adapters/erasure/volunteer-post.destroyer";
 import { VolunteerPostCommentDestroyer } from "src/hb-backend-api/volunteer-post/adapters/erasure/volunteer-post-comment.destroyer";
+import { LikeDestroyer } from "src/hb-backend-api/volunteer-post/adapters/erasure/like.destroyer";
+import { BookmarkDestroyer } from "src/hb-backend-api/volunteer-post/adapters/erasure/bookmark.destroyer";
 import { VolunteerPostEntity } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post.entity";
 import { VolunteerPostSchema } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post.schema";
 import { VolunteerPostLikeEntity } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post-like.entity";
@@ -60,6 +62,8 @@ import { ListMyBookmarksService } from "src/hb-backend-api/volunteer-post/applic
   providers: [
     VolunteerPostDestroyer,
     VolunteerPostCommentDestroyer,
+    LikeDestroyer,
+    BookmarkDestroyer,
     {
       provide: DIToken.VolunteerPostModule.CreateVolunteerPostUseCase,
       useClass: CreateVolunteerPostService,
@@ -131,10 +135,14 @@ export class VolunteerPostModule implements OnModuleInit {
     private readonly destroyerRegistry: DestroyerRegistry,
     private readonly volunteerPostDestroyer: VolunteerPostDestroyer,
     private readonly volunteerPostCommentDestroyer: VolunteerPostCommentDestroyer,
+    private readonly likeDestroyer: LikeDestroyer,
+    private readonly bookmarkDestroyer: BookmarkDestroyer,
   ) {}
 
   public onModuleInit(): void {
     this.destroyerRegistry.register(this.volunteerPostDestroyer);
     this.destroyerRegistry.register(this.volunteerPostCommentDestroyer);
+    this.destroyerRegistry.register(this.likeDestroyer);
+    this.destroyerRegistry.register(this.bookmarkDestroyer);
   }
 }
