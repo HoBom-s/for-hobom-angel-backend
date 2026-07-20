@@ -34,8 +34,8 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1089.0",
-    "@aws-sdk/s3-request-presigner": "^3.1089.0",
+    "@aws-sdk/client-s3": "^3.1090.0",
+    "@aws-sdk/s3-request-presigner": "^3.1090.0",
     "@grpc/grpc-js": "^1.14.3",
     "@nestjs/common": "^11.1.28",
     "@nestjs/config": "^4.0.3",
