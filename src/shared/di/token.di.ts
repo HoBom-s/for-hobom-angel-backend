@@ -197,6 +197,15 @@ class AdoptionModuleToken extends TokenRegistry {
   public readonly ReturnAdoptionUseCase = this.register(
     "adoption.return.use-case",
   );
+  public readonly ListShelterAdoptionApplicationsUseCase = this.register(
+    "adoption.list-shelter-applications.use-case",
+  );
+  public readonly ListMyAdoptionApplicationsUseCase = this.register(
+    "adoption.list-my-applications.use-case",
+  );
+  public readonly GetAdoptionApplicationUseCase = this.register(
+    "adoption.get-application.use-case",
+  );
   public readonly AdoptionApplicationPersistencePort = this.register(
     "adoption.application.persistence.port",
   );
@@ -217,6 +226,15 @@ class FosterModuleToken extends TokenRegistry {
   );
   public readonly ConvertFosterToAdoptionUseCase = this.register(
     "foster.convert-to-adoption.use-case",
+  );
+  public readonly ListShelterFosterApplicationsUseCase = this.register(
+    "foster.list-shelter-applications.use-case",
+  );
+  public readonly ListMyFosterApplicationsUseCase = this.register(
+    "foster.list-my-applications.use-case",
+  );
+  public readonly GetFosterApplicationUseCase = this.register(
+    "foster.get-application.use-case",
   );
   public readonly FosterApplicationPersistencePort = this.register(
     "foster.application.persistence.port",

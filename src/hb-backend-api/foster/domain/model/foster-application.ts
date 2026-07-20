@@ -27,6 +27,7 @@ export class FosterApplication {
     private endedAt: Date | null,
     private endReason: FosterEndReason | null,
     private readonly version: number,
+    private readonly createdAt: Date | null,
   ) {}
 
   public static submit(params: {
@@ -57,6 +58,7 @@ export class FosterApplication {
       null,
       null,
       0,
+      null,
     );
   }
 
@@ -73,6 +75,7 @@ export class FosterApplication {
     endedAt: Date | null;
     endReason: FosterEndReason | null;
     version: number;
+    createdAt: Date | null;
   }): FosterApplication {
     return new FosterApplication(
       params.id,
@@ -87,6 +90,7 @@ export class FosterApplication {
       params.endedAt,
       params.endReason,
       params.version,
+      params.createdAt,
     );
   }
 
@@ -181,5 +185,9 @@ export class FosterApplication {
   }
   public get getVersion(): number {
     return this.version;
+  }
+  /** Submission time; null on an in-memory instance not yet persisted. */
+  public get getCreatedAt(): Date | null {
+    return this.createdAt;
   }
 }

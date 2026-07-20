@@ -1,11 +1,13 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Inject,
   Param,
   Post,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 import {
@@ -14,7 +16,12 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { ApiCreatedEnvelope } from "src/shared/response/api-envelope.decorator";
+import {
+  ApiCreatedEnvelope,
+  ApiEnvelope,
+  ApiEnvelopeCursor,
+} from "src/shared/response/api-envelope.decorator";
+import { CursorPageResponse } from "src/shared/pagination/cursor-page.response";
 import { SubmitFosterResponse } from "src/hb-backend-api/foster/adapters/in/dto/submit-foster.response";
 import { ConvertFosterResponse } from "src/hb-backend-api/foster/adapters/in/dto/convert-foster.response";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
@@ -31,8 +38,14 @@ import {
   ConvertFosterToAdoptionResult,
   ConvertFosterToAdoptionUseCase,
 } from "src/hb-backend-api/foster/domain/ports/in/convert-foster-to-adoption.use-case";
+import { ListShelterFosterApplicationsUseCase } from "src/hb-backend-api/foster/domain/ports/in/list-shelter-foster-applications.use-case";
+import { ListMyFosterApplicationsUseCase } from "src/hb-backend-api/foster/domain/ports/in/list-my-foster-applications.use-case";
+import { GetFosterApplicationUseCase } from "src/hb-backend-api/foster/domain/ports/in/get-foster-application.use-case";
 import { SubmitFosterApplicationDto } from "src/hb-backend-api/foster/adapters/in/dto/submit-foster-application.dto";
 import { TerminateFosterDto } from "src/hb-backend-api/foster/adapters/in/dto/terminate-foster.dto";
+import { ListFosterApplicationsQueryDto } from "src/hb-backend-api/foster/adapters/in/dto/list-foster-applications.query.dto";
+import { FosterApplicationSummaryResponse } from "src/hb-backend-api/foster/adapters/in/dto/foster-application-summary.response";
+import { FosterApplicationDetailResponse } from "src/hb-backend-api/foster/adapters/in/dto/foster-application-detail.response";
 
 @ApiTags("Foster")
 @ApiBearerAuth()
@@ -46,6 +59,12 @@ export class FosterController {
     private readonly terminateFosterUseCase: TerminateFosterUseCase,
     @Inject(DIToken.FosterModule.ConvertFosterToAdoptionUseCase)
     private readonly convertFosterToAdoptionUseCase: ConvertFosterToAdoptionUseCase,
+    @Inject(DIToken.FosterModule.ListShelterFosterApplicationsUseCase)
+    private readonly listShelterApplicationsUseCase: ListShelterFosterApplicationsUseCase,
+    @Inject(DIToken.FosterModule.ListMyFosterApplicationsUseCase)
+    private readonly listMyApplicationsUseCase: ListMyFosterApplicationsUseCase,
+    @Inject(DIToken.FosterModule.GetFosterApplicationUseCase)
+    private readonly getApplicationUseCase: GetFosterApplicationUseCase,
   ) {}
 
   @ApiOperation({ summary: "임시보호 신청 (동물이 예약되고 심사가 열림)" })
@@ -91,5 +110,61 @@ export class FosterController {
       fosterApplicationId,
       actorId: user.userId,
     });
+  }
+
+  @ApiOperation({
+    summary: "보호소 임시보호 신청 목록 (담당자, 상태 필터·커서)",
+  })
+  @ApiEnvelopeCursor(FosterApplicationSummaryResponse)
+  @Get("shelters/:shelterId/foster-applications")
+  public async listForShelter(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("shelterId") shelterId: string,
+    @Query() query: ListFosterApplicationsQueryDto,
+  ): Promise<CursorPageResponse<FosterApplicationSummaryResponse>> {
+    const page = await this.listShelterApplicationsUseCase.invoke({
+      shelterId,
+      actorId: user.userId,
+      status: query.status,
+      cursor: query.cursor,
+      limit: query.limit ?? 20,
+    });
+    return CursorPageResponse.of(page, (app) =>
+      FosterApplicationSummaryResponse.from(app),
+    );
+  }
+
+  @ApiOperation({ summary: "내 임시보호 신청 목록 (상태 필터·커서)" })
+  @ApiEnvelopeCursor(FosterApplicationSummaryResponse)
+  @Get("me/foster-applications")
+  public async listMine(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: ListFosterApplicationsQueryDto,
+  ): Promise<CursorPageResponse<FosterApplicationSummaryResponse>> {
+    const page = await this.listMyApplicationsUseCase.invoke({
+      applicantId: user.userId,
+      status: query.status,
+      cursor: query.cursor,
+      limit: query.limit ?? 20,
+    });
+    return CursorPageResponse.of(page, (app) =>
+      FosterApplicationSummaryResponse.from(app),
+    );
+  }
+
+  @ApiOperation({
+    summary: "임시보호 신청 단건 상세 (신청자 본인 또는 보호소 담당자)",
+  })
+  @ApiEnvelope(FosterApplicationDetailResponse)
+  @Get("foster-applications/:fosterApplicationId")
+  public async getOne(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("fosterApplicationId") fosterApplicationId: string,
+  ): Promise<FosterApplicationDetailResponse> {
+    const application = await this.getApplicationUseCase.invoke({
+      applicationId: fosterApplicationId,
+      actorId: user.userId,
+    });
+    return FosterApplicationDetailResponse.from(application);
   }
 }

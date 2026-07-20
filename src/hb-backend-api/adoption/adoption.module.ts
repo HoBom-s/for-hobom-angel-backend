@@ -19,6 +19,9 @@ import { AdoptionApplicationQueryAdapter } from "src/hb-backend-api/adoption/ada
 import { AdoptionApplicationRepositoryImpl } from "src/hb-backend-api/adoption/infra/repositories/adoption-application.repository.impl";
 import { SubmitAdoptionApplicationService } from "src/hb-backend-api/adoption/application/use-cases/submit-adoption-application.service";
 import { ReturnAdoptionService } from "src/hb-backend-api/adoption/application/use-cases/return-adoption.service";
+import { ListShelterAdoptionApplicationsService } from "src/hb-backend-api/adoption/application/use-cases/list-shelter-adoption-applications.service";
+import { ListMyAdoptionApplicationsService } from "src/hb-backend-api/adoption/application/use-cases/list-my-adoption-applications.service";
+import { GetAdoptionApplicationService } from "src/hb-backend-api/adoption/application/use-cases/get-adoption-application.service";
 import { AdoptionApprovalCallback } from "src/hb-backend-api/adoption/application/adoption-approval.callback";
 import { AdoptionMessageSubjectResolver } from "src/hb-backend-api/adoption/application/adoption-message-subject.resolver";
 import { AdoptionController } from "src/hb-backend-api/adoption/adapters/in/adoption.controller";
@@ -56,6 +59,18 @@ import { AdoptionController } from "src/hb-backend-api/adoption/adapters/in/adop
     {
       provide: DIToken.AdoptionModule.ReturnAdoptionUseCase,
       useClass: ReturnAdoptionService,
+    },
+    {
+      provide: DIToken.AdoptionModule.ListShelterAdoptionApplicationsUseCase,
+      useClass: ListShelterAdoptionApplicationsService,
+    },
+    {
+      provide: DIToken.AdoptionModule.ListMyAdoptionApplicationsUseCase,
+      useClass: ListMyAdoptionApplicationsService,
+    },
+    {
+      provide: DIToken.AdoptionModule.GetAdoptionApplicationUseCase,
+      useClass: GetAdoptionApplicationService,
     },
     {
       provide: DIToken.AdoptionModule.AdoptionApplicationRepository,

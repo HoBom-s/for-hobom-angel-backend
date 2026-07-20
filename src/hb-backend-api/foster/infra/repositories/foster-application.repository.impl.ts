@@ -42,6 +42,44 @@ export class FosterApplicationRepositoryImpl implements FosterApplicationReposit
     return this.model.findById(id).exec();
   }
 
+  public findPageByShelter(
+    shelterId: Types.ObjectId,
+    status: FosterApplicationStatus | null,
+    cursorId: Types.ObjectId | null,
+    limit: number,
+  ): Promise<FosterApplicationEntity[]> {
+    return this.findPage({ shelterId }, status, cursorId, limit);
+  }
+
+  public findPageByApplicant(
+    applicantId: Types.ObjectId,
+    status: FosterApplicationStatus | null,
+    cursorId: Types.ObjectId | null,
+    limit: number,
+  ): Promise<FosterApplicationEntity[]> {
+    return this.findPage({ applicantId }, status, cursorId, limit);
+  }
+
+  private findPage(
+    base: Record<string, unknown>,
+    status: FosterApplicationStatus | null,
+    cursorId: Types.ObjectId | null,
+    limit: number,
+  ): Promise<FosterApplicationEntity[]> {
+    const query: Record<string, unknown> = { ...base };
+    if (status) {
+      query.status = status;
+    }
+    if (cursorId) {
+      query._id = { $lt: cursorId };
+    }
+    return this.model
+      .find(query)
+      .sort({ _id: -1 })
+      .limit(limit + 1)
+      .exec();
+  }
+
   public countByApplicantAndStatus(
     applicantId: Types.ObjectId,
     status: FosterApplicationStatus,

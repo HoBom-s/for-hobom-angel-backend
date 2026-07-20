@@ -23,6 +23,7 @@ export function toDomain(doc: FosterApplicationEntity): FosterApplication {
     endedAt: doc.endedAt ?? null,
     endReason: doc.endReason ?? null,
     version: doc.version ?? 0,
+    createdAt: doc.createdAt ?? null,
   });
 }
 

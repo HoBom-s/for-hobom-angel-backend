@@ -21,6 +21,9 @@ import { FosterApplicationRepositoryImpl } from "src/hb-backend-api/foster/infra
 import { SubmitFosterApplicationService } from "src/hb-backend-api/foster/application/use-cases/submit-foster-application.service";
 import { TerminateFosterService } from "src/hb-backend-api/foster/application/use-cases/terminate-foster.service";
 import { ConvertFosterToAdoptionService } from "src/hb-backend-api/foster/application/use-cases/convert-foster-to-adoption.service";
+import { ListShelterFosterApplicationsService } from "src/hb-backend-api/foster/application/use-cases/list-shelter-foster-applications.service";
+import { ListMyFosterApplicationsService } from "src/hb-backend-api/foster/application/use-cases/list-my-foster-applications.service";
+import { GetFosterApplicationService } from "src/hb-backend-api/foster/application/use-cases/get-foster-application.service";
 import { FosterApprovalCallback } from "src/hb-backend-api/foster/application/foster-approval.callback";
 import { FosterMessageSubjectResolver } from "src/hb-backend-api/foster/application/foster-message-subject.resolver";
 import { FosterController } from "src/hb-backend-api/foster/adapters/in/foster.controller";
@@ -60,6 +63,18 @@ import { FosterController } from "src/hb-backend-api/foster/adapters/in/foster.c
     {
       provide: DIToken.FosterModule.ConvertFosterToAdoptionUseCase,
       useClass: ConvertFosterToAdoptionService,
+    },
+    {
+      provide: DIToken.FosterModule.ListShelterFosterApplicationsUseCase,
+      useClass: ListShelterFosterApplicationsService,
+    },
+    {
+      provide: DIToken.FosterModule.ListMyFosterApplicationsUseCase,
+      useClass: ListMyFosterApplicationsService,
+    },
+    {
+      provide: DIToken.FosterModule.GetFosterApplicationUseCase,
+      useClass: GetFosterApplicationService,
     },
     {
       provide: DIToken.FosterModule.FosterApplicationRepository,

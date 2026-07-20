@@ -29,6 +29,8 @@ describe("PlacementEligibilityAdapter", () => {
   beforeEach(() => {
     adoptionQueryPort = {
       findById: jest.fn(),
+      findPageByShelter: jest.fn(),
+      findPageByApplicant: jest.fn(),
       countByApplicantAndStatus: jest.fn(),
       countByShelterAndStatus: jest.fn(),
       countByShelterAndStatusBetween: jest.fn(),
@@ -37,6 +39,8 @@ describe("PlacementEligibilityAdapter", () => {
     };
     fosterQueryPort = {
       findById: jest.fn(),
+      findPageByShelter: jest.fn(),
+      findPageByApplicant: jest.fn(),
       countByApplicantAndStatus: jest.fn(),
       countByShelterAndStatus: jest.fn(),
       countByStatus: jest.fn(),
