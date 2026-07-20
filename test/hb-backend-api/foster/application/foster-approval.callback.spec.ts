@@ -75,6 +75,8 @@ describe("FosterApprovalCallback", () => {
     });
     applicationQueryPort = {
       findById: jest.fn().mockResolvedValue(application),
+      findPageByShelter: jest.fn(),
+      findPageByApplicant: jest.fn(),
       countByApplicantAndStatus: jest.fn(),
       countByShelterAndStatus: jest.fn(),
       countByStatus: jest.fn(),

@@ -25,6 +25,7 @@ export class AdoptionApplication {
     private returnedAt: Date | null,
     private returnReason: string | null,
     private readonly version: number,
+    private readonly createdAt: Date | null,
   ) {}
 
   public static submit(params: {
@@ -46,6 +47,7 @@ export class AdoptionApplication {
       null,
       null,
       0,
+      null,
     );
   }
 
@@ -71,6 +73,7 @@ export class AdoptionApplication {
       null,
       null,
       0,
+      null,
     );
   }
 
@@ -86,6 +89,7 @@ export class AdoptionApplication {
     returnedAt: Date | null;
     returnReason: string | null;
     version: number;
+    createdAt: Date | null;
   }): AdoptionApplication {
     return new AdoptionApplication(
       params.id,
@@ -99,6 +103,7 @@ export class AdoptionApplication {
       params.returnedAt,
       params.returnReason,
       params.version,
+      params.createdAt,
     );
   }
 
@@ -178,5 +183,9 @@ export class AdoptionApplication {
   }
   public get getVersion(): number {
     return this.version;
+  }
+  /** Submission time; null on an in-memory instance not yet persisted. */
+  public get getCreatedAt(): Date | null {
+    return this.createdAt;
   }
 }

@@ -74,6 +74,8 @@ describe("AdoptionApprovalCallback", () => {
     });
     applicationQueryPort = {
       findById: jest.fn().mockResolvedValue(application),
+      findPageByShelter: jest.fn(),
+      findPageByApplicant: jest.fn(),
       countByApplicantAndStatus: jest.fn(),
       countByShelterAndStatus: jest.fn(),
       countByShelterAndStatusBetween: jest.fn(),
