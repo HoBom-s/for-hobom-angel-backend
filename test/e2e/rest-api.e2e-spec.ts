@@ -216,6 +216,33 @@ describe("REST API (e2e)", () => {
     return shelterId as string;
   };
 
+  it("opens the shelter directory/detail/map to anonymous visitors, but keeps the roster private", async () => {
+    const admin = await seedUser();
+    const slug = `public-${Date.now()}`;
+    const shelterId = await registerAndApproveShelter(admin.token, slug);
+    const server = app.getHttpServer();
+
+    // Directory list — no Authorization header.
+    const list = await request(server).get(`${PREFIX}/shelters`).expect(200);
+    expect(
+      list.body.items.items.some((s: { slug: string }) => s.slug === slug),
+    ).toBe(true);
+
+    // About detail by slug — anonymous.
+    const detail = await request(server)
+      .get(`${PREFIX}/shelters/${slug}`)
+      .expect(200);
+    expect(detail.body.items.status).toBe(ShelterStatus.VERIFIED);
+
+    // Map markers — anonymous.
+    await request(server).get(`${PREFIX}/shelters/map`).expect(200);
+
+    // A non-@Public read on the same controller still requires a token.
+    await request(server)
+      .get(`${PREFIX}/shelters/${shelterId}/staff`)
+      .expect(401);
+  });
+
   it("searches animals by keyword, respecting filters", async () => {
     const admin = await seedUser();
     const shelterId = await registerAndApproveShelter(

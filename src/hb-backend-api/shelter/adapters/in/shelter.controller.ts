@@ -30,6 +30,7 @@ import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.con
 import { DIToken } from "src/shared/di/token.di";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
 import { JwtAuthGuard } from "src/hb-backend-api/auth/adapters/in/rest/guard/jwt-auth.guard";
+import { Public } from "src/hb-backend-api/auth/adapters/in/rest/decorator/public.decorator";
 import { AuthenticatedUser } from "src/hb-backend-api/auth/domain/model/token-pair";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { ShelterSlug } from "src/hb-backend-api/shelter/domain/model/vo/shelter-slug.vo";
@@ -148,6 +149,7 @@ export class ShelterController {
     summary: "보호소 디렉터리 — 검증된 보호소 목록 (지역·이름 검색·커서)",
   })
   @ApiEnvelopeCursor(ShelterListItemResponse)
+  @Public()
   @Get()
   public async list(
     @Query() query: SearchSheltersQueryDto,
@@ -166,6 +168,7 @@ export class ShelterController {
   @ApiOperation({ summary: "지도 탐색 — 위치 공개 보호소 마커 (지역 필터)" })
   @ApiQuery({ name: "region", required: false, type: String })
   @ApiEnvelopeArray(ShelterMarkerResponse)
+  @Public()
   @Get("map")
   public async map(
     @Query("region") region?: string,
@@ -191,6 +194,7 @@ export class ShelterController {
 
   @ApiOperation({ summary: "보호소 단건 조회 (슬러그)" })
   @ApiEnvelope(ShelterResponse)
+  @Public()
   @Get(":slug")
   public async getBySlug(
     @Param("slug") slug: string,
