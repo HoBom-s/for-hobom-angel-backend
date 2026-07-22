@@ -3,6 +3,8 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { MongoSessionContext } from "src/infra/mongo/transaction/transaction.context";
 import { OptimisticLockException } from "src/shared/exception/optimistic-lock.exception";
+import { ApprovalStatus } from "src/hb-backend-api/approval/domain/enums/approval-status.enum";
+import { ApprovalType } from "src/hb-backend-api/approval/domain/enums/approval-type.enum";
 import { ApprovalActionEntity } from "src/hb-backend-api/approval/domain/model/approval-action.entity";
 import { ApprovalRequestEntity } from "src/hb-backend-api/approval/domain/model/approval-request.entity";
 import {
@@ -46,6 +48,22 @@ export class ApprovalRepositoryImpl implements ApprovalRepository {
     id: Types.ObjectId,
   ): Promise<ApprovalRequestEntity | null> {
     return this.requestModel.findById(id).exec();
+  }
+
+  public findPendingByTypeAndShelter(
+    type: ApprovalType,
+    shelterId: string,
+    limit: number,
+  ): Promise<ApprovalRequestEntity[]> {
+    return this.requestModel
+      .find({
+        type,
+        status: ApprovalStatus.PENDING,
+        "context.shelterId": shelterId,
+      })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .exec();
   }
 
   public async insertAction(doc: Partial<ApprovalActionEntity>): Promise<void> {

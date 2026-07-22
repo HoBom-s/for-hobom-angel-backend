@@ -53,6 +53,7 @@ import { ApprovalController } from "src/hb-backend-api/approval/adapters/in/appr
     ApprovalCallbackRegistry,
     DIToken.ApprovalModule.SubmitApprovalUseCase,
     DIToken.ApprovalModule.DecideApprovalUseCase,
+    DIToken.ApprovalModule.ApprovalQueryPort,
   ],
 })
 export class ApprovalModule {}
