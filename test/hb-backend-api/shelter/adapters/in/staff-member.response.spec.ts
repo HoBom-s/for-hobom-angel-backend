@@ -27,6 +27,7 @@ const userWithGrants = (grants: ShelterRoleGrant[]): User =>
     suspendedAt: null,
     sanctionReason: null,
     version: 0,
+    createdAt: null,
   });
 
 describe("StaffMemberResponse.from", () => {

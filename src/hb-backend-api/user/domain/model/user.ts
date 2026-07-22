@@ -35,6 +35,7 @@ export class User {
     private suspendedAt: Date | null,
     private sanctionReason: string | null,
     private readonly version: number,
+    private readonly createdAt: Date | null,
   ) {}
 
   public static register(registration: RegisterUser): User {
@@ -56,6 +57,7 @@ export class User {
       null,
       null,
       0,
+      null,
     );
   }
 
@@ -73,6 +75,7 @@ export class User {
     suspendedAt: Date | null;
     sanctionReason: string | null;
     version: number;
+    createdAt: Date | null;
   }): User {
     return new User(
       params.id,
@@ -88,6 +91,7 @@ export class User {
       params.suspendedAt,
       params.sanctionReason,
       params.version,
+      params.createdAt,
     );
   }
 
@@ -248,5 +252,9 @@ export class User {
   /** Loaded version, used as the optimistic-lock guard on the next save. */
   public get getVersion(): number {
     return this.version;
+  }
+  /** Sign-up time; null on an in-memory instance not yet persisted. */
+  public get getCreatedAt(): Date | null {
+    return this.createdAt;
   }
 }

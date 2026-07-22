@@ -34,6 +34,7 @@ const activeCandidate = () =>
     suspendedAt: null,
     sanctionReason: null,
     version: 0,
+    createdAt: null,
   });
 
 const request = (

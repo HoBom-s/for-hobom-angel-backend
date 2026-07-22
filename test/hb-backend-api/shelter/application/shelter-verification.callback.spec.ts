@@ -66,6 +66,7 @@ const activeRegistrant = () =>
     suspendedAt: null,
     sanctionReason: null,
     version: 0,
+    createdAt: null,
   });
 
 const request = (over: { status?: ApprovalStatus; reason?: string } = {}) =>

@@ -44,6 +44,7 @@ import {
 import { ListSheltersUseCase } from "src/hb-backend-api/shelter/domain/ports/in/list-shelters.use-case";
 import { EditShelterProfileUseCase } from "src/hb-backend-api/shelter/domain/ports/in/edit-shelter-profile.use-case";
 import { GetShelterStaffUseCase } from "src/hb-backend-api/shelter/domain/ports/in/get-shelter-staff.use-case";
+import { ListStaffPromotionsUseCase } from "src/hb-backend-api/shelter/domain/ports/in/list-staff-promotions.use-case";
 import { ShelterQueryPort } from "src/hb-backend-api/shelter/domain/ports/out/shelter-query.port";
 import { RegisterShelterDto } from "src/hb-backend-api/shelter/adapters/in/dto/register-shelter.dto";
 import { RequestStaffPromotionDto } from "src/hb-backend-api/shelter/adapters/in/dto/request-staff-promotion.dto";
@@ -53,6 +54,7 @@ import { RegisterShelterResponse } from "src/hb-backend-api/shelter/adapters/in/
 import { StaffPromotionResponse } from "src/hb-backend-api/shelter/adapters/in/dto/staff-promotion.response";
 import { ShelterListItemResponse } from "src/hb-backend-api/shelter/adapters/in/dto/shelter-list-item.response";
 import { StaffMemberResponse } from "src/hb-backend-api/shelter/adapters/in/dto/staff-member.response";
+import { StaffPromotionRequestResponse } from "src/hb-backend-api/shelter/adapters/in/dto/staff-promotion-request.response";
 import { SearchSheltersQueryDto } from "src/hb-backend-api/shelter/adapters/in/dto/search-shelters.query.dto";
 import { EditShelterProfileDto } from "src/hb-backend-api/shelter/adapters/in/dto/edit-shelter-profile.dto";
 
@@ -72,6 +74,8 @@ export class ShelterController {
     private readonly editShelterProfileUseCase: EditShelterProfileUseCase,
     @Inject(DIToken.ShelterModule.GetShelterStaffUseCase)
     private readonly getShelterStaffUseCase: GetShelterStaffUseCase,
+    @Inject(DIToken.ShelterModule.ListStaffPromotionsUseCase)
+    private readonly listStaffPromotionsUseCase: ListStaffPromotionsUseCase,
     @Inject(DIToken.ShelterModule.ShelterQueryPort)
     private readonly shelterQueryPort: ShelterQueryPort,
   ) {}
@@ -104,6 +108,22 @@ export class ShelterController {
       candidateUserId: body.candidateUserId,
       requestedBy: user.userId,
     });
+  }
+
+  @ApiOperation({
+    summary: "대기 중인 스태프 승격 요청 큐 (담당자) — 후보·봉사·가입기간",
+  })
+  @ApiEnvelopeArray(StaffPromotionRequestResponse)
+  @Get(":shelterId/staff-promotions")
+  public async listStaffPromotions(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("shelterId") shelterId: string,
+  ): Promise<StaffPromotionRequestResponse[]> {
+    const views = await this.listStaffPromotionsUseCase.invoke({
+      shelterId,
+      actorId: user.userId,
+    });
+    return views.map((view) => StaffPromotionRequestResponse.from(view));
   }
 
   @ApiOperation({
