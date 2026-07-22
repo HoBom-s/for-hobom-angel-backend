@@ -16,6 +16,7 @@ import { RegisterShelterService } from "src/hb-backend-api/shelter/application/u
 import { RequestStaffPromotionService } from "src/hb-backend-api/shelter/application/use-cases/request-staff-promotion.service";
 import { ListSheltersService } from "src/hb-backend-api/shelter/application/use-cases/list-shelters.service";
 import { EditShelterProfileService } from "src/hb-backend-api/shelter/application/use-cases/edit-shelter-profile.service";
+import { GetShelterStaffService } from "src/hb-backend-api/shelter/application/use-cases/get-shelter-staff.service";
 import { ShelterVerificationCallback } from "src/hb-backend-api/shelter/application/shelter-verification.callback";
 import { StaffPromotionCallback } from "src/hb-backend-api/shelter/application/staff-promotion.callback";
 import { ShelterController } from "src/hb-backend-api/shelter/adapters/in/shelter.controller";
@@ -54,6 +55,10 @@ import { ShelterController } from "src/hb-backend-api/shelter/adapters/in/shelte
     {
       provide: DIToken.ShelterModule.EditShelterProfileUseCase,
       useClass: EditShelterProfileService,
+    },
+    {
+      provide: DIToken.ShelterModule.GetShelterStaffUseCase,
+      useClass: GetShelterStaffService,
     },
     {
       provide: DIToken.ShelterModule.ShelterRepository,

@@ -107,6 +107,7 @@ describe("ShelterVerificationCallback", () => {
       findById: jest.fn().mockResolvedValue(registrant),
       findByNickname: jest.fn(),
       findByEmail: jest.fn(),
+      findByShelter: jest.fn(),
       countByStatus: jest.fn(),
       countCreatedBetween: jest.fn(),
       findWithdrawnToPurge: jest.fn(),

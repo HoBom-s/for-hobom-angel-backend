@@ -31,6 +31,7 @@ import { DIToken } from "src/shared/di/token.di";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
 import { JwtAuthGuard } from "src/hb-backend-api/auth/adapters/in/rest/guard/jwt-auth.guard";
 import { AuthenticatedUser } from "src/hb-backend-api/auth/domain/model/token-pair";
+import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { ShelterSlug } from "src/hb-backend-api/shelter/domain/model/vo/shelter-slug.vo";
 import {
   RegisterShelterResult,
@@ -42,6 +43,7 @@ import {
 } from "src/hb-backend-api/shelter/domain/ports/in/request-staff-promotion.use-case";
 import { ListSheltersUseCase } from "src/hb-backend-api/shelter/domain/ports/in/list-shelters.use-case";
 import { EditShelterProfileUseCase } from "src/hb-backend-api/shelter/domain/ports/in/edit-shelter-profile.use-case";
+import { GetShelterStaffUseCase } from "src/hb-backend-api/shelter/domain/ports/in/get-shelter-staff.use-case";
 import { ShelterQueryPort } from "src/hb-backend-api/shelter/domain/ports/out/shelter-query.port";
 import { RegisterShelterDto } from "src/hb-backend-api/shelter/adapters/in/dto/register-shelter.dto";
 import { RequestStaffPromotionDto } from "src/hb-backend-api/shelter/adapters/in/dto/request-staff-promotion.dto";
@@ -50,6 +52,7 @@ import { ShelterMarkerResponse } from "src/hb-backend-api/shelter/adapters/in/dt
 import { RegisterShelterResponse } from "src/hb-backend-api/shelter/adapters/in/dto/register-shelter.response";
 import { StaffPromotionResponse } from "src/hb-backend-api/shelter/adapters/in/dto/staff-promotion.response";
 import { ShelterListItemResponse } from "src/hb-backend-api/shelter/adapters/in/dto/shelter-list-item.response";
+import { StaffMemberResponse } from "src/hb-backend-api/shelter/adapters/in/dto/staff-member.response";
 import { SearchSheltersQueryDto } from "src/hb-backend-api/shelter/adapters/in/dto/search-shelters.query.dto";
 import { EditShelterProfileDto } from "src/hb-backend-api/shelter/adapters/in/dto/edit-shelter-profile.dto";
 
@@ -67,6 +70,8 @@ export class ShelterController {
     private readonly listSheltersUseCase: ListSheltersUseCase,
     @Inject(DIToken.ShelterModule.EditShelterProfileUseCase)
     private readonly editShelterProfileUseCase: EditShelterProfileUseCase,
+    @Inject(DIToken.ShelterModule.GetShelterStaffUseCase)
+    private readonly getShelterStaffUseCase: GetShelterStaffUseCase,
     @Inject(DIToken.ShelterModule.ShelterQueryPort)
     private readonly shelterQueryPort: ShelterQueryPort,
   ) {}
@@ -147,6 +152,21 @@ export class ShelterController {
   ): Promise<ShelterMarkerResponse[]> {
     const shelters = await this.shelterQueryPort.findMappable(region);
     return shelters.map((shelter) => ShelterMarkerResponse.from(shelter));
+  }
+
+  @ApiOperation({ summary: "보호소 스태프 로스터 (담당자) — 멤버·역할" })
+  @ApiEnvelopeArray(StaffMemberResponse)
+  @Get(":shelterId/staff")
+  public async listStaff(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("shelterId") shelterId: string,
+  ): Promise<StaffMemberResponse[]> {
+    const members = await this.getShelterStaffUseCase.invoke({
+      shelterId,
+      actorId: user.userId,
+    });
+    const sid = ShelterId.fromString(shelterId);
+    return members.map((member) => StaffMemberResponse.from(member, sid));
   }
 
   @ApiOperation({ summary: "보호소 단건 조회 (슬러그)" })
