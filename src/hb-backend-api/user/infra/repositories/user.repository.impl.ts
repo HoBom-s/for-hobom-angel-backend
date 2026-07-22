@@ -52,6 +52,20 @@ export class UserRepositoryImpl implements UserRepository {
     return this.userModel.findOne({ email }).exec();
   }
 
+  public findByShelter(
+    shelterId: Types.ObjectId,
+    limit: number,
+  ): Promise<UserEntity[]> {
+    return this.userModel
+      .find({
+        "shelterRoles.shelterId": shelterId,
+        status: { $ne: UserStatus.WITHDRAWN },
+      })
+      .sort({ _id: 1 })
+      .limit(limit)
+      .exec();
+  }
+
   public countByStatus(status: UserStatus): Promise<number> {
     return this.userModel.countDocuments({ status }).exec();
   }
