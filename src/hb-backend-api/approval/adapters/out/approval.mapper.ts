@@ -15,5 +15,6 @@ export function toDomain(doc: ApprovalRequestEntity): ApprovalRequest {
     reason: doc.reason ?? null,
     decisionMetadata: doc.decisionMetadata ?? null,
     version: doc.version ?? 0,
+    createdAt: doc.createdAt ?? null,
   });
 }
