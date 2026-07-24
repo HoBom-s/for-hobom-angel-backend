@@ -25,5 +25,13 @@ export interface ApprovalRepository {
     shelterId: string,
     limit: number,
   ): Promise<ApprovalRequestEntity[]>;
+  /** Global PENDING queue (optionally one type), newest first, keyset on `_id`. */
+  findPendingPage(
+    type: ApprovalType | null,
+    cursorId: Types.ObjectId | null,
+    limit: number,
+  ): Promise<ApprovalRequestEntity[]>;
+  /** PENDING request counts grouped by type. */
+  countPendingByType(): Promise<{ type: ApprovalType; count: number }[]>;
   insertAction(doc: Partial<ApprovalActionEntity>): Promise<void>;
 }

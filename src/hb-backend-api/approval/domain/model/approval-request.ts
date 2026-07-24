@@ -26,6 +26,7 @@ export class ApprovalRequest {
     private reason: string | null,
     private decisionMetadata: Record<string, unknown> | null,
     private readonly version: number,
+    private readonly createdAt: Date | null,
   ) {}
 
   public static submit(params: {
@@ -49,6 +50,7 @@ export class ApprovalRequest {
       null,
       null,
       0,
+      null,
     );
   }
 
@@ -64,6 +66,7 @@ export class ApprovalRequest {
     reason: string | null;
     decisionMetadata: Record<string, unknown> | null;
     version: number;
+    createdAt?: Date | null;
   }): ApprovalRequest {
     return new ApprovalRequest(
       params.id,
@@ -77,6 +80,7 @@ export class ApprovalRequest {
       params.reason,
       params.decisionMetadata,
       params.version,
+      params.createdAt ?? null,
     );
   }
 
@@ -161,5 +165,9 @@ export class ApprovalRequest {
   }
   public get getVersion(): number {
     return this.version;
+  }
+  /** Submission time; null on an in-memory instance not yet persisted. */
+  public get getCreatedAt(): Date | null {
+    return this.createdAt;
   }
 }

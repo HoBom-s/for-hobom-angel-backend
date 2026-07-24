@@ -243,6 +243,53 @@ describe("REST API (e2e)", () => {
       .expect(401);
   });
 
+  it("exposes the operator pending-approval queue with per-type counts, operator-only", async () => {
+    const server = app.getHttpServer();
+    const applicant = await seedUser();
+
+    // Grant one seeded user the operator role (fresh-loaded by the services).
+    const op = await seedUser();
+    await userModel
+      .updateOne(
+        { _id: new Types.ObjectId(op.id) },
+        { $set: { roles: [UserRole.USER, UserRole.SYSTEM_ADMIN] } },
+      )
+      .exec();
+
+    // A fresh shelter registration opens a PENDING SHELTER_VERIFICATION.
+    const reg = await request(server)
+      .post(`${PREFIX}/shelters`)
+      .set(auth(applicant.token))
+      .send(registerShelterBody(`opq-${Date.now()}`))
+      .expect(201);
+    const { approvalId } = reg.body.items;
+
+    // Operator sees it in the type-filtered queue.
+    const queue = await request(server)
+      .get(`${PREFIX}/approvals/pending`)
+      .query({ type: "SHELTER_VERIFICATION", limit: 50 })
+      .set(auth(op.token))
+      .expect(200);
+    const mine = queue.body.items.items.find(
+      (a: { approvalId: string }) => a.approvalId === approvalId,
+    );
+    expect(mine).toBeDefined();
+    expect(mine.type).toBe("SHELTER_VERIFICATION");
+
+    // Tab badges: verification count reflects the real aggregation.
+    const counts = await request(server)
+      .get(`${PREFIX}/approvals/pending/counts`)
+      .set(auth(op.token))
+      .expect(200);
+    expect(counts.body.items.SHELTER_VERIFICATION).toBeGreaterThanOrEqual(1);
+
+    // A non-operator is forbidden.
+    await request(server)
+      .get(`${PREFIX}/approvals/pending`)
+      .set(auth(applicant.token))
+      .expect(403);
+  });
+
   it("searches animals by keyword, respecting filters", async () => {
     const admin = await seedUser();
     const shelterId = await registerAndApproveShelter(
