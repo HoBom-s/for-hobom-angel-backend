@@ -9,6 +9,14 @@ import { ApprovalRequest } from "src/hb-backend-api/approval/domain/model/approv
  */
 export interface ApprovalCallback {
   readonly type: ApprovalType;
+  /**
+   * Authorizes the actor to decide THIS request before any mutation. The engine
+   * is domain-agnostic, so each type declares its own decider here (operator vs.
+   * the target shelter's staff). MUST throw (ForbiddenException) when the actor
+   * is not permitted. Called by the engine before {@link onApproved}/
+   * {@link onRejected}, inside the decision transaction.
+   */
+  authorize(request: ApprovalRequest, actorId: string): Promise<void>;
   onApproved(request: ApprovalRequest): Promise<void>;
   onRejected(request: ApprovalRequest): Promise<void>;
 }

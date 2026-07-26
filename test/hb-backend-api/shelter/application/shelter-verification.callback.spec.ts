@@ -1,3 +1,4 @@
+import { ForbiddenException } from "@nestjs/common";
 import { ApprovalStatus } from "src/hb-backend-api/approval/domain/enums/approval-status.enum";
 import { ApprovalType } from "src/hb-backend-api/approval/domain/enums/approval-type.enum";
 import { ApprovalRequest } from "src/hb-backend-api/approval/domain/model/approval-request";
@@ -69,6 +70,24 @@ const activeRegistrant = () =>
     createdAt: null,
   });
 
+const operator = () =>
+  User.reconstitute({
+    id: UserId.generate(),
+    nickname: Nickname.of("op"),
+    email: Email.of("op@example.com"),
+    passwordHash: "hashed",
+    verifiedChannel: VerifiedChannel.EMAIL,
+    roles: [UserRole.SYSTEM_ADMIN],
+    shelterRoles: [],
+    status: UserStatus.ACTIVE,
+    withdrawnAt: null,
+    purgeAfter: null,
+    suspendedAt: null,
+    sanctionReason: null,
+    version: 0,
+    createdAt: null,
+  });
+
 const request = (over: { status?: ApprovalStatus; reason?: string } = {}) =>
   ApprovalRequest.reconstitute({
     id: ApprovalId.generate(),
@@ -130,6 +149,32 @@ describe("ShelterVerificationCallback", () => {
 
   it("declares the SHELTER_VERIFICATION type", () => {
     expect(callback.type).toBe(ApprovalType.SHELTER_VERIFICATION);
+  });
+
+  describe("authorize", () => {
+    it("allows a platform operator", async () => {
+      userQueryPort.findById.mockResolvedValue(operator());
+
+      await expect(
+        callback.authorize(request(), UserId.generate().toString()),
+      ).resolves.toBeUndefined();
+    });
+
+    it("forbids a non-operator (e.g. the registrant)", async () => {
+      userQueryPort.findById.mockResolvedValue(registrant);
+
+      await expect(
+        callback.authorize(request(), registrantId.toString()),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it("forbids when the actor does not exist", async () => {
+      userQueryPort.findById.mockResolvedValue(null);
+
+      await expect(
+        callback.authorize(request(), UserId.generate().toString()),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
   });
 
   describe("onApproved", () => {
