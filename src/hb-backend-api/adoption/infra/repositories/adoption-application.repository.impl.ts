@@ -44,10 +44,80 @@ export class AdoptionApplicationRepositoryImpl implements AdoptionApplicationRep
     return this.model.findById(id).exec();
   }
 
+  public findPageByShelter(
+    shelterId: Types.ObjectId,
+    status: AdoptionApplicationStatus | null,
+    cursorId: Types.ObjectId | null,
+    limit: number,
+  ): Promise<AdoptionApplicationEntity[]> {
+    return this.findPage({ shelterId }, status, cursorId, limit);
+  }
+
+  public findPageByApplicant(
+    applicantId: Types.ObjectId,
+    status: AdoptionApplicationStatus | null,
+    cursorId: Types.ObjectId | null,
+    limit: number,
+  ): Promise<AdoptionApplicationEntity[]> {
+    return this.findPage({ applicantId }, status, cursorId, limit);
+  }
+
+  private findPage(
+    base: Record<string, unknown>,
+    status: AdoptionApplicationStatus | null,
+    cursorId: Types.ObjectId | null,
+    limit: number,
+  ): Promise<AdoptionApplicationEntity[]> {
+    const query: Record<string, unknown> = { ...base };
+    if (status) {
+      query.status = status;
+    }
+    if (cursorId) {
+      query._id = { $lt: cursorId };
+    }
+    return this.model
+      .find(query)
+      .sort({ _id: -1 })
+      .limit(limit + 1)
+      .exec();
+  }
+
   public countByApplicantAndStatus(
     applicantId: Types.ObjectId,
     status: AdoptionApplicationStatus,
   ): Promise<number> {
     return this.model.countDocuments({ applicantId, status }).exec();
+  }
+
+  public countByShelterAndStatus(
+    shelterId: Types.ObjectId,
+    status: AdoptionApplicationStatus,
+  ): Promise<number> {
+    return this.model.countDocuments({ shelterId, status }).exec();
+  }
+
+  public countByShelterAndStatusBetween(
+    shelterId: Types.ObjectId,
+    status: AdoptionApplicationStatus,
+    from: Date,
+    to: Date,
+  ): Promise<number> {
+    return this.model
+      .countDocuments({ shelterId, status, updatedAt: { $gte: from, $lt: to } })
+      .exec();
+  }
+
+  public countByStatus(status: AdoptionApplicationStatus): Promise<number> {
+    return this.model.countDocuments({ status }).exec();
+  }
+
+  public countByStatusBetween(
+    status: AdoptionApplicationStatus,
+    from: Date,
+    to: Date,
+  ): Promise<number> {
+    return this.model
+      .countDocuments({ status, updatedAt: { $gte: from, $lt: to } })
+      .exec();
   }
 }

@@ -5,6 +5,7 @@ import { AuditLogEntity } from "src/hb-backend-api/audit/domain/model/audit-log.
 import { AuditLogSchema } from "src/hb-backend-api/audit/domain/model/audit-log.schema";
 import { AuditPersistenceAdapter } from "src/hb-backend-api/audit/adapters/out/audit-persistence.adapter";
 import { AuditRepositoryImpl } from "src/hb-backend-api/audit/infra/repositories/audit.repository.impl";
+import { AuditRetentionSchedule } from "src/hb-backend-api/audit/adapters/in/schedule/audit-retention.schedule";
 
 /**
  * Compliance audit trail. Exposes {@link DIToken.AuditModule.AuditPersistencePort}
@@ -26,6 +27,7 @@ import { AuditRepositoryImpl } from "src/hb-backend-api/audit/infra/repositories
       provide: DIToken.AuditModule.AuditRepository,
       useClass: AuditRepositoryImpl,
     },
+    AuditRetentionSchedule,
   ],
   exports: [DIToken.AuditModule.AuditPersistencePort],
 })

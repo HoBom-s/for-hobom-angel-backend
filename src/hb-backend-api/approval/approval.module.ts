@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { DIToken } from "src/shared/di/token.di";
+import { UserModule } from "src/hb-backend-api/user/user.module";
 import { ApprovalActionEntity } from "src/hb-backend-api/approval/domain/model/approval-action.entity";
 import { ApprovalActionSchema } from "src/hb-backend-api/approval/domain/model/approval-action.schema";
 import { ApprovalRequestEntity } from "src/hb-backend-api/approval/domain/model/approval-request.entity";
@@ -11,6 +12,8 @@ import { ApprovalRepositoryImpl } from "src/hb-backend-api/approval/infra/reposi
 import { ApprovalCallbackRegistry } from "src/hb-backend-api/approval/application/approval-callback.registry";
 import { SubmitApprovalService } from "src/hb-backend-api/approval/application/use-cases/submit-approval.service";
 import { DecideApprovalService } from "src/hb-backend-api/approval/application/use-cases/decide-approval.service";
+import { ListPendingApprovalsService } from "src/hb-backend-api/approval/application/use-cases/list-pending-approvals.service";
+import { CountPendingApprovalsService } from "src/hb-backend-api/approval/application/use-cases/count-pending-approvals.service";
 import { ApprovalController } from "src/hb-backend-api/approval/adapters/in/approval.controller";
 
 /**
@@ -24,6 +27,7 @@ import { ApprovalController } from "src/hb-backend-api/approval/adapters/in/appr
       { name: ApprovalRequestEntity.name, schema: ApprovalRequestSchema },
       { name: ApprovalActionEntity.name, schema: ApprovalActionSchema },
     ]),
+    UserModule,
   ],
   controllers: [ApprovalController],
   providers: [
@@ -35,6 +39,14 @@ import { ApprovalController } from "src/hb-backend-api/approval/adapters/in/appr
     {
       provide: DIToken.ApprovalModule.DecideApprovalUseCase,
       useClass: DecideApprovalService,
+    },
+    {
+      provide: DIToken.ApprovalModule.ListPendingApprovalsUseCase,
+      useClass: ListPendingApprovalsService,
+    },
+    {
+      provide: DIToken.ApprovalModule.CountPendingApprovalsUseCase,
+      useClass: CountPendingApprovalsService,
     },
     {
       provide: DIToken.ApprovalModule.ApprovalRepository,
@@ -53,6 +65,7 @@ import { ApprovalController } from "src/hb-backend-api/approval/adapters/in/appr
     ApprovalCallbackRegistry,
     DIToken.ApprovalModule.SubmitApprovalUseCase,
     DIToken.ApprovalModule.DecideApprovalUseCase,
+    DIToken.ApprovalModule.ApprovalQueryPort,
   ],
 })
 export class ApprovalModule {}

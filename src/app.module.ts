@@ -1,22 +1,30 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
-import { APP_INTERCEPTOR } from "@nestjs/core";
+import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { MongooseModule } from "@nestjs/mongoose";
 import { ScheduleModule } from "@nestjs/schedule";
 import { ThrottlerModule } from "@nestjs/throttler";
+import { context, trace } from "@opentelemetry/api";
 import { randomUUID } from "crypto";
 import { IncomingMessage } from "http";
 import { LoggerModule } from "nestjs-pino";
 import { TransactionModule } from "src/infra/mongo/transaction/transaction.module";
 import { CryptoModule } from "src/shared/crypto/crypto.module";
+import { LockModule } from "src/shared/lock/lock.module";
 import { validate } from "src/shared/config/env.validation";
 import { buildMongooseOptions } from "src/shared/config/mongoose-options";
 import { DiscordModule } from "src/shared/discord/discord.module";
 import { HttpLogInterceptor } from "src/shared/observability/http-log.interceptor";
+import { TelemetryLifecycle } from "src/shared/observability/telemetry.lifecycle";
+import { HobomThrottlerGuard } from "src/shared/throttle/hobom-throttler.guard";
+import { ThrottleConfig } from "src/shared/throttle/throttle.config";
 import { TraceContext } from "src/shared/trace/trace.context";
 import { TraceInterceptor } from "src/shared/trace/trace.interceptor";
 import { AdopterHistoryModule } from "src/hb-backend-api/adopter-history/adopter-history.module";
 import { AdoptionModule } from "src/hb-backend-api/adoption/adoption.module";
+import { DsarModule } from "src/hb-backend-api/dsar/dsar.module";
+import { PolicyModule } from "src/hb-backend-api/policy/policy.module";
+import { ConsentModule } from "src/hb-backend-api/consent/consent.module";
 import { AnimalModule } from "src/hb-backend-api/animal/animal.module";
 import { AnnouncementModule } from "src/hb-backend-api/announcement/announcement.module";
 import { ApprovalModule } from "src/hb-backend-api/approval/approval.module";
@@ -27,6 +35,9 @@ import { FosterModule } from "src/hb-backend-api/foster/foster.module";
 import { AuthModule } from "src/hb-backend-api/auth/auth.module";
 import { HealthModule } from "src/hb-backend-api/health/health.module";
 import { IdempotencyModule } from "src/hb-backend-api/idempotency/idempotency.module";
+import { MediaModule } from "src/hb-backend-api/media/media.module";
+import { ShelterStatsModule } from "src/hb-backend-api/shelter-stats/shelter-stats.module";
+import { VolunteerPostModule } from "src/hb-backend-api/volunteer-post/volunteer-post.module";
 import { MessagingModule } from "src/hb-backend-api/messaging/messaging.module";
 import { OutboxModule } from "src/hb-backend-api/outbox/outbox.module";
 import { QuestionnaireModule } from "src/hb-backend-api/questionnaire/questionnaire.module";
@@ -50,10 +61,22 @@ import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
             ? { target: "pino-pretty", options: { singleLine: true } }
             : undefined,
         redact: ["req.headers.authorization", "req.headers.cookie"],
+        // Correlate logs with traces: stamp the active OTel span's ids onto
+        // every log line. Empty (no cost) when OTel is dormant.
+        mixin() {
+          const span = trace.getSpan(context.active());
+          if (!span) {
+            return {};
+          }
+          const { traceId, spanId } = span.spanContext();
+          return { trace_id: traceId, span_id: spanId };
+        },
       },
     }),
     ThrottlerModule.forRoot({
-      throttlers: [{ ttl: 60_000, limit: 100 }],
+      throttlers: [
+        { ttl: ThrottleConfig.windowMs, limit: ThrottleConfig.globalLimit },
+      ],
     }),
     ScheduleModule.forRoot(),
     MongooseModule.forRootAsync({
@@ -63,6 +86,7 @@ import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
     // Global infra
     TransactionModule,
     CryptoModule,
+    LockModule,
     DiscordModule,
     // Feature modules
     HealthModule,
@@ -85,9 +109,19 @@ import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
     AnnouncementModule,
     FaqModule,
     AdopterHistoryModule,
+    MediaModule,
+    ShelterStatsModule,
+    VolunteerPostModule,
+    DsarModule,
+    PolicyModule,
+    ConsentModule,
   ],
   providers: [
     TraceContext,
+    TelemetryLifecycle,
+    // App-level rate limiting (defense-in-depth behind the gateway). Global so it
+    // covers every HTTP route; health probes + gRPC opt out via @SkipThrottle.
+    { provide: APP_GUARD, useClass: HobomThrottlerGuard },
     // Order matters: trace id is bound first, then the access log can read it.
     { provide: APP_INTERCEPTOR, useClass: TraceInterceptor },
     { provide: APP_INTERCEPTOR, useClass: HttpLogInterceptor },

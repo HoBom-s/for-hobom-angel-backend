@@ -1,4 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { ForbiddenException, Inject, Injectable } from "@nestjs/common";
 import { DIToken } from "src/shared/di/token.di";
 import { ApprovalType } from "src/hb-backend-api/approval/domain/enums/approval-type.enum";
 import { ApprovalRequest } from "src/hb-backend-api/approval/domain/model/approval-request";
@@ -14,6 +14,8 @@ import { FosterApplication } from "src/hb-backend-api/foster/domain/model/foster
 import { FosterApplicationId } from "src/hb-backend-api/foster/domain/model/vo/foster-application-id.vo";
 import { FosterApplicationPersistencePort } from "src/hb-backend-api/foster/domain/ports/out/foster-application-persistence.port";
 import { FosterApplicationQueryPort } from "src/hb-backend-api/foster/domain/ports/out/foster-application-query.port";
+import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
+import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-query.port";
 
 /**
  * Completes a FOSTER decision. On approval it approves the application and moves
@@ -37,7 +39,22 @@ export class FosterApprovalCallback implements ApprovalCallback {
     private readonly animalPersistencePort: AnimalPersistencePort,
     @Inject(DIToken.OutboxModule.OutboxPersistencePort)
     private readonly outboxPersistencePort: OutboxPersistencePort,
+    @Inject(DIToken.UserModule.UserQueryPort)
+    private readonly userQueryPort: UserQueryPort,
   ) {}
+
+  public async authorize(
+    request: ApprovalRequest,
+    actorId: string,
+  ): Promise<void> {
+    const application = await this.loadApplication(request);
+    const actor = await this.userQueryPort.findById(UserId.fromString(actorId));
+    if (!actor || !actor.canManageShelter(application.getShelterId)) {
+      throw new ForbiddenException(
+        "해당 보호소의 스태프만 임시보호 신청을 결정할 수 있어요.",
+      );
+    }
+  }
 
   public async onApproved(request: ApprovalRequest): Promise<void> {
     const application = await this.loadApplication(request);

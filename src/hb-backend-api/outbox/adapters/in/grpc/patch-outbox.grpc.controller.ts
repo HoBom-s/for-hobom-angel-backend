@@ -1,5 +1,6 @@
 import { Controller, Inject, UseGuards } from "@nestjs/common";
 import { GrpcMethod } from "@nestjs/microservices";
+import { SkipThrottle } from "@nestjs/throttler";
 import { DIToken } from "src/shared/di/token.di";
 import { GrpcApiKeyGuard } from "src/infra/grpc/grpc-api-key.guard";
 import {
@@ -21,6 +22,9 @@ interface MarkFailedRequest {
  * hobom-event-processor calls these after each publish attempt to advance a row.
  * Both return google.protobuf.Empty (`{}`).
  */
+// gRPC runs in a non-HTTP context and is already gated by the API-key guard —
+// opt out of HTTP rate limiting.
+@SkipThrottle()
 @Controller()
 @UseGuards(GrpcApiKeyGuard)
 export class PatchOutboxGrpcController {

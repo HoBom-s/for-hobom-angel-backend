@@ -53,6 +53,19 @@ describe("REST API (e2e)", () => {
     return { id: id.toHexString(), token };
   };
 
+  // A platform operator (SYSTEM_ADMIN) — the decider for SHELTER_VERIFICATION.
+  // Role is fresh-loaded by the services, so patching the seeded doc suffices.
+  const seedOperator = async (): Promise<{ id: string; token: string }> => {
+    const operator = await seedUser();
+    await userModel
+      .updateOne(
+        { _id: new Types.ObjectId(operator.id) },
+        { $set: { roles: [UserRole.USER, UserRole.SYSTEM_ADMIN] } },
+      )
+      .exec();
+    return operator;
+  };
+
   const auth = (token: string) => ({ Authorization: `Bearer ${token}` });
 
   let bizSeq = 0;
@@ -135,10 +148,11 @@ describe("REST API (e2e)", () => {
     const { shelterId, approvalId } = registerRes.body.items;
     expect(shelterId).toBeTruthy();
 
-    // 2) operator approves the verification
+    // 2) operator (not the registrant) approves the verification
+    const operator = await seedOperator();
     await request(app.getHttpServer())
       .post(`${PREFIX}/approvals/${approvalId}/decision`)
-      .set(auth(registrant.token))
+      .set(auth(operator.token))
       .send({ decision: "APPROVE", metadata: { trustTier: "A" } })
       .expect(204);
 
@@ -170,6 +184,24 @@ describe("REST API (e2e)", () => {
       .expect(200);
     expect(getAnimal.body.items.status).toBe(AnimalStatus.AVAILABLE);
     expect(getAnimal.body.items.name).toBe("초코");
+  });
+
+  it("forbids a non-operator from approving their own shelter verification (403)", async () => {
+    const registrant = await seedUser();
+    const registerRes = await request(app.getHttpServer())
+      .post(`${PREFIX}/shelters`)
+      .set(auth(registrant.token))
+      .send(registerShelterBody(`selfapprove-${Date.now()}`))
+      .expect(201);
+    const { approvalId } = registerRes.body.items;
+
+    // The registrant is a plain USER — deciding their own verification (which
+    // would self-grant SHELTER_ADMIN) must be rejected, not silently allowed.
+    await request(app.getHttpServer())
+      .post(`${PREFIX}/approvals/${approvalId}/decision`)
+      .set(auth(registrant.token))
+      .send({ decision: "APPROVE", metadata: { trustTier: "A" } })
+      .expect(403);
   });
 
   it("forbids registering an animal under a shelter the user can't manage", async () => {
@@ -208,13 +240,88 @@ describe("REST API (e2e)", () => {
       })
       .expect(201);
     const { shelterId, approvalId } = reg.body.items;
+    const operator = await seedOperator();
     await request(app.getHttpServer())
       .post(`${PREFIX}/approvals/${approvalId}/decision`)
-      .set(auth(token))
+      .set(auth(operator.token))
       .send({ decision: "APPROVE", metadata: { trustTier: "A" } })
       .expect(204);
     return shelterId as string;
   };
+
+  it("opens the shelter directory/detail/map to anonymous visitors, but keeps the roster private", async () => {
+    const admin = await seedUser();
+    const slug = `public-${Date.now()}`;
+    const shelterId = await registerAndApproveShelter(admin.token, slug);
+    const server = app.getHttpServer();
+
+    // Directory list — no Authorization header.
+    const list = await request(server).get(`${PREFIX}/shelters`).expect(200);
+    expect(
+      list.body.items.items.some((s: { slug: string }) => s.slug === slug),
+    ).toBe(true);
+
+    // About detail by slug — anonymous.
+    const detail = await request(server)
+      .get(`${PREFIX}/shelters/${slug}`)
+      .expect(200);
+    expect(detail.body.items.status).toBe(ShelterStatus.VERIFIED);
+
+    // Map markers — anonymous.
+    await request(server).get(`${PREFIX}/shelters/map`).expect(200);
+
+    // A non-@Public read on the same controller still requires a token.
+    await request(server)
+      .get(`${PREFIX}/shelters/${shelterId}/staff`)
+      .expect(401);
+  });
+
+  it("exposes the operator pending-approval queue with per-type counts, operator-only", async () => {
+    const server = app.getHttpServer();
+    const applicant = await seedUser();
+
+    // Grant one seeded user the operator role (fresh-loaded by the services).
+    const op = await seedUser();
+    await userModel
+      .updateOne(
+        { _id: new Types.ObjectId(op.id) },
+        { $set: { roles: [UserRole.USER, UserRole.SYSTEM_ADMIN] } },
+      )
+      .exec();
+
+    // A fresh shelter registration opens a PENDING SHELTER_VERIFICATION.
+    const reg = await request(server)
+      .post(`${PREFIX}/shelters`)
+      .set(auth(applicant.token))
+      .send(registerShelterBody(`opq-${Date.now()}`))
+      .expect(201);
+    const { approvalId } = reg.body.items;
+
+    // Operator sees it in the type-filtered queue.
+    const queue = await request(server)
+      .get(`${PREFIX}/approvals/pending`)
+      .query({ type: "SHELTER_VERIFICATION", limit: 50 })
+      .set(auth(op.token))
+      .expect(200);
+    const mine = queue.body.items.items.find(
+      (a: { approvalId: string }) => a.approvalId === approvalId,
+    );
+    expect(mine).toBeDefined();
+    expect(mine.type).toBe("SHELTER_VERIFICATION");
+
+    // Tab badges: verification count reflects the real aggregation.
+    const counts = await request(server)
+      .get(`${PREFIX}/approvals/pending/counts`)
+      .set(auth(op.token))
+      .expect(200);
+    expect(counts.body.items.SHELTER_VERIFICATION).toBeGreaterThanOrEqual(1);
+
+    // A non-operator is forbidden.
+    await request(server)
+      .get(`${PREFIX}/approvals/pending`)
+      .set(auth(applicant.token))
+      .expect(403);
+  });
 
   it("searches animals by keyword, respecting filters", async () => {
     const admin = await seedUser();
@@ -287,6 +394,121 @@ describe("REST API (e2e)", () => {
       region: "서울",
       city: "강남구",
     });
+  });
+
+  it("exposes the About profile on GET /shelters/:slug and stats on /stats", async () => {
+    const admin = await seedUser();
+    const slug = `about-${Date.now()}`;
+    const shelterId = await registerAndApproveShelter(admin.token, slug);
+
+    // Profile is written by the §07 About editor (PATCH), not raw DB seeding.
+    await request(app.getHttpServer())
+      .patch(`${PREFIX}/shelters/${shelterId}/profile`)
+      .set(auth(admin.token))
+      .send({
+        intro: "# 안녕하세요\n행복한 발자국입니다.",
+        operatingSince: "2015-03-01T00:00:00.000Z",
+        representativeName: "김보호",
+      })
+      .expect(204);
+
+    const about = await request(app.getHttpServer())
+      .get(`${PREFIX}/shelters/${slug}`)
+      .set(auth(admin.token))
+      .expect(200);
+    expect(about.body.items.intro).toContain("행복한 발자국");
+    expect(about.body.items.operatingSince).toBe("2015-03-01T00:00:00.000Z");
+    expect(about.body.items.representativeName).toBe("김보호");
+    expect(about.body.items.visitGuide).toBeNull();
+
+    // Two AVAILABLE animals → shelteredCount 2, availableCount 2, adoptedCount 0.
+    for (const name of [`s1-${Date.now()}`, `s2-${Date.now()}`]) {
+      await request(app.getHttpServer())
+        .post(`${PREFIX}/shelters/${shelterId}/animals`)
+        .set(auth(admin.token))
+        .send({
+          name,
+          species: AnimalSpecies.CAT,
+          traits: { sex: AnimalSex.FEMALE, size: AnimalSize.SMALL },
+          health: { neutered: true, vaccinated: true },
+          intake: { intakeDate: "2026-01-02T00:00:00.000Z" },
+        })
+        .expect(201);
+    }
+
+    const stats = await request(app.getHttpServer())
+      .get(`${PREFIX}/shelters/${shelterId}/stats`)
+      .set(auth(admin.token))
+      .expect(200);
+    expect(stats.body.items).toEqual({
+      adoptedCount: 0,
+      shelteredCount: 2,
+      availableCount: 2,
+    });
+  });
+
+  it("saves a cover image via PATCH, surfaces it on the directory card, and refuses non-staff", async () => {
+    const admin = await seedUser();
+    const region = `cover-${Date.now()}`;
+    const slug = `cover-${Date.now()}`;
+    const shelterId = await registerAndApproveShelter(admin.token, slug, {
+      region,
+      city: "강남구",
+      roadAddress: "테헤란로 5",
+      visibility: AddressVisibility.PARTIAL,
+    });
+
+    // A non-staff member cannot edit the profile.
+    const outsider = await seedUser();
+    await request(app.getHttpServer())
+      .patch(`${PREFIX}/shelters/${shelterId}/profile`)
+      .set(auth(outsider.token))
+      .send({ coverImageKey: "shelters/nope.webp" })
+      .expect(403);
+
+    // The shelter's admin sets the cover image.
+    await request(app.getHttpServer())
+      .patch(`${PREFIX}/shelters/${shelterId}/profile`)
+      .set(auth(admin.token))
+      .send({ coverImageKey: "shelters/hero.webp" })
+      .expect(204);
+
+    // It now rides along on the §04 directory card.
+    const list = await request(app.getHttpServer())
+      .get(`${PREFIX}/shelters`)
+      .query({ region, limit: 10 })
+      .set(auth(admin.token))
+      .expect(200);
+    expect(list.body.items.items).toHaveLength(1);
+    expect(list.body.items.items[0].coverImageKey).toBe("shelters/hero.webp");
+  });
+
+  it("lists verified shelters in the directory, filtered by region", async () => {
+    const admin = await seedUser();
+    const region = `dir-${Date.now()}`;
+    const shelterId = await registerAndApproveShelter(
+      admin.token,
+      `dir-list-${Date.now()}`,
+      {
+        region,
+        city: "강남구",
+        roadAddress: "테헤란로 9",
+        visibility: AddressVisibility.PARTIAL,
+      },
+    );
+
+    const res = await request(app.getHttpServer())
+      .get(`${PREFIX}/shelters`)
+      .query({ region, limit: 10 })
+      .set(auth(admin.token))
+      .expect(200);
+
+    expect(res.body.items.items).toHaveLength(1);
+    expect(res.body.items.items[0].id).toBe(shelterId);
+    expect(res.body.items.items[0].region).toBe(region);
+    expect(res.body.items.items[0].status).toBe("VERIFIED");
+    expect(res.body.items.hasNext).toBe(false);
+    expect(res.body.items.nextCursor).toBeNull();
   });
 
   it("returns map markers only for shelters with disclosed coordinates", async () => {

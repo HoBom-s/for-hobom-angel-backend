@@ -12,7 +12,9 @@ import { RegisterAnimalService } from "src/hb-backend-api/animal/application/use
 import { UpdateAnimalProfileService } from "src/hb-backend-api/animal/application/use-cases/update-animal-profile.service";
 import { RelistAnimalService } from "src/hb-backend-api/animal/application/use-cases/relist-animal.service";
 import { SetAnimalBlindService } from "src/hb-backend-api/animal/application/use-cases/set-animal-blind.service";
+import { GetShelterStatsService } from "src/hb-backend-api/animal/application/use-cases/get-shelter-stats.service";
 import { AnimalController } from "src/hb-backend-api/animal/adapters/in/animal.controller";
+import { ShelterStatsController } from "src/hb-backend-api/animal/adapters/in/shelter-stats.controller";
 
 /**
  * Animal store. Owns the adoptable-animal roster and its lifecycle. Registration
@@ -28,11 +30,15 @@ import { AnimalController } from "src/hb-backend-api/animal/adapters/in/animal.c
     ShelterModule,
     UserModule,
   ],
-  controllers: [AnimalController],
+  controllers: [AnimalController, ShelterStatsController],
   providers: [
     {
       provide: DIToken.AnimalModule.RegisterAnimalUseCase,
       useClass: RegisterAnimalService,
+    },
+    {
+      provide: DIToken.AnimalModule.GetShelterStatsUseCase,
+      useClass: GetShelterStatsService,
     },
     {
       provide: DIToken.AnimalModule.UpdateAnimalProfileUseCase,
@@ -64,6 +70,7 @@ import { AnimalController } from "src/hb-backend-api/animal/adapters/in/animal.c
     DIToken.AnimalModule.UpdateAnimalProfileUseCase,
     DIToken.AnimalModule.AnimalPersistencePort,
     DIToken.AnimalModule.AnimalQueryPort,
+    DIToken.AnimalModule.GetShelterStatsUseCase,
   ],
 })
 export class AnimalModule {}

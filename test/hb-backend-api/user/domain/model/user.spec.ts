@@ -40,6 +40,7 @@ const reconstitute = (
     suspendedAt: null,
     sanctionReason: null,
     version: 0,
+    createdAt: null,
     ...overrides,
   });
 

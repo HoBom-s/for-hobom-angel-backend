@@ -40,11 +40,21 @@ export class FavoriteRepositoryImpl implements FavoriteRepository {
 
   public findByUser(
     userId: Types.ObjectId,
-    targetType?: FavoriteTargetType,
+    targetType: FavoriteTargetType | undefined,
+    cursorId: Types.ObjectId | null,
+    limit: number,
   ): Promise<FavoriteEntity[]> {
+    const query: Record<string, unknown> = { userId };
+    if (targetType) {
+      query.targetType = targetType;
+    }
+    if (cursorId) {
+      query._id = { $lt: cursorId };
+    }
     return this.model
-      .find(targetType ? { userId, targetType } : { userId })
-      .sort({ createdAt: -1 })
+      .find(query)
+      .sort({ _id: -1 })
+      .limit(limit + 1)
       .exec();
   }
 }

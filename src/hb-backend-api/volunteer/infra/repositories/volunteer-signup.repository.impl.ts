@@ -25,6 +25,15 @@ export class VolunteerSignupRepositoryImpl implements VolunteerSignupRepository 
     return created;
   }
 
+  public findApprovedByVolunteer(
+    volunteerId: Types.ObjectId,
+  ): Promise<VolunteerSignupEntity[]> {
+    return this.model
+      .find({ volunteerId, status: VolunteerSignupStatus.APPROVED })
+      .sort({ _id: -1 })
+      .exec();
+  }
+
   public async update(
     id: Types.ObjectId,
     expectedVersion: number,
@@ -45,7 +54,7 @@ export class VolunteerSignupRepositoryImpl implements VolunteerSignupRepository 
     return this.model.findById(id).exec();
   }
 
-  public findActive(
+  public findLive(
     eventId: Types.ObjectId,
     volunteerId: Types.ObjectId,
   ): Promise<VolunteerSignupEntity | null> {
@@ -53,8 +62,49 @@ export class VolunteerSignupRepositoryImpl implements VolunteerSignupRepository 
       .findOne({
         eventId,
         volunteerId,
-        status: VolunteerSignupStatus.ACTIVE,
+        status: {
+          $in: [VolunteerSignupStatus.PENDING, VolunteerSignupStatus.APPROVED],
+        },
       })
+      .exec();
+  }
+
+  public findByEvent(
+    eventId: Types.ObjectId,
+  ): Promise<VolunteerSignupEntity[]> {
+    return this.model.find({ eventId }).sort({ _id: -1 }).exec();
+  }
+
+  public findLiveByVolunteer(
+    volunteerId: Types.ObjectId,
+    eventIds: Types.ObjectId[],
+  ): Promise<VolunteerSignupEntity[]> {
+    if (eventIds.length === 0) {
+      return Promise.resolve([]);
+    }
+    return this.model
+      .find({
+        volunteerId,
+        eventId: { $in: eventIds },
+        status: {
+          $in: [VolunteerSignupStatus.PENDING, VolunteerSignupStatus.APPROVED],
+        },
+      })
+      .exec();
+  }
+
+  public findByVolunteer(
+    volunteerId: Types.ObjectId,
+    cursorId: Types.ObjectId | null,
+    limit: number,
+  ): Promise<VolunteerSignupEntity[]> {
+    const query = cursorId
+      ? { volunteerId, _id: { $lt: cursorId } }
+      : { volunteerId };
+    return this.model
+      .find(query)
+      .sort({ _id: -1 })
+      .limit(limit + 1)
       .exec();
   }
 }

@@ -25,4 +25,11 @@ export interface AnimalQueryPort {
   findById(id: AnimalId): Promise<Animal | null>;
   findByShelter(shelterId: ShelterId): Promise<Animal[]>;
   search(criteria: AnimalSearchCriteria): Promise<Page<Animal>>;
+  /** Count a shelter's animals in any of the given statuses (for stats). */
+  countByShelterAndStatuses(
+    shelterId: ShelterId,
+    statuses: AnimalStatus[],
+  ): Promise<number>;
+  /** Platform-wide count of animals in any of the given statuses (operator stats). */
+  countByStatuses(statuses: AnimalStatus[]): Promise<number>;
 }

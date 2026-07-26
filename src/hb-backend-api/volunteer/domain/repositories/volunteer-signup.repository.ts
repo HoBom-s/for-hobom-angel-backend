@@ -14,8 +14,26 @@ export interface VolunteerSignupRepository {
     patch: VolunteerSignupMutablePatch,
   ): Promise<void>;
   findById(id: Types.ObjectId): Promise<VolunteerSignupEntity | null>;
-  findActive(
+  findLive(
     eventId: Types.ObjectId,
     volunteerId: Types.ObjectId,
   ): Promise<VolunteerSignupEntity | null>;
+  findByEvent(eventId: Types.ObjectId): Promise<VolunteerSignupEntity[]>;
+  /** A member's APPROVED signups (for the volunteer-service certificate). */
+  findApprovedByVolunteer(
+    volunteerId: Types.ObjectId,
+  ): Promise<VolunteerSignupEntity[]>;
+  findLiveByVolunteer(
+    volunteerId: Types.ObjectId,
+    eventIds: Types.ObjectId[],
+  ): Promise<VolunteerSignupEntity[]>;
+  /**
+   * A member's signups, newest first. Returns up to `limit + 1` docs;
+   * `cursorId` is the previous page's last signup id (exclusive).
+   */
+  findByVolunteer(
+    volunteerId: Types.ObjectId,
+    cursorId: Types.ObjectId | null,
+    limit: number,
+  ): Promise<VolunteerSignupEntity[]>;
 }

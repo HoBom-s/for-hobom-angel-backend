@@ -192,7 +192,7 @@ describe("Adoption procedure (flow)", () => {
   });
 
   it("adopts the animal and approves the application on approval", async () => {
-    const { applicantId, animalId } = await setup();
+    const { adminId, applicantId, animalId } = await setup();
     const { applicationId, approvalId } = await submitApplication.invoke({
       animalId,
       applicantId: applicantId.toHexString(),
@@ -201,7 +201,7 @@ describe("Adoption procedure (flow)", () => {
 
     await decideApproval.invoke({
       requestId: ApprovalId.fromString(approvalId),
-      actorId: "operator-1",
+      actorId: adminId.toHexString(),
       decision: ApprovalDecision.approve(),
     });
 
@@ -224,7 +224,7 @@ describe("Adoption procedure (flow)", () => {
   });
 
   it("releases the animal and rejects the application on rejection", async () => {
-    const { applicantId, animalId } = await setup();
+    const { adminId, applicantId, animalId } = await setup();
     const { applicationId, approvalId } = await submitApplication.invoke({
       animalId,
       applicantId: applicantId.toHexString(),
@@ -233,7 +233,7 @@ describe("Adoption procedure (flow)", () => {
 
     await decideApproval.invoke({
       requestId: ApprovalId.fromString(approvalId),
-      actorId: "operator-1",
+      actorId: adminId.toHexString(),
       decision: ApprovalDecision.reject(),
       reason: "조건이 맞지 않아요.",
     });

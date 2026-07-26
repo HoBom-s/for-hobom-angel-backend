@@ -22,6 +22,7 @@ export function toDomain(doc: AdoptionApplicationEntity): AdoptionApplication {
     returnedAt: doc.returnedAt ?? null,
     returnReason: doc.returnReason ?? null,
     version: doc.version ?? 0,
+    createdAt: doc.createdAt ?? null,
   });
 }
 

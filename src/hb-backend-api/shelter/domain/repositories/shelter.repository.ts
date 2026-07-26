@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { ShelterStatus } from "src/hb-backend-api/shelter/domain/enums/shelter-status.enum";
 import { ShelterEntity } from "src/hb-backend-api/shelter/domain/model/shelter.entity";
 
 /** Mutable fields the aggregate can change after registration. */
@@ -12,6 +13,7 @@ export type ShelterMutablePatch = Partial<
     | "representatives"
     | "facilityPhotos"
     | "verificationSignals"
+    | "profile"
   >
 >;
 
@@ -30,6 +32,18 @@ export interface ShelterRepository {
   ): Promise<void>;
   findById(id: Types.ObjectId): Promise<ShelterEntity | null>;
   findBySlug(slug: string): Promise<ShelterEntity | null>;
+  countByStatus(status: ShelterStatus): Promise<number>;
   /** Verified, non-hidden shelters with coordinates; optionally by region. */
   findMappable(region?: string): Promise<ShelterEntity[]>;
+  /**
+   * Verified shelters, newest first, for the directory list. Returns up to
+   * `limit + 1` docs so the caller can detect a next page; `cursorId` is the id
+   * of the previous page's last item (exclusive), or null for the first page.
+   */
+  listVerified(
+    region: string | undefined,
+    keyword: string | undefined,
+    cursorId: Types.ObjectId | null,
+    limit: number,
+  ): Promise<ShelterEntity[]>;
 }

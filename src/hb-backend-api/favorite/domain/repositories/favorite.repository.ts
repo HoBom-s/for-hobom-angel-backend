@@ -15,8 +15,11 @@ export interface FavoriteRepository {
     targetType: FavoriteTargetType,
     targetRef: string,
   ): Promise<boolean>;
+  /** A member's favorites, keyset-paginated newest-first (returns up to limit+1). */
   findByUser(
     userId: Types.ObjectId,
-    targetType?: FavoriteTargetType,
+    targetType: FavoriteTargetType | undefined,
+    cursorId: Types.ObjectId | null,
+    limit: number,
   ): Promise<FavoriteEntity[]>;
 }

@@ -11,12 +11,16 @@ import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id
 import { ShelterQueryPort } from "src/hb-backend-api/shelter/domain/ports/out/shelter-query.port";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-query.port";
+import { AnimalId } from "src/hb-backend-api/animal/domain/model/vo/animal-id.vo";
+import { VolunteerType } from "src/hb-backend-api/volunteer/domain/enums/volunteer-type.enum";
 import { VolunteerEvent } from "src/hb-backend-api/volunteer/domain/model/volunteer-event";
+import { TransportDetails } from "src/hb-backend-api/volunteer/domain/model/vo/transport-details";
 import { VolunteerEventPersistencePort } from "src/hb-backend-api/volunteer/domain/ports/out/volunteer-event-persistence.port";
 import {
   CreateVolunteerEventCommand,
   CreateVolunteerEventResult,
   CreateVolunteerEventUseCase,
+  TransportInput,
 } from "src/hb-backend-api/volunteer/domain/ports/in/create-volunteer-event.use-case";
 
 /**
@@ -63,9 +67,24 @@ export class CreateVolunteerEventService implements CreateVolunteerEventUseCase 
       startAt: command.startAt,
       endAt: command.endAt,
       capacity: command.capacity,
+      type: command.type ?? VolunteerType.GENERAL,
+      transport: this.toTransport(command.transport),
     });
     await this.eventPersistencePort.create(event);
 
     return { eventId: event.getId.toString() };
+  }
+
+  private toTransport(input?: TransportInput): TransportDetails | null {
+    if (!input) {
+      return null;
+    }
+    return TransportDetails.of({
+      departure: input.departure,
+      arrival: input.arrival,
+      flightAt: input.flightAt,
+      animalIds: input.animalIds.map((id) => AnimalId.fromString(id)),
+      qualification: input.qualification,
+    });
   }
 }

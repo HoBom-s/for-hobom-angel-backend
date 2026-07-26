@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { UserStatus } from "src/hb-backend-api/user/domain/enums/user-status.enum";
 import { UserEntity } from "src/hb-backend-api/user/domain/model/user.entity";
 
 /**
@@ -14,6 +15,20 @@ export type UserAuthzPatch = Partial<
   suspendedAt?: Date | null;
   sanctionReason?: string | null;
 };
+
+/**
+ * The tombstone written by an erasure. All identifiable PII (real name, phone,
+ * email, nickname) is overwritten; the row survives for referential integrity.
+ */
+export interface UserAnonymizePatch {
+  realNameEnc: string;
+  phoneEnc: string;
+  email: string;
+  nickname: string;
+  status: UserStatus;
+  withdrawnAt: Date;
+  purgeAfter: null;
+}
 
 /**
  * Persistence contract over the users collection. Works with raw (already
@@ -34,4 +49,20 @@ export interface UserRepository {
   findById(id: Types.ObjectId): Promise<UserEntity | null>;
   findByNickname(nickname: string): Promise<UserEntity | null>;
   findByEmail(email: string): Promise<UserEntity | null>;
+  /** Non-withdrawn members holding a role at this shelter (staff roster). */
+  findByShelter(
+    shelterId: Types.ObjectId,
+    limit: number,
+  ): Promise<UserEntity[]>;
+  countByStatus(status: UserStatus): Promise<number>;
+  countCreatedBetween(from: Date, to: Date): Promise<number>;
+  /**
+   * Idempotent PII tombstone (DSAR erasure). No-op if already anonymized
+   * (guarded on `realNameEnc`), so a retry/resume returns 0 rows modified.
+   */
+  anonymize(id: Types.ObjectId, patch: UserAnonymizePatch): Promise<number>;
+  /** Rows for this id still holding identifiable PII (residual check). */
+  countUnanonymized(id: Types.ObjectId, tombstone: string): Promise<number>;
+  /** Ids of withdrawn accounts whose purge grace has elapsed (daily sweep). */
+  findWithdrawnToPurge(now: Date, limit: number): Promise<Types.ObjectId[]>;
 }

@@ -16,9 +16,23 @@ import { VolunteerSignupRepositoryImpl } from "src/hb-backend-api/volunteer/infr
 import { CreateVolunteerEventService } from "src/hb-backend-api/volunteer/application/use-cases/create-volunteer-event.service";
 import { SignUpForVolunteerService } from "src/hb-backend-api/volunteer/application/use-cases/sign-up-for-volunteer.service";
 import { WithdrawVolunteerSignupService } from "src/hb-backend-api/volunteer/application/use-cases/withdraw-volunteer-signup.service";
+import { DecideVolunteerSignupService } from "src/hb-backend-api/volunteer/application/use-cases/decide-volunteer-signup.service";
+import { ListEventSignupsService } from "src/hb-backend-api/volunteer/application/use-cases/list-event-signups.service";
+import { ReadVolunteerEventsService } from "src/hb-backend-api/volunteer/application/use-cases/read-volunteer-events.service";
+import { ListMySignupsService } from "src/hb-backend-api/volunteer/application/use-cases/list-my-signups.service";
 import { CancelVolunteerEventService } from "src/hb-backend-api/volunteer/application/use-cases/cancel-volunteer-event.service";
 import { CloseExpiredVolunteerEventsService } from "src/hb-backend-api/volunteer/application/use-cases/close-expired-volunteer-events.service";
+import { VolunteerCertificateEntity } from "src/hb-backend-api/volunteer/domain/model/volunteer-certificate.entity";
+import { VolunteerCertificateSchema } from "src/hb-backend-api/volunteer/domain/model/volunteer-certificate.schema";
+import { VolunteerCertificatePersistenceAdapter } from "src/hb-backend-api/volunteer/adapters/out/volunteer-certificate-persistence.adapter";
+import { VolunteerCertificateQueryAdapter } from "src/hb-backend-api/volunteer/adapters/out/volunteer-certificate-query.adapter";
+import { VolunteerCertificateRepositoryImpl } from "src/hb-backend-api/volunteer/infra/repositories/volunteer-certificate.repository.impl";
+import { IssueVolunteerCertificateService } from "src/hb-backend-api/volunteer/application/use-cases/issue-volunteer-certificate.service";
+import { GetMyCertificatesService } from "src/hb-backend-api/volunteer/application/use-cases/get-my-certificates.service";
+import { VerifyCertificateService } from "src/hb-backend-api/volunteer/application/use-cases/verify-certificate.service";
 import { VolunteerController } from "src/hb-backend-api/volunteer/adapters/in/volunteer.controller";
+import { VolunteerCertificateController } from "src/hb-backend-api/volunteer/adapters/in/volunteer-certificate.controller";
+import { CertificateVerifyController } from "src/hb-backend-api/volunteer/adapters/in/certificate-verify.controller";
 import { VolunteerExpirySchedule } from "src/hb-backend-api/volunteer/adapters/in/schedule/volunteer-expiry.schedule";
 
 /**
@@ -31,11 +45,19 @@ import { VolunteerExpirySchedule } from "src/hb-backend-api/volunteer/adapters/i
     MongooseModule.forFeature([
       { name: VolunteerEventEntity.name, schema: VolunteerEventSchema },
       { name: VolunteerSignupEntity.name, schema: VolunteerSignupSchema },
+      {
+        name: VolunteerCertificateEntity.name,
+        schema: VolunteerCertificateSchema,
+      },
     ]),
     ShelterModule,
     UserModule,
   ],
-  controllers: [VolunteerController],
+  controllers: [
+    VolunteerController,
+    VolunteerCertificateController,
+    CertificateVerifyController,
+  ],
   providers: [
     {
       provide: DIToken.VolunteerModule.CreateVolunteerEventUseCase,
@@ -48,6 +70,22 @@ import { VolunteerExpirySchedule } from "src/hb-backend-api/volunteer/adapters/i
     {
       provide: DIToken.VolunteerModule.WithdrawVolunteerSignupUseCase,
       useClass: WithdrawVolunteerSignupService,
+    },
+    {
+      provide: DIToken.VolunteerModule.DecideVolunteerSignupUseCase,
+      useClass: DecideVolunteerSignupService,
+    },
+    {
+      provide: DIToken.VolunteerModule.ListEventSignupsUseCase,
+      useClass: ListEventSignupsService,
+    },
+    {
+      provide: DIToken.VolunteerModule.ReadVolunteerEventsUseCase,
+      useClass: ReadVolunteerEventsService,
+    },
+    {
+      provide: DIToken.VolunteerModule.ListMySignupsUseCase,
+      useClass: ListMySignupsService,
     },
     {
       provide: DIToken.VolunteerModule.CancelVolunteerEventUseCase,
@@ -81,6 +119,30 @@ import { VolunteerExpirySchedule } from "src/hb-backend-api/volunteer/adapters/i
     {
       provide: DIToken.VolunteerModule.VolunteerSignupQueryPort,
       useClass: VolunteerSignupQueryAdapter,
+    },
+    {
+      provide: DIToken.VolunteerModule.IssueVolunteerCertificateUseCase,
+      useClass: IssueVolunteerCertificateService,
+    },
+    {
+      provide: DIToken.VolunteerModule.GetMyCertificatesUseCase,
+      useClass: GetMyCertificatesService,
+    },
+    {
+      provide: DIToken.VolunteerModule.VerifyCertificateUseCase,
+      useClass: VerifyCertificateService,
+    },
+    {
+      provide: DIToken.VolunteerModule.VolunteerCertificateRepository,
+      useClass: VolunteerCertificateRepositoryImpl,
+    },
+    {
+      provide: DIToken.VolunteerModule.VolunteerCertificatePersistencePort,
+      useClass: VolunteerCertificatePersistenceAdapter,
+    },
+    {
+      provide: DIToken.VolunteerModule.VolunteerCertificateQueryPort,
+      useClass: VolunteerCertificateQueryAdapter,
     },
   ],
   exports: [

@@ -4,6 +4,7 @@ import { Model, Types } from "mongoose";
 import { MongoSessionContext } from "src/infra/mongo/transaction/transaction.context";
 import { OptimisticLockException } from "src/shared/exception/optimistic-lock.exception";
 import { AnimalSort } from "src/hb-backend-api/animal/domain/enums/animal-sort.enum";
+import { AnimalStatus } from "src/hb-backend-api/animal/domain/enums/animal-status.enum";
 import { AnimalEntity } from "src/hb-backend-api/animal/domain/model/animal.entity";
 import {
   AnimalMutablePatch,
@@ -46,6 +47,21 @@ export class AnimalRepositoryImpl implements AnimalRepository {
 
   public findByShelterId(shelterId: Types.ObjectId): Promise<AnimalEntity[]> {
     return this.animalModel.find({ shelterId }).sort({ createdAt: -1 }).exec();
+  }
+
+  public countByShelterAndStatuses(
+    shelterId: Types.ObjectId,
+    statuses: AnimalStatus[],
+  ): Promise<number> {
+    return this.animalModel
+      .countDocuments({ shelterId, status: { $in: statuses } })
+      .exec();
+  }
+
+  public countByStatuses(statuses: AnimalStatus[]): Promise<number> {
+    return this.animalModel
+      .countDocuments({ status: { $in: statuses } })
+      .exec();
   }
 
   public search(

@@ -30,4 +30,11 @@ export class AuditRepositoryImpl implements AuditRepository {
       { session },
     );
   }
+
+  public async purgeOlderThan(cutoff: Date): Promise<number> {
+    const result = await this.auditModel.deleteMany({
+      createdAt: { $lt: cutoff },
+    });
+    return result.deletedCount ?? 0;
+  }
 }

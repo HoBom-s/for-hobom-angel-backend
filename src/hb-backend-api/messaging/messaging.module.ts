@@ -1,7 +1,10 @@
-import { Module } from "@nestjs/common";
+import { Module, OnModuleInit } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { DIToken } from "src/shared/di/token.di";
+import { DestroyerRegistry } from "src/shared/erasure/destroyer.registry";
+import { ErasureModule } from "src/shared/erasure/erasure.module";
 import { UserModule } from "src/hb-backend-api/user/user.module";
+import { MessageDestroyer } from "src/hb-backend-api/messaging/adapters/erasure/message.destroyer";
 import { MessageEntity } from "src/hb-backend-api/messaging/domain/model/message.entity";
 import { MessageSchema } from "src/hb-backend-api/messaging/domain/model/message.schema";
 import { MessagePersistenceAdapter } from "src/hb-backend-api/messaging/adapters/out/message-persistence.adapter";
@@ -25,11 +28,13 @@ import { MessageController } from "src/hb-backend-api/messaging/adapters/in/mess
       { name: MessageEntity.name, schema: MessageSchema },
     ]),
     UserModule,
+    ErasureModule,
   ],
   controllers: [MessageController],
   providers: [
     MessageSubjectResolverRegistry,
     ConversationAccessService,
+    MessageDestroyer,
     {
       provide: DIToken.MessagingModule.PostMessageUseCase,
       useClass: PostMessageService,
@@ -53,4 +58,13 @@ import { MessageController } from "src/hb-backend-api/messaging/adapters/in/mess
   ],
   exports: [MessageSubjectResolverRegistry],
 })
-export class MessagingModule {}
+export class MessagingModule implements OnModuleInit {
+  constructor(
+    private readonly destroyerRegistry: DestroyerRegistry,
+    private readonly messageDestroyer: MessageDestroyer,
+  ) {}
+
+  public onModuleInit(): void {
+    this.destroyerRegistry.register(this.messageDestroyer);
+  }
+}

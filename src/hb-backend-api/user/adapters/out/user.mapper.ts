@@ -27,5 +27,6 @@ export function toDomain(doc: UserEntity): User {
     suspendedAt: doc.suspendedAt ?? null,
     sanctionReason: doc.sanctionReason ?? null,
     version: doc.version ?? 0,
+    createdAt: doc.createdAt ?? null,
   });
 }

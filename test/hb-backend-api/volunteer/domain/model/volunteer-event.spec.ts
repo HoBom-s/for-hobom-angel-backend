@@ -1,5 +1,8 @@
+import { AnimalId } from "src/hb-backend-api/animal/domain/model/vo/animal-id.vo";
 import { VolunteerEventStatus } from "src/hb-backend-api/volunteer/domain/enums/volunteer-event-status.enum";
+import { VolunteerType } from "src/hb-backend-api/volunteer/domain/enums/volunteer-type.enum";
 import { VolunteerEvent } from "src/hb-backend-api/volunteer/domain/model/volunteer-event";
+import { TransportDetails } from "src/hb-backend-api/volunteer/domain/model/vo/transport-details";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 
 const START = new Date("2027-01-01T10:00:00.000Z");
@@ -29,6 +32,45 @@ describe("VolunteerEvent", () => {
       expect(() => open({ capacity: 0 })).toThrow("모집 인원");
       expect(() => open({ title: "  " })).toThrow("제목");
       expect(() => open({ startAt: END, endAt: START })).toThrow("시간");
+    });
+
+    it("defaults to GENERAL with no transport", () => {
+      const event = open();
+      expect(event.getType).toBe(VolunteerType.GENERAL);
+      expect(event.getTransport).toBeNull();
+    });
+  });
+
+  describe("type & transport", () => {
+    const transport = () =>
+      TransportDetails.of({
+        departure: "인천",
+        arrival: "밴쿠버",
+        flightAt: new Date("2027-01-01T09:00:00.000Z"),
+        animalIds: [AnimalId.generate(), AnimalId.generate()],
+        qualification: "반려동물 동반 경험",
+      });
+
+    it("opens an OVERSEAS event carrying transport", () => {
+      const event = open({
+        type: VolunteerType.OVERSEAS,
+        transport: transport(),
+      });
+      expect(event.getType).toBe(VolunteerType.OVERSEAS);
+      expect(event.getTransport?.getDeparture).toBe("인천");
+      expect(event.getTransport?.getAnimalCount).toBe(2);
+    });
+
+    it("rejects OVERSEAS without transport", () => {
+      expect(() => open({ type: VolunteerType.OVERSEAS })).toThrow(
+        "해외 이동봉사",
+      );
+    });
+
+    it("rejects GENERAL carrying transport", () => {
+      expect(() =>
+        open({ type: VolunteerType.GENERAL, transport: transport() }),
+      ).toThrow("일반 봉사");
     });
   });
 
