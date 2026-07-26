@@ -58,7 +58,7 @@ describe("Outbox relay (e2e)", () => {
       phoneEnc: "enc",
       email: `${id.toHexString()}@example.com`,
       verifiedChannel: VerifiedChannel.EMAIL,
-      roles: [UserRole.USER],
+      roles: [UserRole.USER, UserRole.SYSTEM_ADMIN],
       shelterRoles: [],
       status: UserStatus.ACTIVE,
       version: 0,

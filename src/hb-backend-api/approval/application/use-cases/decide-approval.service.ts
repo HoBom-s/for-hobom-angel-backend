@@ -36,6 +36,10 @@ export class DecideApprovalService implements DecideApprovalUseCase {
     }
     // Resolve the callback before mutating — fail fast if the type is unwired.
     const callback = this.callbacks.get(request.getType);
+    // Authorize the actor for THIS request's type before any state change. The
+    // engine is domain-agnostic, so the per-type decider check lives in the
+    // callback (operator vs. the target shelter's staff). Throws on denial.
+    await callback.authorize(request, command.actorId);
     const now = new Date();
 
     if (command.decision.isApprove()) {

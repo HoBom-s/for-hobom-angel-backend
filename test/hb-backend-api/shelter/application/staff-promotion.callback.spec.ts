@@ -1,3 +1,4 @@
+import { ForbiddenException } from "@nestjs/common";
 import { ApprovalStatus } from "src/hb-backend-api/approval/domain/enums/approval-status.enum";
 import { ApprovalType } from "src/hb-backend-api/approval/domain/enums/approval-type.enum";
 import { ApprovalRequest } from "src/hb-backend-api/approval/domain/model/approval-request";
@@ -36,6 +37,27 @@ const activeCandidate = () =>
     version: 0,
     createdAt: null,
   });
+
+const shelterManager = () => {
+  const user = User.reconstitute({
+    id: UserId.generate(),
+    nickname: Nickname.of("mgr"),
+    email: Email.of("mgr@example.com"),
+    passwordHash: "hashed",
+    verifiedChannel: VerifiedChannel.EMAIL,
+    roles: [UserRole.USER],
+    shelterRoles: [],
+    status: UserStatus.ACTIVE,
+    withdrawnAt: null,
+    purgeAfter: null,
+    suspendedAt: null,
+    sanctionReason: null,
+    version: 0,
+    createdAt: null,
+  });
+  user.grantShelterAdmin(shelterId);
+  return user;
+};
 
 const request = (
   over: {
@@ -93,6 +115,35 @@ describe("StaffPromotionCallback", () => {
 
   it("declares the STAFF_PROMOTION type", () => {
     expect(callback.type).toBe(ApprovalType.STAFF_PROMOTION);
+  });
+
+  describe("authorize", () => {
+    it("allows an admin of the context shelter", async () => {
+      userQueryPort.findById.mockResolvedValue(shelterManager());
+
+      await expect(
+        callback.authorize(request(), UserId.generate().toString()),
+      ).resolves.toBeUndefined();
+    });
+
+    it("forbids a user who does not manage the shelter", async () => {
+      userQueryPort.findById.mockResolvedValue(candidate);
+
+      await expect(
+        callback.authorize(request(), candidateId.toString()),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it("forbids when the request context has no shelterId", async () => {
+      userQueryPort.findById.mockResolvedValue(shelterManager());
+
+      await expect(
+        callback.authorize(
+          request({ context: null }),
+          UserId.generate().toString(),
+        ),
+      ).rejects.toThrow("shelterId");
+    });
   });
 
   describe("onApproved", () => {

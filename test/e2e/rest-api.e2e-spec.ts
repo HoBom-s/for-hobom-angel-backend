@@ -53,6 +53,19 @@ describe("REST API (e2e)", () => {
     return { id: id.toHexString(), token };
   };
 
+  // A platform operator (SYSTEM_ADMIN) — the decider for SHELTER_VERIFICATION.
+  // Role is fresh-loaded by the services, so patching the seeded doc suffices.
+  const seedOperator = async (): Promise<{ id: string; token: string }> => {
+    const operator = await seedUser();
+    await userModel
+      .updateOne(
+        { _id: new Types.ObjectId(operator.id) },
+        { $set: { roles: [UserRole.USER, UserRole.SYSTEM_ADMIN] } },
+      )
+      .exec();
+    return operator;
+  };
+
   const auth = (token: string) => ({ Authorization: `Bearer ${token}` });
 
   let bizSeq = 0;
@@ -135,10 +148,11 @@ describe("REST API (e2e)", () => {
     const { shelterId, approvalId } = registerRes.body.items;
     expect(shelterId).toBeTruthy();
 
-    // 2) operator approves the verification
+    // 2) operator (not the registrant) approves the verification
+    const operator = await seedOperator();
     await request(app.getHttpServer())
       .post(`${PREFIX}/approvals/${approvalId}/decision`)
-      .set(auth(registrant.token))
+      .set(auth(operator.token))
       .send({ decision: "APPROVE", metadata: { trustTier: "A" } })
       .expect(204);
 
@@ -170,6 +184,24 @@ describe("REST API (e2e)", () => {
       .expect(200);
     expect(getAnimal.body.items.status).toBe(AnimalStatus.AVAILABLE);
     expect(getAnimal.body.items.name).toBe("초코");
+  });
+
+  it("forbids a non-operator from approving their own shelter verification (403)", async () => {
+    const registrant = await seedUser();
+    const registerRes = await request(app.getHttpServer())
+      .post(`${PREFIX}/shelters`)
+      .set(auth(registrant.token))
+      .send(registerShelterBody(`selfapprove-${Date.now()}`))
+      .expect(201);
+    const { approvalId } = registerRes.body.items;
+
+    // The registrant is a plain USER — deciding their own verification (which
+    // would self-grant SHELTER_ADMIN) must be rejected, not silently allowed.
+    await request(app.getHttpServer())
+      .post(`${PREFIX}/approvals/${approvalId}/decision`)
+      .set(auth(registrant.token))
+      .send({ decision: "APPROVE", metadata: { trustTier: "A" } })
+      .expect(403);
   });
 
   it("forbids registering an animal under a shelter the user can't manage", async () => {
@@ -208,9 +240,10 @@ describe("REST API (e2e)", () => {
       })
       .expect(201);
     const { shelterId, approvalId } = reg.body.items;
+    const operator = await seedOperator();
     await request(app.getHttpServer())
       .post(`${PREFIX}/approvals/${approvalId}/decision`)
-      .set(auth(token))
+      .set(auth(operator.token))
       .send({ decision: "APPROVE", metadata: { trustTier: "A" } })
       .expect(204);
     return shelterId as string;

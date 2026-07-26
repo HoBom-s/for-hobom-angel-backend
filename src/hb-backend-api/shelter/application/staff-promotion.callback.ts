@@ -1,4 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { ForbiddenException, Inject, Injectable } from "@nestjs/common";
 import { DIToken } from "src/shared/di/token.di";
 import { ApprovalType } from "src/hb-backend-api/approval/domain/enums/approval-type.enum";
 import { ApprovalRequest } from "src/hb-backend-api/approval/domain/model/approval-request";
@@ -30,6 +30,19 @@ export class StaffPromotionCallback implements ApprovalCallback {
     @Inject(DIToken.OutboxModule.OutboxPersistencePort)
     private readonly outboxPersistencePort: OutboxPersistencePort,
   ) {}
+
+  public async authorize(
+    request: ApprovalRequest,
+    actorId: string,
+  ): Promise<void> {
+    const shelterId = ShelterId.fromString(this.requireShelterId(request));
+    const actor = await this.userQueryPort.findById(UserId.fromString(actorId));
+    if (!actor || !actor.canManageShelter(shelterId)) {
+      throw new ForbiddenException(
+        "해당 보호소의 관리자만 스태프 승격을 결정할 수 있어요.",
+      );
+    }
+  }
 
   public async onApproved(request: ApprovalRequest): Promise<void> {
     const candidateId = UserId.fromString(request.getSubjectRef);

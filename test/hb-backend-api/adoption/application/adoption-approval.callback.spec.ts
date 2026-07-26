@@ -1,3 +1,4 @@
+import { ForbiddenException } from "@nestjs/common";
 import { ApprovalStatus } from "src/hb-backend-api/approval/domain/enums/approval-status.enum";
 import { ApprovalType } from "src/hb-backend-api/approval/domain/enums/approval-type.enum";
 import { ApprovalRequest } from "src/hb-backend-api/approval/domain/model/approval-request";
@@ -20,10 +21,41 @@ import { AdoptionApplicationPersistencePort } from "src/hb-backend-api/adoption/
 import { AdoptionApplicationQueryPort } from "src/hb-backend-api/adoption/domain/ports/out/adoption-application-query.port";
 import { AdoptionApprovalCallback } from "src/hb-backend-api/adoption/application/adoption-approval.callback";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
+import { UserRole } from "src/hb-backend-api/user/domain/enums/user-role.enum";
+import { UserStatus } from "src/hb-backend-api/user/domain/enums/user-status.enum";
+import { VerifiedChannel } from "src/hb-backend-api/user/domain/enums/verified-channel.enum";
+import { User } from "src/hb-backend-api/user/domain/model/user";
+import { Email } from "src/hb-backend-api/user/domain/model/vo/email.vo";
+import { Nickname } from "src/hb-backend-api/user/domain/model/vo/nickname.vo";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
+import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-query.port";
 
 const shelterId = ShelterId.generate();
 const applicantId = UserId.generate();
+
+const activeUser = (id: UserId) =>
+  User.reconstitute({
+    id,
+    nickname: Nickname.of("staff"),
+    email: Email.of("staff@example.com"),
+    passwordHash: "hashed",
+    verifiedChannel: VerifiedChannel.EMAIL,
+    roles: [UserRole.USER],
+    shelterRoles: [],
+    status: UserStatus.ACTIVE,
+    withdrawnAt: null,
+    purgeAfter: null,
+    suspendedAt: null,
+    sanctionReason: null,
+    version: 0,
+    createdAt: null,
+  });
+
+const shelterManager = (id: UserId) => {
+  const user = activeUser(id);
+  user.grantShelterAdmin(shelterId);
+  return user;
+};
 
 const reservedAnimal = () => {
   const animal = Animal.register({
@@ -46,6 +78,7 @@ describe("AdoptionApprovalCallback", () => {
   let animalQueryPort: jest.Mocked<AnimalQueryPort>;
   let animalPersistencePort: jest.Mocked<AnimalPersistencePort>;
   let outboxPersistencePort: jest.Mocked<OutboxPersistencePort>;
+  let userQueryPort: jest.Mocked<UserQueryPort>;
   let callback: AdoptionApprovalCallback;
 
   const request = (over: { status?: ApprovalStatus; reason?: string } = {}) =>
@@ -96,17 +129,55 @@ describe("AdoptionApprovalCallback", () => {
       markAsSent: jest.fn(),
       markAsFailed: jest.fn(),
     };
+    userQueryPort = {
+      findById: jest.fn(),
+      findByNickname: jest.fn(),
+      findByEmail: jest.fn(),
+      findByShelter: jest.fn(),
+      countByStatus: jest.fn(),
+      countCreatedBetween: jest.fn(),
+      findWithdrawnToPurge: jest.fn(),
+    };
     callback = new AdoptionApprovalCallback(
       applicationQueryPort,
       applicationPersistencePort,
       animalQueryPort,
       animalPersistencePort,
       outboxPersistencePort,
+      userQueryPort,
     );
   });
 
   it("declares the ADOPTION type", () => {
     expect(callback.type).toBe(ApprovalType.ADOPTION);
+  });
+
+  describe("authorize", () => {
+    it("allows a staff member of the application's shelter", async () => {
+      const actorId = UserId.generate();
+      userQueryPort.findById.mockResolvedValue(shelterManager(actorId));
+
+      await expect(
+        callback.authorize(request(), actorId.toString()),
+      ).resolves.toBeUndefined();
+    });
+
+    it("forbids a user who does not manage the shelter", async () => {
+      const actorId = UserId.generate();
+      userQueryPort.findById.mockResolvedValue(activeUser(actorId));
+
+      await expect(
+        callback.authorize(request(), actorId.toString()),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it("forbids when the actor does not exist", async () => {
+      userQueryPort.findById.mockResolvedValue(null);
+
+      await expect(
+        callback.authorize(request(), UserId.generate().toString()),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
   });
 
   describe("onApproved", () => {

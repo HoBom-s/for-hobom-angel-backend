@@ -54,6 +54,26 @@ describe("Shelter registration → verification (flow)", () => {
     return id;
   };
 
+  // A platform operator (SYSTEM_ADMIN) — the decider for SHELTER_VERIFICATION.
+  const seedOperator = async (): Promise<Types.ObjectId> => {
+    const id = new Types.ObjectId();
+    seq += 1;
+    await userModel.create({
+      _id: id,
+      nickname: `op-${seq}`,
+      realNameEnc: "enc",
+      passwordHash: "hashed",
+      phoneEnc: "enc",
+      email: `op-${id.toHexString()}@example.com`,
+      verifiedChannel: VerifiedChannel.EMAIL,
+      roles: [UserRole.USER, UserRole.SYSTEM_ADMIN],
+      shelterRoles: [],
+      status: UserStatus.ACTIVE,
+      version: 0,
+    });
+    return id;
+  };
+
   beforeAll(async () => {
     mongo = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
     process.env.HOBOM_SYSTEM_ANGEL_BACKEND_TIGER_DB = mongo.getUri();
@@ -125,9 +145,10 @@ describe("Shelter registration → verification (flow)", () => {
       businessNumber: "9876543210",
     });
 
+    const operatorId = await seedOperator();
     await decideApproval.invoke({
       requestId: ApprovalId.fromString(approvalId),
-      actorId: "operator-1",
+      actorId: operatorId.toHexString(),
       decision: ApprovalDecision.approve(),
       metadata: { trustTier: TrustTier.A },
     });
@@ -173,9 +194,10 @@ describe("Shelter registration → verification (flow)", () => {
       businessNumber: "1112223330",
     });
 
+    const operatorId = await seedOperator();
     await decideApproval.invoke({
       requestId: ApprovalId.fromString(approvalId),
-      actorId: "operator-1",
+      actorId: operatorId.toHexString(),
       decision: ApprovalDecision.reject(),
       reason: "조직 서류가 확인되지 않았어요.",
     });
