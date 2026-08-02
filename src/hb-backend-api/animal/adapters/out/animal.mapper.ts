@@ -1,5 +1,6 @@
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { Animal } from "src/hb-backend-api/animal/domain/model/animal";
+import { PlacementType } from "src/hb-backend-api/animal/domain/enums/placement-type.enum";
 import { AnimalEntity } from "src/hb-backend-api/animal/domain/model/animal.entity";
 import { AnimalPhoto } from "src/hb-backend-api/animal/domain/model/animal-photo";
 import { HealthProfile } from "src/hb-backend-api/animal/domain/model/health-profile";
@@ -40,6 +41,12 @@ export function toDomain(doc: AnimalEntity): Animal {
       AnimalPhoto.of({ objectKey: p.objectKey, caption: p.caption }),
     ),
     status: doc.status,
+    // Legacy documents predate this field; treat missing/empty as "accepts both"
+    // to preserve their prior behavior.
+    eligiblePlacements:
+      doc.eligiblePlacements && doc.eligiblePlacements.length > 0
+        ? doc.eligiblePlacements
+        : [PlacementType.ADOPTION, PlacementType.FOSTER],
     blinded: doc.blinded ?? false,
     version: doc.version ?? 0,
   });
@@ -62,6 +69,7 @@ export function toInsertDoc(animal: Animal): Partial<AnimalEntity> {
     },
     photos: animal.getPhotos.map((p) => p.toPlain()),
     status: animal.getStatus,
+    eligiblePlacements: animal.getEligiblePlacements,
     blinded: animal.isBlinded(),
     version: animal.getVersion,
   };

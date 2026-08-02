@@ -360,6 +360,77 @@ describe("REST API (e2e)", () => {
     expect(miss.body.items.items).toHaveLength(0);
   });
 
+  it("distinguishes adoption/foster eligibility in detail, catalog filter, and the apply guard", async () => {
+    const admin = await seedUser();
+    const shelterId = await registerAndApproveShelter(
+      admin.token,
+      `plc-${Date.now()}`,
+    );
+    const fosterName = `임보온리-${Date.now()}`;
+    const body = (name: string, eligiblePlacements?: string[]) => ({
+      name,
+      species: AnimalSpecies.DOG,
+      traits: { sex: AnimalSex.FEMALE, size: AnimalSize.SMALL },
+      health: { neutered: true, vaccinated: true },
+      intake: { intakeDate: "2026-01-02T00:00:00.000Z" },
+      ...(eligiblePlacements ? { eligiblePlacements } : {}),
+    });
+
+    // A foster-only animal.
+    const reg = await request(app.getHttpServer())
+      .post(`${PREFIX}/shelters/${shelterId}/animals`)
+      .set(auth(admin.token))
+      .send(body(fosterName, ["FOSTER"]))
+      .expect(201);
+    const { animalId } = reg.body.items;
+
+    // Detail exposes the eligibility.
+    const detail = await request(app.getHttpServer())
+      .get(`${PREFIX}/animals/${animalId}`)
+      .set(auth(admin.token))
+      .expect(200);
+    expect(detail.body.items.eligiblePlacements).toEqual(["FOSTER"]);
+
+    // Catalog filter: FOSTER finds it, ADOPTION excludes it.
+    const inFoster = await request(app.getHttpServer())
+      .get(`${PREFIX}/animals`)
+      .query({ keyword: fosterName, placement: "FOSTER" })
+      .set(auth(admin.token))
+      .expect(200);
+    expect(inFoster.body.items.items).toHaveLength(1);
+    expect(inFoster.body.items.items[0].id).toBe(animalId);
+
+    const inAdoption = await request(app.getHttpServer())
+      .get(`${PREFIX}/animals`)
+      .query({ keyword: fosterName, placement: "ADOPTION" })
+      .set(auth(admin.token))
+      .expect(200);
+    expect(inAdoption.body.items.items).toHaveLength(0);
+
+    // Apply guard: an adoption application on a foster-only animal is rejected.
+    const applicant = await seedUser();
+    await request(app.getHttpServer())
+      .post(`${PREFIX}/animals/${animalId}/adoption-applications`)
+      .set(auth(applicant.token))
+      .send({ answers: [] })
+      .expect(409);
+
+    // Registering without the field defaults to accepting both.
+    const both = await request(app.getHttpServer())
+      .post(`${PREFIX}/shelters/${shelterId}/animals`)
+      .set(auth(admin.token))
+      .send(body(`둘다-${Date.now()}`))
+      .expect(201);
+    const bothDetail = await request(app.getHttpServer())
+      .get(`${PREFIX}/animals/${both.body.items.animalId}`)
+      .set(auth(admin.token))
+      .expect(200);
+    expect(bothDetail.body.items.eligiblePlacements).toEqual([
+      "ADOPTION",
+      "FOSTER",
+    ]);
+  });
+
   it("returns animal detail with weight and the owning-shelter summary", async () => {
     const admin = await seedUser();
     const slug = `detail-${Date.now()}`;

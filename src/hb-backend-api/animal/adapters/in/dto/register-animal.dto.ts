@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import {
+  ArrayMinSize,
+  ArrayUnique,
   IsArray,
   IsBoolean,
   IsDate,
@@ -17,6 +19,7 @@ import {
 import { AnimalSex } from "src/hb-backend-api/animal/domain/enums/animal-sex.enum";
 import { AnimalSize } from "src/hb-backend-api/animal/domain/enums/animal-size.enum";
 import { AnimalSpecies } from "src/hb-backend-api/animal/domain/enums/animal-species.enum";
+import { PlacementType } from "src/hb-backend-api/animal/domain/enums/placement-type.enum";
 
 export class TraitsDto {
   @ApiProperty({ enum: AnimalSex })
@@ -143,4 +146,17 @@ export class RegisterAnimalDto {
   @ValidateNested({ each: true })
   @Type(() => AnimalPhotoDto)
   photos?: AnimalPhotoDto[];
+
+  @ApiPropertyOptional({
+    enum: PlacementType,
+    isArray: true,
+    description:
+      '받는 신청 유형 (생략 시 입양+임보 둘 다). 예: ["FOSTER"]=임보만',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayUnique()
+  @IsEnum(PlacementType, { each: true })
+  eligiblePlacements?: PlacementType[];
 }

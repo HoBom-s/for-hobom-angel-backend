@@ -7,5 +7,8 @@ export const AnimalSchema = SchemaFactory.createForClass(AnimalEntity);
 AnimalSchema.index({ shelterId: 1, status: 1, createdAt: -1 });
 // Discovery: browse/filter available animals by species.
 AnimalSchema.index({ status: 1, species: 1, createdAt: -1 });
+// Discovery: browse by placement type (입양/임보 catalog tabs). Multikey on the
+// array; status leads so the common "available + placement" filter is covered.
+AnimalSchema.index({ status: 1, eligiblePlacements: 1, createdAt: -1 });
 // Match against public 유기동물 공고 when present.
 AnimalSchema.index({ "intake.noticeNumber": 1 }, { sparse: true });

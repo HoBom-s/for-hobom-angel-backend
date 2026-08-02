@@ -1,6 +1,7 @@
 import { AnimalSex } from "src/hb-backend-api/animal/domain/enums/animal-sex.enum";
 import { AnimalSize } from "src/hb-backend-api/animal/domain/enums/animal-size.enum";
 import { AnimalSpecies } from "src/hb-backend-api/animal/domain/enums/animal-species.enum";
+import { PlacementType } from "src/hb-backend-api/animal/domain/enums/placement-type.enum";
 
 export interface AnimalTraitsInput {
   sex: AnimalSex;
@@ -41,6 +42,8 @@ export interface RegisterAnimalCommand {
   health: AnimalHealthInput;
   intake: AnimalIntakeInput;
   photos?: AnimalPhotoInput[];
+  /** Application types the animal accepts; defaults to both (입양+임보). */
+  eligiblePlacements?: PlacementType[];
 }
 
 export interface RegisterAnimalResult {

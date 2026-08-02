@@ -4,6 +4,7 @@ import { AnimalSize } from "src/hb-backend-api/animal/domain/enums/animal-size.e
 import { AnimalSort } from "src/hb-backend-api/animal/domain/enums/animal-sort.enum";
 import { AnimalSpecies } from "src/hb-backend-api/animal/domain/enums/animal-species.enum";
 import { AnimalStatus } from "src/hb-backend-api/animal/domain/enums/animal-status.enum";
+import { PlacementType } from "src/hb-backend-api/animal/domain/enums/placement-type.enum";
 import { AnimalEntity } from "src/hb-backend-api/animal/domain/model/animal.entity";
 
 /** Discovery filters. Absent fields are unconstrained. */
@@ -12,6 +13,8 @@ export interface AnimalSearchFilter {
   size?: AnimalSize;
   sex?: AnimalSex;
   status?: AnimalStatus;
+  /** Only animals whose eligiblePlacements contains this type. */
+  placement?: PlacementType;
   /** Matched against name/description. */
   keyword?: string;
 }

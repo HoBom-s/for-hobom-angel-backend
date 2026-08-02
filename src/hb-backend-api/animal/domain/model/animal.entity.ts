@@ -5,6 +5,7 @@ import { AnimalSex } from "src/hb-backend-api/animal/domain/enums/animal-sex.enu
 import { AnimalSize } from "src/hb-backend-api/animal/domain/enums/animal-size.enum";
 import { AnimalSpecies } from "src/hb-backend-api/animal/domain/enums/animal-species.enum";
 import { AnimalStatus } from "src/hb-backend-api/animal/domain/enums/animal-status.enum";
+import { PlacementType } from "src/hb-backend-api/animal/domain/enums/placement-type.enum";
 
 export interface TraitsDoc {
   sex: AnimalSex;
@@ -93,6 +94,15 @@ export class AnimalEntity extends BaseEntity {
     default: AnimalStatus.AVAILABLE,
   })
   public status: AnimalStatus;
+
+  // Application types this animal accepts (입양/임보). Defaults to both so
+  // pre-existing documents keep today's "accepts either" behavior.
+  @Prop({
+    type: [String],
+    enum: PlacementType,
+    default: [PlacementType.ADOPTION, PlacementType.FOSTER],
+  })
+  public eligiblePlacements: PlacementType[];
 
   // Operator moderation: hidden from public discovery when true.
   @Prop({ required: true, default: false })

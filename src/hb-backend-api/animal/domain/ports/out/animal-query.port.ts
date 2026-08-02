@@ -4,6 +4,7 @@ import { AnimalSize } from "src/hb-backend-api/animal/domain/enums/animal-size.e
 import { AnimalSort } from "src/hb-backend-api/animal/domain/enums/animal-sort.enum";
 import { AnimalSpecies } from "src/hb-backend-api/animal/domain/enums/animal-species.enum";
 import { AnimalStatus } from "src/hb-backend-api/animal/domain/enums/animal-status.enum";
+import { PlacementType } from "src/hb-backend-api/animal/domain/enums/placement-type.enum";
 import { Animal } from "src/hb-backend-api/animal/domain/model/animal";
 import { AnimalId } from "src/hb-backend-api/animal/domain/model/vo/animal-id.vo";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
@@ -14,6 +15,7 @@ export interface AnimalSearchCriteria {
   size?: AnimalSize;
   sex?: AnimalSex;
   status?: AnimalStatus;
+  placement?: PlacementType;
   keyword?: string;
   cursor?: string;
   limit: number;

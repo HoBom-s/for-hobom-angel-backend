@@ -70,6 +70,7 @@ export class RegisterAnimalService implements RegisterAnimalUseCase {
       health: HealthProfile.of(command.health),
       intake: IntakeRecord.of(command.intake),
       photos: (command.photos ?? []).map((p) => AnimalPhoto.of(p)),
+      eligiblePlacements: command.eligiblePlacements,
     });
     await this.animalPersistencePort.create(animal);
 

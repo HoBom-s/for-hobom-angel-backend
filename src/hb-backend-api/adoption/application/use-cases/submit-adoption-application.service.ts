@@ -10,6 +10,7 @@ import { TransactionRunner } from "src/infra/mongo/transaction/transaction.runne
 import { DIToken } from "src/shared/di/token.di";
 import { ApprovalType } from "src/hb-backend-api/approval/domain/enums/approval-type.enum";
 import { SubmitApprovalUseCase } from "src/hb-backend-api/approval/domain/ports/in/submit-approval.use-case";
+import { PlacementType } from "src/hb-backend-api/animal/domain/enums/placement-type.enum";
 import { AnimalId } from "src/hb-backend-api/animal/domain/model/vo/animal-id.vo";
 import { AnimalPersistencePort } from "src/hb-backend-api/animal/domain/ports/out/animal-persistence.port";
 import { AnimalQueryPort } from "src/hb-backend-api/animal/domain/ports/out/animal-query.port";
@@ -63,6 +64,9 @@ export class SubmitAdoptionApplicationService implements SubmitAdoptionApplicati
     }
     if (!animal.acceptsApplications()) {
       throw new ConflictException("지금은 입양 신청을 받을 수 없어요.");
+    }
+    if (!animal.isEligibleFor(PlacementType.ADOPTION)) {
+      throw new ConflictException("이 동물은 입양 신청 대상이 아니에요.");
     }
 
     const applicant = await this.userQueryPort.findById(

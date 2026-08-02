@@ -14,6 +14,7 @@ import { AnimalSize } from "src/hb-backend-api/animal/domain/enums/animal-size.e
 import { AnimalSort } from "src/hb-backend-api/animal/domain/enums/animal-sort.enum";
 import { AnimalSpecies } from "src/hb-backend-api/animal/domain/enums/animal-species.enum";
 import { AnimalStatus } from "src/hb-backend-api/animal/domain/enums/animal-status.enum";
+import { PlacementType } from "src/hb-backend-api/animal/domain/enums/placement-type.enum";
 
 export class SearchAnimalsQueryDto {
   @ApiPropertyOptional({ enum: AnimalSpecies })
@@ -35,6 +36,14 @@ export class SearchAnimalsQueryDto {
   @IsOptional()
   @IsEnum(AnimalStatus)
   status?: AnimalStatus;
+
+  @ApiPropertyOptional({
+    enum: PlacementType,
+    description: "신청 유형 필터: ADOPTION(입양) / FOSTER(임보). 생략 시 전체",
+  })
+  @IsOptional()
+  @IsEnum(PlacementType)
+  placement?: PlacementType;
 
   @ApiPropertyOptional({ description: "이름/설명 키워드" })
   @IsOptional()
