@@ -78,6 +78,10 @@ export class AnimalRepositoryImpl implements AnimalRepository {
     if (filter.status) {
       query.status = filter.status;
     }
+    if (filter.placement) {
+      // Multikey array match: docs whose eligiblePlacements contains the value.
+      query.eligiblePlacements = filter.placement;
+    }
     if (filter.size) {
       query["traits.size"] = filter.size;
     }

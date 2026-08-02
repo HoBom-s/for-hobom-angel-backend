@@ -2,6 +2,7 @@ import { AnimalSex } from "src/hb-backend-api/animal/domain/enums/animal-sex.enu
 import { AnimalSize } from "src/hb-backend-api/animal/domain/enums/animal-size.enum";
 import { AnimalSpecies } from "src/hb-backend-api/animal/domain/enums/animal-species.enum";
 import { AnimalStatus } from "src/hb-backend-api/animal/domain/enums/animal-status.enum";
+import { PlacementType } from "src/hb-backend-api/animal/domain/enums/placement-type.enum";
 import { Animal } from "src/hb-backend-api/animal/domain/model/animal";
 import { AnimalPhoto } from "src/hb-backend-api/animal/domain/model/animal-photo";
 import { HealthProfile } from "src/hb-backend-api/animal/domain/model/health-profile";
@@ -45,6 +46,51 @@ describe("Animal aggregate", () => {
         AnimalPhoto.of({ objectKey: `k${i}` }),
       );
       expect(() => register({ photos })).toThrow("최대");
+    });
+  });
+
+  describe("eligible placements", () => {
+    it("defaults to accepting both adoption and foster", () => {
+      const animal = register();
+      expect(animal.getEligiblePlacements).toEqual([
+        PlacementType.ADOPTION,
+        PlacementType.FOSTER,
+      ]);
+      expect(animal.isEligibleFor(PlacementType.ADOPTION)).toBe(true);
+      expect(animal.isEligibleFor(PlacementType.FOSTER)).toBe(true);
+    });
+
+    it("honors a foster-only registration", () => {
+      const animal = register({ eligiblePlacements: [PlacementType.FOSTER] });
+      expect(animal.getEligiblePlacements).toEqual([PlacementType.FOSTER]);
+      expect(animal.isEligibleFor(PlacementType.ADOPTION)).toBe(false);
+      expect(animal.acceptsApplicationFor(PlacementType.FOSTER)).toBe(true);
+      expect(animal.acceptsApplicationFor(PlacementType.ADOPTION)).toBe(false);
+    });
+
+    it("de-dupes and normalizes to canonical order", () => {
+      const animal = register({
+        eligiblePlacements: [
+          PlacementType.FOSTER,
+          PlacementType.ADOPTION,
+          PlacementType.FOSTER,
+        ],
+      });
+      expect(animal.getEligiblePlacements).toEqual([
+        PlacementType.ADOPTION,
+        PlacementType.FOSTER,
+      ]);
+    });
+
+    it("rejects an explicitly empty placement set", () => {
+      expect(() => register({ eligiblePlacements: [] })).toThrow("신청 유형");
+    });
+
+    it("acceptsApplicationFor requires AVAILABLE status", () => {
+      const animal = register({ eligiblePlacements: [PlacementType.ADOPTION] });
+      animal.reserve();
+      expect(animal.isEligibleFor(PlacementType.ADOPTION)).toBe(true);
+      expect(animal.acceptsApplicationFor(PlacementType.ADOPTION)).toBe(false);
     });
   });
 

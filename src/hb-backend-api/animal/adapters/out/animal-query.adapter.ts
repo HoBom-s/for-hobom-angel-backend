@@ -56,6 +56,7 @@ export class AnimalQueryAdapter implements AnimalQueryPort {
         size: criteria.size,
         sex: criteria.sex,
         status: criteria.status,
+        placement: criteria.placement,
         keyword: criteria.keyword,
       },
       cursorId,

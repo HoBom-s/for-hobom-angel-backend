@@ -110,6 +110,7 @@ export class AnimalController {
       size: query.size,
       sex: query.sex,
       status: query.status,
+      placement: query.placement,
       keyword: query.keyword,
       cursor: query.cursor,
       limit: query.limit ?? 20,

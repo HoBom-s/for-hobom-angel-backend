@@ -1,6 +1,7 @@
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { AnimalSpecies } from "src/hb-backend-api/animal/domain/enums/animal-species.enum";
 import { AnimalStatus } from "src/hb-backend-api/animal/domain/enums/animal-status.enum";
+import { PlacementType } from "src/hb-backend-api/animal/domain/enums/placement-type.enum";
 import { AnimalPhoto } from "src/hb-backend-api/animal/domain/model/animal-photo";
 import { HealthProfile } from "src/hb-backend-api/animal/domain/model/health-profile";
 import { IntakeRecord } from "src/hb-backend-api/animal/domain/model/intake-record";
@@ -29,11 +30,33 @@ export class Animal {
     private readonly intake: IntakeRecord,
     private photos: AnimalPhoto[],
     private status: AnimalStatus,
+    private eligiblePlacements: PlacementType[],
     private blinded: boolean,
     private readonly version: number,
   ) {}
 
   private static readonly MAX_PHOTOS = 20;
+
+  /** Canonical order; also the default (offered for both) when unspecified. */
+  private static readonly ALL_PLACEMENTS: PlacementType[] = [
+    PlacementType.ADOPTION,
+    PlacementType.FOSTER,
+  ];
+
+  /**
+   * De-dupes to canonical order and drops unknown values. An AVAILABLE animal
+   * must accept at least one placement, so an explicitly empty set is rejected.
+   */
+  private static normalizePlacements(
+    input: PlacementType[] | undefined,
+  ): PlacementType[] {
+    const chosen = new Set(input ?? Animal.ALL_PLACEMENTS);
+    const normalized = Animal.ALL_PLACEMENTS.filter((p) => chosen.has(p));
+    if (normalized.length === 0) {
+      throw new Error("입양/임시보호 중 최소 한 가지 신청 유형이 필요해요.");
+    }
+    return normalized;
+  }
 
   public static register(params: {
     shelterId: ShelterId;
@@ -44,6 +67,8 @@ export class Animal {
     health: HealthProfile;
     intake: IntakeRecord;
     photos?: AnimalPhoto[];
+    /** Application types this animal accepts; defaults to both when omitted. */
+    eligiblePlacements?: PlacementType[];
   }): Animal {
     if (!params.name?.trim()) {
       throw new Error("동물 이름이 필요해요.");
@@ -63,6 +88,7 @@ export class Animal {
       params.intake,
       photos,
       AnimalStatus.AVAILABLE,
+      Animal.normalizePlacements(params.eligiblePlacements),
       false,
       0,
     );
@@ -79,6 +105,7 @@ export class Animal {
     intake: IntakeRecord;
     photos: AnimalPhoto[];
     status: AnimalStatus;
+    eligiblePlacements: PlacementType[];
     blinded: boolean;
     version: number;
   }): Animal {
@@ -93,6 +120,7 @@ export class Animal {
       params.intake,
       params.photos,
       params.status,
+      params.eligiblePlacements,
       params.blinded,
       params.version,
     );
@@ -202,6 +230,16 @@ export class Animal {
     return this.status === AnimalStatus.AVAILABLE;
   }
 
+  /** Whether this animal is offered for the given placement type (any status). */
+  public isEligibleFor(placement: PlacementType): boolean {
+    return this.eligiblePlacements.includes(placement);
+  }
+
+  /** Whether a new application of the given placement type may be started now. */
+  public acceptsApplicationFor(placement: PlacementType): boolean {
+    return this.acceptsApplications() && this.isEligibleFor(placement);
+  }
+
   public belongsTo(shelterId: ShelterId): boolean {
     return this.shelterId.equals(shelterId);
   }
@@ -242,6 +280,9 @@ export class Animal {
   }
   public get getStatus(): AnimalStatus {
     return this.status;
+  }
+  public get getEligiblePlacements(): PlacementType[] {
+    return [...this.eligiblePlacements];
   }
   public get getVersion(): number {
     return this.version;

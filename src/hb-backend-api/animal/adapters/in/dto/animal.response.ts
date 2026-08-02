@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { AnimalSpecies } from "src/hb-backend-api/animal/domain/enums/animal-species.enum";
 import { AnimalStatus } from "src/hb-backend-api/animal/domain/enums/animal-status.enum";
+import { PlacementType } from "src/hb-backend-api/animal/domain/enums/placement-type.enum";
 import { Animal } from "src/hb-backend-api/animal/domain/model/animal";
 import { Shelter } from "src/hb-backend-api/shelter/domain/model/shelter";
 
@@ -58,6 +59,14 @@ export class AnimalResponse {
   @ApiProperty({ enum: AnimalStatus })
   status: AnimalStatus;
 
+  @ApiProperty({
+    enum: PlacementType,
+    isArray: true,
+    description:
+      '이 동물이 받는 신청 유형. 예: ["ADOPTION","FOSTER"]=둘 다, ["FOSTER"]=임보만. AVAILABLE이면 1개 이상',
+  })
+  eligiblePlacements: PlacementType[];
+
   @ApiProperty({ description: "운영자 블라인드 여부 (탐색 노출 제외)" })
   blinded: boolean;
 
@@ -91,6 +100,7 @@ export class AnimalResponse {
     dto.species = animal.getSpecies;
     dto.description = animal.getDescription;
     dto.status = animal.getStatus;
+    dto.eligiblePlacements = animal.getEligiblePlacements;
     dto.blinded = animal.isBlinded();
     dto.traits = {
       sex: traits.getSex,
