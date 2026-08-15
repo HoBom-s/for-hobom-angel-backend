@@ -178,6 +178,7 @@
   "overrides": {
     "multer": "^2.2.0",
     "js-yaml": "5.2.2",
-    "brace-expansion": "5.0.8"
+    "brace-expansion": "5.0.9",
+    "fast-uri": "3.1.5"
   }
 }
