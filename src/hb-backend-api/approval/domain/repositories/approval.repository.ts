@@ -19,6 +19,11 @@ export interface ApprovalRepository {
     patch: ApprovalDecisionPatch,
   ): Promise<void>;
   findRequestById(id: Types.ObjectId): Promise<ApprovalRequestEntity | null>;
+  /** The PENDING request for a subject (e.g. application id) and type, if any. */
+  findPendingBySubjectRef(
+    subjectRef: string,
+    type: ApprovalType,
+  ): Promise<ApprovalRequestEntity | null>;
   /** PENDING requests of a type for a shelter (`context.shelterId`), newest first. */
   findPendingByTypeAndShelter(
     type: ApprovalType,

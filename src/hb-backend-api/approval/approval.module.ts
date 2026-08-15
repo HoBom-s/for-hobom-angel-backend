@@ -12,6 +12,7 @@ import { ApprovalRepositoryImpl } from "src/hb-backend-api/approval/infra/reposi
 import { ApprovalCallbackRegistry } from "src/hb-backend-api/approval/application/approval-callback.registry";
 import { SubmitApprovalService } from "src/hb-backend-api/approval/application/use-cases/submit-approval.service";
 import { DecideApprovalService } from "src/hb-backend-api/approval/application/use-cases/decide-approval.service";
+import { DecideBySubjectRefService } from "src/hb-backend-api/approval/application/use-cases/decide-by-subject-ref.service";
 import { ListPendingApprovalsService } from "src/hb-backend-api/approval/application/use-cases/list-pending-approvals.service";
 import { CountPendingApprovalsService } from "src/hb-backend-api/approval/application/use-cases/count-pending-approvals.service";
 import { ApprovalController } from "src/hb-backend-api/approval/adapters/in/approval.controller";
@@ -41,6 +42,10 @@ import { ApprovalController } from "src/hb-backend-api/approval/adapters/in/appr
       useClass: DecideApprovalService,
     },
     {
+      provide: DIToken.ApprovalModule.DecideBySubjectRefUseCase,
+      useClass: DecideBySubjectRefService,
+    },
+    {
       provide: DIToken.ApprovalModule.ListPendingApprovalsUseCase,
       useClass: ListPendingApprovalsService,
     },
@@ -65,6 +70,7 @@ import { ApprovalController } from "src/hb-backend-api/approval/adapters/in/appr
     ApprovalCallbackRegistry,
     DIToken.ApprovalModule.SubmitApprovalUseCase,
     DIToken.ApprovalModule.DecideApprovalUseCase,
+    DIToken.ApprovalModule.DecideBySubjectRefUseCase,
     DIToken.ApprovalModule.ApprovalQueryPort,
   ],
 })

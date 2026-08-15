@@ -29,6 +29,9 @@ import { DIToken } from "src/shared/di/token.di";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
 import { JwtAuthGuard } from "src/hb-backend-api/auth/adapters/in/rest/guard/jwt-auth.guard";
 import { AuthenticatedUser } from "src/hb-backend-api/auth/domain/model/token-pair";
+import { ApprovalType } from "src/hb-backend-api/approval/domain/enums/approval-type.enum";
+import { ApprovalDecision } from "src/hb-backend-api/approval/domain/model/vo/approval-decision.vo";
+import { DecideBySubjectRefUseCase } from "src/hb-backend-api/approval/domain/ports/in/decide-by-subject-ref.use-case";
 import {
   SubmitFosterApplicationResult,
   SubmitFosterApplicationUseCase,
@@ -46,6 +49,7 @@ import { TerminateFosterDto } from "src/hb-backend-api/foster/adapters/in/dto/te
 import { ListFosterApplicationsQueryDto } from "src/hb-backend-api/foster/adapters/in/dto/list-foster-applications.query.dto";
 import { FosterApplicationSummaryResponse } from "src/hb-backend-api/foster/adapters/in/dto/foster-application-summary.response";
 import { FosterApplicationDetailResponse } from "src/hb-backend-api/foster/adapters/in/dto/foster-application-detail.response";
+import { DecideFosterApplicationDto } from "src/hb-backend-api/foster/adapters/in/dto/decide-foster-application.dto";
 
 @ApiTags("Foster")
 @ApiBearerAuth()
@@ -65,6 +69,8 @@ export class FosterController {
     private readonly listMyApplicationsUseCase: ListMyFosterApplicationsUseCase,
     @Inject(DIToken.FosterModule.GetFosterApplicationUseCase)
     private readonly getApplicationUseCase: GetFosterApplicationUseCase,
+    @Inject(DIToken.ApprovalModule.DecideBySubjectRefUseCase)
+    private readonly decideBySubjectRefUseCase: DecideBySubjectRefUseCase,
   ) {}
 
   @ApiOperation({ summary: "임시보호 신청 (동물이 예약되고 심사가 열림)" })
@@ -80,6 +86,26 @@ export class FosterController {
       applicantId: user.userId,
       answers: body.answers,
       plannedEndDate: body.plannedEndDate ?? null,
+    });
+  }
+
+  @ApiOperation({
+    summary: "임시보호 신청 심사 결정 (보호소 담당자) — 승인/반려",
+  })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post("foster-applications/:fosterApplicationId/decision")
+  public async decide(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("fosterApplicationId") fosterApplicationId: string,
+    @Body() body: DecideFosterApplicationDto,
+  ): Promise<void> {
+    await this.decideBySubjectRefUseCase.invoke({
+      subjectRef: fosterApplicationId,
+      type: ApprovalType.FOSTER,
+      actorId: user.userId,
+      decision: ApprovalDecision.of(body.decision),
+      reason: body.reason,
     });
   }
 

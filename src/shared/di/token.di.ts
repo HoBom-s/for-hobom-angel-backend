@@ -123,6 +123,9 @@ class ApprovalModuleToken extends TokenRegistry {
   public readonly DecideApprovalUseCase = this.register(
     "approval.decide.use-case",
   );
+  public readonly DecideBySubjectRefUseCase = this.register(
+    "approval.decide-by-subject-ref.use-case",
+  );
   public readonly ListPendingApprovalsUseCase = this.register(
     "approval.list-pending.use-case",
   );
