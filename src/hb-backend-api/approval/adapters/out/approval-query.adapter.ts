@@ -22,6 +22,17 @@ export class ApprovalQueryAdapter implements ApprovalQueryPort {
     return doc ? toDomain(doc) : null;
   }
 
+  public async findPendingBySubjectRef(
+    subjectRef: string,
+    type: ApprovalType,
+  ): Promise<ApprovalRequest | null> {
+    const doc = await this.approvalRepository.findPendingBySubjectRef(
+      subjectRef,
+      type,
+    );
+    return doc ? toDomain(doc) : null;
+  }
+
   public async findPendingByTypeAndShelter(
     type: ApprovalType,
     shelterId: string,

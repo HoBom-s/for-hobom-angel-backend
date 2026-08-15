@@ -50,6 +50,15 @@ export class ApprovalRepositoryImpl implements ApprovalRepository {
     return this.requestModel.findById(id).exec();
   }
 
+  public findPendingBySubjectRef(
+    subjectRef: string,
+    type: ApprovalType,
+  ): Promise<ApprovalRequestEntity | null> {
+    return this.requestModel
+      .findOne({ subjectRef, type, status: ApprovalStatus.PENDING })
+      .exec();
+  }
+
   public findPendingByTypeAndShelter(
     type: ApprovalType,
     shelterId: string,

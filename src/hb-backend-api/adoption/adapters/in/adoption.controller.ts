@@ -28,6 +28,9 @@ import { DIToken } from "src/shared/di/token.di";
 import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
 import { JwtAuthGuard } from "src/hb-backend-api/auth/adapters/in/rest/guard/jwt-auth.guard";
 import { AuthenticatedUser } from "src/hb-backend-api/auth/domain/model/token-pair";
+import { ApprovalType } from "src/hb-backend-api/approval/domain/enums/approval-type.enum";
+import { ApprovalDecision } from "src/hb-backend-api/approval/domain/model/vo/approval-decision.vo";
+import { DecideBySubjectRefUseCase } from "src/hb-backend-api/approval/domain/ports/in/decide-by-subject-ref.use-case";
 import {
   SubmitAdoptionApplicationResult,
   SubmitAdoptionApplicationUseCase,
@@ -41,6 +44,7 @@ import { ReturnAdoptionDto } from "src/hb-backend-api/adoption/adapters/in/dto/r
 import { ListAdoptionApplicationsQueryDto } from "src/hb-backend-api/adoption/adapters/in/dto/list-adoption-applications.query.dto";
 import { AdoptionApplicationSummaryResponse } from "src/hb-backend-api/adoption/adapters/in/dto/adoption-application-summary.response";
 import { AdoptionApplicationDetailResponse } from "src/hb-backend-api/adoption/adapters/in/dto/adoption-application-detail.response";
+import { DecideAdoptionApplicationDto } from "src/hb-backend-api/adoption/adapters/in/dto/decide-adoption-application.dto";
 
 @ApiTags("Adoption")
 @ApiBearerAuth()
@@ -58,6 +62,8 @@ export class AdoptionController {
     private readonly listMyApplicationsUseCase: ListMyAdoptionApplicationsUseCase,
     @Inject(DIToken.AdoptionModule.GetAdoptionApplicationUseCase)
     private readonly getApplicationUseCase: GetAdoptionApplicationUseCase,
+    @Inject(DIToken.ApprovalModule.DecideBySubjectRefUseCase)
+    private readonly decideBySubjectRefUseCase: DecideBySubjectRefUseCase,
   ) {}
 
   @ApiOperation({ summary: "입양 신청 (동물이 예약되고 심사가 열림)" })
@@ -87,6 +93,26 @@ export class AdoptionController {
     await this.returnAdoptionUseCase.invoke({
       adoptionId,
       actorId: user.userId,
+      reason: body.reason,
+    });
+  }
+
+  @ApiOperation({
+    summary: "입양 신청 심사 결정 (보호소 담당자) — 승인/반려",
+  })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post("adoption-applications/:adoptionId/decision")
+  public async decide(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("adoptionId") adoptionId: string,
+    @Body() body: DecideAdoptionApplicationDto,
+  ): Promise<void> {
+    await this.decideBySubjectRefUseCase.invoke({
+      subjectRef: adoptionId,
+      type: ApprovalType.ADOPTION,
+      actorId: user.userId,
+      decision: ApprovalDecision.of(body.decision),
       reason: body.reason,
     });
   }

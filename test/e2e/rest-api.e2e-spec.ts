@@ -431,6 +431,76 @@ describe("REST API (e2e)", () => {
     ]);
   });
 
+  it("lets shelter staff decide an adoption application by application id", async () => {
+    const admin = await seedUser();
+    const shelterId = await registerAndApproveShelter(
+      admin.token,
+      `decide-${Date.now()}`,
+    );
+    const animalBody = {
+      name: `결정-${Date.now()}`,
+      species: AnimalSpecies.DOG,
+      traits: { sex: AnimalSex.FEMALE, size: AnimalSize.SMALL },
+      health: { neutered: true, vaccinated: true },
+      intake: { intakeDate: "2026-01-02T00:00:00.000Z" },
+    };
+    const registerAnimal = async (): Promise<string> => {
+      const res = await request(app.getHttpServer())
+        .post(`${PREFIX}/shelters/${shelterId}/animals`)
+        .set(auth(admin.token))
+        .send(animalBody)
+        .expect(201);
+      return res.body.items.animalId as string;
+    };
+    const submitApplication = async (animalId: string): Promise<string> => {
+      const applicant = await seedUser();
+      const res = await request(app.getHttpServer())
+        .post(`${PREFIX}/animals/${animalId}/adoption-applications`)
+        .set(auth(applicant.token))
+        .send({ answers: [] })
+        .expect(201);
+      return res.body.items.applicationId as string;
+    };
+
+    // Approve: application → APPROVED, animal → ADOPTED.
+    const animalId = await registerAnimal();
+    const applicationId = await submitApplication(animalId);
+    await request(app.getHttpServer())
+      .post(`${PREFIX}/adoption-applications/${applicationId}/decision`)
+      .set(auth(admin.token))
+      .send({ decision: "APPROVE" })
+      .expect(204);
+
+    const detail = await request(app.getHttpServer())
+      .get(`${PREFIX}/adoption-applications/${applicationId}`)
+      .set(auth(admin.token))
+      .expect(200);
+    expect(detail.body.items.status).toBe("APPROVED");
+
+    const animal = await request(app.getHttpServer())
+      .get(`${PREFIX}/animals/${animalId}`)
+      .set(auth(admin.token))
+      .expect(200);
+    expect(animal.body.items.status).toBe(AnimalStatus.ADOPTED);
+
+    // Deciding again → no pending approval → 404.
+    await request(app.getHttpServer())
+      .post(`${PREFIX}/adoption-applications/${applicationId}/decision`)
+      .set(auth(admin.token))
+      .send({ decision: "APPROVE" })
+      .expect(404);
+
+    // A non-staff user cannot decide a fresh application → 403.
+    const animalId2 = await registerAnimal();
+    const applicationId2 = await submitApplication(animalId2);
+    const outsider = await seedUser();
+    await request(app.getHttpServer())
+      .post(`${PREFIX}/adoption-applications/${applicationId2}/decision`)
+      .set(auth(outsider.token))
+      .send({ decision: "REJECT", reason: "권한 없음 테스트" })
+      .expect(403);
+  });
+
   it("returns animal detail with weight and the owning-shelter summary", async () => {
     const admin = await seedUser();
     const slug = `detail-${Date.now()}`;
