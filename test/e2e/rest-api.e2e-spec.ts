@@ -501,6 +501,37 @@ describe("REST API (e2e)", () => {
       .expect(403);
   });
 
+  it("exposes a shelter's verification dossier to an operator, not to others", async () => {
+    const registrant = await seedUser();
+    const reg = await request(app.getHttpServer())
+      .post(`${PREFIX}/shelters`)
+      .set(auth(registrant.token))
+      .send(registerShelterBody(`dossier-${Date.now()}`))
+      .expect(201);
+    const { shelterId } = reg.body.items;
+
+    const operator = await seedOperator();
+    const res = await request(app.getHttpServer())
+      .get(`${PREFIX}/shelters/${shelterId}/verification`)
+      .set(auth(operator.token))
+      .expect(200);
+    const d = res.body.items;
+    expect(d.shelterId).toBe(shelterId);
+    expect(d.status).toBe(ShelterStatus.PENDING_VERIFICATION);
+    expect(d.name).toBe("행복한 발자국");
+    expect(d.businessNumber).toBeTruthy();
+    expect(d.address.region).toBe("서울");
+    expect(d.registrant.id).toBe(registrant.id);
+    expect(Array.isArray(d.verificationSignals)).toBe(true);
+    expect(d.verificationSignals).toHaveLength(3);
+
+    // The registrant (a plain USER) cannot read the dossier.
+    await request(app.getHttpServer())
+      .get(`${PREFIX}/shelters/${shelterId}/verification`)
+      .set(auth(registrant.token))
+      .expect(403);
+  });
+
   it("returns animal detail with weight and the owning-shelter summary", async () => {
     const admin = await seedUser();
     const slug = `detail-${Date.now()}`;

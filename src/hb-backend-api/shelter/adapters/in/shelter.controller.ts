@@ -45,6 +45,7 @@ import {
 import { ListSheltersUseCase } from "src/hb-backend-api/shelter/domain/ports/in/list-shelters.use-case";
 import { EditShelterProfileUseCase } from "src/hb-backend-api/shelter/domain/ports/in/edit-shelter-profile.use-case";
 import { GetShelterStaffUseCase } from "src/hb-backend-api/shelter/domain/ports/in/get-shelter-staff.use-case";
+import { GetShelterVerificationUseCase } from "src/hb-backend-api/shelter/domain/ports/in/get-shelter-verification.use-case";
 import { ListStaffPromotionsUseCase } from "src/hb-backend-api/shelter/domain/ports/in/list-staff-promotions.use-case";
 import { ShelterQueryPort } from "src/hb-backend-api/shelter/domain/ports/out/shelter-query.port";
 import { RegisterShelterDto } from "src/hb-backend-api/shelter/adapters/in/dto/register-shelter.dto";
@@ -58,6 +59,7 @@ import { StaffMemberResponse } from "src/hb-backend-api/shelter/adapters/in/dto/
 import { StaffPromotionRequestResponse } from "src/hb-backend-api/shelter/adapters/in/dto/staff-promotion-request.response";
 import { SearchSheltersQueryDto } from "src/hb-backend-api/shelter/adapters/in/dto/search-shelters.query.dto";
 import { EditShelterProfileDto } from "src/hb-backend-api/shelter/adapters/in/dto/edit-shelter-profile.dto";
+import { ShelterVerificationResponse } from "src/hb-backend-api/shelter/adapters/in/dto/shelter-verification.response";
 
 @ApiTags("Shelters")
 @ApiBearerAuth()
@@ -75,6 +77,8 @@ export class ShelterController {
     private readonly editShelterProfileUseCase: EditShelterProfileUseCase,
     @Inject(DIToken.ShelterModule.GetShelterStaffUseCase)
     private readonly getShelterStaffUseCase: GetShelterStaffUseCase,
+    @Inject(DIToken.ShelterModule.GetShelterVerificationUseCase)
+    private readonly getShelterVerificationUseCase: GetShelterVerificationUseCase,
     @Inject(DIToken.ShelterModule.ListStaffPromotionsUseCase)
     private readonly listStaffPromotionsUseCase: ListStaffPromotionsUseCase,
     @Inject(DIToken.ShelterModule.ShelterQueryPort)
@@ -190,6 +194,23 @@ export class ShelterController {
     });
     const sid = ShelterId.fromString(shelterId);
     return members.map((member) => StaffMemberResponse.from(member, sid));
+  }
+
+  @ApiOperation({
+    summary: "보호소 검증 dossier (운영자) — 심사 상세 (제출정보 + 검증신호)",
+  })
+  @ApiEnvelope(ShelterVerificationResponse)
+  @Get(":shelterId/verification")
+  public async getVerification(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("shelterId") shelterId: string,
+  ): Promise<ShelterVerificationResponse> {
+    const { shelter, registrant } =
+      await this.getShelterVerificationUseCase.invoke({
+        shelterId,
+        viewerId: user.userId,
+      });
+    return ShelterVerificationResponse.from(shelter, registrant);
   }
 
   @ApiOperation({ summary: "보호소 단건 조회 (슬러그)" })
