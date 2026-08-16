@@ -46,6 +46,7 @@ import { ListSheltersUseCase } from "src/hb-backend-api/shelter/domain/ports/in/
 import { EditShelterProfileUseCase } from "src/hb-backend-api/shelter/domain/ports/in/edit-shelter-profile.use-case";
 import { GetShelterStaffUseCase } from "src/hb-backend-api/shelter/domain/ports/in/get-shelter-staff.use-case";
 import { GetShelterVerificationUseCase } from "src/hb-backend-api/shelter/domain/ports/in/get-shelter-verification.use-case";
+import { GetShelterProfileUseCase } from "src/hb-backend-api/shelter/domain/ports/in/get-shelter-profile.use-case";
 import { ListStaffPromotionsUseCase } from "src/hb-backend-api/shelter/domain/ports/in/list-staff-promotions.use-case";
 import { ShelterQueryPort } from "src/hb-backend-api/shelter/domain/ports/out/shelter-query.port";
 import { RegisterShelterDto } from "src/hb-backend-api/shelter/adapters/in/dto/register-shelter.dto";
@@ -60,6 +61,7 @@ import { StaffPromotionRequestResponse } from "src/hb-backend-api/shelter/adapte
 import { SearchSheltersQueryDto } from "src/hb-backend-api/shelter/adapters/in/dto/search-shelters.query.dto";
 import { EditShelterProfileDto } from "src/hb-backend-api/shelter/adapters/in/dto/edit-shelter-profile.dto";
 import { ShelterVerificationResponse } from "src/hb-backend-api/shelter/adapters/in/dto/shelter-verification.response";
+import { ShelterProfileResponse } from "src/hb-backend-api/shelter/adapters/in/dto/shelter-profile.response";
 
 @ApiTags("Shelters")
 @ApiBearerAuth()
@@ -79,6 +81,8 @@ export class ShelterController {
     private readonly getShelterStaffUseCase: GetShelterStaffUseCase,
     @Inject(DIToken.ShelterModule.GetShelterVerificationUseCase)
     private readonly getShelterVerificationUseCase: GetShelterVerificationUseCase,
+    @Inject(DIToken.ShelterModule.GetShelterProfileUseCase)
+    private readonly getShelterProfileUseCase: GetShelterProfileUseCase,
     @Inject(DIToken.ShelterModule.ListStaffPromotionsUseCase)
     private readonly listStaffPromotionsUseCase: ListStaffPromotionsUseCase,
     @Inject(DIToken.ShelterModule.ShelterQueryPort)
@@ -211,6 +215,22 @@ export class ShelterController {
         viewerId: user.userId,
       });
     return ShelterVerificationResponse.from(shelter, registrant);
+  }
+
+  @ApiOperation({
+    summary: "보호소 소개 프로필 조회 (스태프) — 편집기 프리필",
+  })
+  @ApiEnvelope(ShelterProfileResponse)
+  @Get(":shelterId/profile")
+  public async getProfile(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("shelterId") shelterId: string,
+  ): Promise<ShelterProfileResponse> {
+    const shelter = await this.getShelterProfileUseCase.invoke({
+      shelterId,
+      actorId: user.userId,
+    });
+    return ShelterProfileResponse.from(shelter);
   }
 
   @ApiOperation({ summary: "보호소 단건 조회 (슬러그)" })
