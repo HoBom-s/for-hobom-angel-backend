@@ -56,7 +56,10 @@ import { MessageController } from "src/hb-backend-api/messaging/adapters/in/mess
       useClass: MessageQueryAdapter,
     },
   ],
-  exports: [MessageSubjectResolverRegistry],
+  exports: [
+    MessageSubjectResolverRegistry,
+    DIToken.MessagingModule.PostMessageUseCase,
+  ],
 })
 export class MessagingModule implements OnModuleInit {
   constructor(
