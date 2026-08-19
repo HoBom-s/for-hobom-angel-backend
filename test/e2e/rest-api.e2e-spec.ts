@@ -532,6 +532,81 @@ describe("REST API (e2e)", () => {
       .expect(403);
   });
 
+  it("opens a shelter inquiry from an animal and threads it through messaging", async () => {
+    const admin = await seedUser();
+    const shelterId = await registerAndApproveShelter(
+      admin.token,
+      `inquiry-${Date.now()}`,
+    );
+    const animalRes = await request(app.getHttpServer())
+      .post(`${PREFIX}/shelters/${shelterId}/animals`)
+      .set(auth(admin.token))
+      .send({
+        name: `문의-${Date.now()}`,
+        species: AnimalSpecies.DOG,
+        traits: { sex: AnimalSex.FEMALE, size: AnimalSize.SMALL },
+        health: { neutered: true, vaccinated: true },
+        intake: { intakeDate: "2026-01-02T00:00:00.000Z" },
+      })
+      .expect(201);
+    const { animalId } = animalRes.body.items;
+
+    // A member opens an inquiry with the first message.
+    const inquirer = await seedUser();
+    const opened = await request(app.getHttpServer())
+      .post(`${PREFIX}/animals/${animalId}/inquiries`)
+      .set(auth(inquirer.token))
+      .send({ message: "이 아이 입양 조건이 궁금해요" })
+      .expect(201);
+    const { inquiryId } = opened.body.items;
+    expect(inquiryId).toBeTruthy();
+
+    // The first message is threaded through the shared messaging domain.
+    const messages = await request(app.getHttpServer())
+      .get(`${PREFIX}/conversations/INQUIRY/${inquiryId}/messages`)
+      .set(auth(inquirer.token))
+      .expect(200);
+    expect(messages.body.items).toHaveLength(1);
+    expect(messages.body.items[0].body).toBe("이 아이 입양 조건이 궁금해요");
+
+    // A repeat inquiry on the same animal reuses the same thread.
+    const again = await request(app.getHttpServer())
+      .post(`${PREFIX}/animals/${animalId}/inquiries`)
+      .set(auth(inquirer.token))
+      .send({ message: "한 번 더 여쭤봐요" })
+      .expect(201);
+    expect(again.body.items.inquiryId).toBe(inquiryId);
+
+    // The inquirer sees it in their list; the shelter sees it in its inbox.
+    const mine = await request(app.getHttpServer())
+      .get(`${PREFIX}/me/inquiries`)
+      .set(auth(inquirer.token))
+      .expect(200);
+    expect(
+      mine.body.items.items.some(
+        (i: { inquiryId: string }) => i.inquiryId === inquiryId,
+      ),
+    ).toBe(true);
+
+    const inbox = await request(app.getHttpServer())
+      .get(`${PREFIX}/shelters/${shelterId}/inquiries`)
+      .set(auth(admin.token))
+      .expect(200);
+    expect(
+      inbox.body.items.items.some(
+        (i: { inquiryId: string; animalId: string }) =>
+          i.inquiryId === inquiryId && i.animalId === animalId,
+      ),
+    ).toBe(true);
+
+    // A non-staff outsider cannot read the shelter's inbox.
+    const outsider = await seedUser();
+    await request(app.getHttpServer())
+      .get(`${PREFIX}/shelters/${shelterId}/inquiries`)
+      .set(auth(outsider.token))
+      .expect(403);
+  });
+
   it("returns animal detail with weight and the owning-shelter summary", async () => {
     const admin = await seedUser();
     const slug = `detail-${Date.now()}`;

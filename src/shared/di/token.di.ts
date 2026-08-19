@@ -497,6 +497,21 @@ class VolunteerPostModuleToken extends TokenRegistry {
   );
 }
 
+class InquiryModuleToken extends TokenRegistry {
+  public readonly StartInquiryUseCase = this.register("inquiry.start.use-case");
+  public readonly ListMyInquiriesUseCase = this.register(
+    "inquiry.list-mine.use-case",
+  );
+  public readonly ListShelterInquiriesUseCase = this.register(
+    "inquiry.list-shelter.use-case",
+  );
+  public readonly InquiryPersistencePort = this.register(
+    "inquiry.persistence.port",
+  );
+  public readonly InquiryQueryPort = this.register("inquiry.query.port");
+  public readonly InquiryRepository = this.register("inquiry.repository");
+}
+
 export const DIToken = {
   OutboxModule: new OutboxModuleToken(),
   MediaModule: new MediaModuleToken(),
@@ -512,6 +527,7 @@ export const DIToken = {
   FosterModule: new FosterModuleToken(),
   VolunteerModule: new VolunteerModuleToken(),
   MessagingModule: new MessagingModuleToken(),
+  InquiryModule: new InquiryModuleToken(),
   FavoriteModule: new FavoriteModuleToken(),
   ReportModule: new ReportModuleToken(),
   ReviewModule: new ReviewModuleToken(),

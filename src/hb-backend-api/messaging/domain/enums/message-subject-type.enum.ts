@@ -6,4 +6,6 @@
 export enum MessageSubjectType {
   ADOPTION = "ADOPTION",
   FOSTER = "FOSTER",
+  /** A general shelter inquiry (문의) opened from an animal, not tied to an application. */
+  INQUIRY = "INQUIRY",
 }
