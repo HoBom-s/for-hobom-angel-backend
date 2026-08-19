@@ -110,6 +110,7 @@ describe("StaffPromotionCallback", () => {
       userQueryPort,
       userPersistencePort,
       outboxPersistencePort,
+      { notify: jest.fn() },
     );
   });
 

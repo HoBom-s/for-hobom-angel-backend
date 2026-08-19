@@ -144,6 +144,7 @@ describe("FosterApprovalCallback", () => {
       animalPersistencePort,
       outboxPersistencePort,
       userQueryPort,
+      { notify: jest.fn() },
     );
   });
 

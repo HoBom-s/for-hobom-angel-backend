@@ -4,6 +4,7 @@ import { DIToken } from "src/shared/di/token.di";
 import { ApprovalModule } from "src/hb-backend-api/approval/approval.module";
 import { ApprovalCallbackRegistry } from "src/hb-backend-api/approval/application/approval-callback.registry";
 import { OutboxModule } from "src/hb-backend-api/outbox/outbox.module";
+import { NotificationModule } from "src/hb-backend-api/notification/notification.module";
 import { UserModule } from "src/hb-backend-api/user/user.module";
 import { ShelterEntity } from "src/hb-backend-api/shelter/domain/model/shelter.entity";
 import { ShelterSchema } from "src/hb-backend-api/shelter/domain/model/shelter.schema";
@@ -46,6 +47,7 @@ import { ShelterController } from "src/hb-backend-api/shelter/adapters/in/shelte
     ApprovalModule,
     UserModule,
     OutboxModule,
+    NotificationModule,
   ],
   controllers: [ShelterController],
   providers: [

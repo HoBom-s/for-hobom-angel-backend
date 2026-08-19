@@ -22,6 +22,8 @@ import { TerminateFosterCommand } from "src/hb-backend-api/foster/domain/ports/i
 import { TerminateFosterUseCase } from "src/hb-backend-api/foster/domain/ports/in/terminate-foster.use-case";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-query.port";
+import { NotificationType } from "src/hb-backend-api/notification/domain/enums/notification-type.enum";
+import { NotifyUseCase } from "src/hb-backend-api/notification/domain/ports/in/notify.use-case";
 
 /**
  * Ends an active foster: returns the animal to AVAILABLE and emits the
@@ -45,6 +47,8 @@ export class TerminateFosterService implements TerminateFosterUseCase {
     private readonly userQueryPort: UserQueryPort,
     @Inject(DIToken.OutboxModule.OutboxPersistencePort)
     private readonly outboxPersistencePort: OutboxPersistencePort,
+    @Inject(DIToken.NotificationModule.NotifyUseCase)
+    private readonly notifyUseCase: NotifyUseCase,
   ) {}
 
   @Transactional()
@@ -99,5 +103,14 @@ export class TerminateFosterService implements TerminateFosterUseCase {
         }),
       ),
     );
+    await this.notifyUseCase.notify({
+      recipientId: application.getApplicantId.toString(),
+      type: NotificationType.FOSTER_TERMINATED,
+      subjectRef: application.getId.toString(),
+      context: {
+        shelterId: application.getShelterId.toString(),
+        animalId: animal.getId.toString(),
+      },
+    });
   }
 }

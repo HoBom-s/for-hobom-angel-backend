@@ -11,6 +11,8 @@ import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { UserPersistencePort } from "src/hb-backend-api/user/domain/ports/out/user-persistence.port";
 import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-query.port";
+import { NotificationType } from "src/hb-backend-api/notification/domain/enums/notification-type.enum";
+import { NotifyUseCase } from "src/hb-backend-api/notification/domain/ports/in/notify.use-case";
 
 /**
  * Completes a STAFF_PROMOTION decision. On approval it grants the candidate the
@@ -29,6 +31,8 @@ export class StaffPromotionCallback implements ApprovalCallback {
     private readonly userPersistencePort: UserPersistencePort,
     @Inject(DIToken.OutboxModule.OutboxPersistencePort)
     private readonly outboxPersistencePort: OutboxPersistencePort,
+    @Inject(DIToken.NotificationModule.NotifyUseCase)
+    private readonly notifyUseCase: NotifyUseCase,
   ) {}
 
   public async authorize(
@@ -67,6 +71,12 @@ export class StaffPromotionCallback implements ApprovalCallback {
         }),
       ),
     );
+    await this.notifyUseCase.notify({
+      recipientId: candidateId.toString(),
+      type: NotificationType.STAFF_PROMOTION_APPROVED,
+      subjectRef: candidateId.toString(),
+      context: { shelterId: shelterId.toString() },
+    });
   }
 
   public onRejected(request: ApprovalRequest): Promise<void> {

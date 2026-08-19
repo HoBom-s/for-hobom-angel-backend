@@ -14,6 +14,8 @@ import { ShelterQueryPort } from "src/hb-backend-api/shelter/domain/ports/out/sh
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { UserPersistencePort } from "src/hb-backend-api/user/domain/ports/out/user-persistence.port";
 import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-query.port";
+import { NotificationType } from "src/hb-backend-api/notification/domain/enums/notification-type.enum";
+import { NotifyUseCase } from "src/hb-backend-api/notification/domain/ports/in/notify.use-case";
 
 /**
  * Completes a SHELTER_VERIFICATION decision. On approval it verifies the shelter,
@@ -38,6 +40,8 @@ export class ShelterVerificationCallback implements ApprovalCallback {
     private readonly userPersistencePort: UserPersistencePort,
     @Inject(DIToken.OutboxModule.OutboxPersistencePort)
     private readonly outboxPersistencePort: OutboxPersistencePort,
+    @Inject(DIToken.NotificationModule.NotifyUseCase)
+    private readonly notifyUseCase: NotifyUseCase,
   ) {}
 
   public async authorize(
@@ -81,6 +85,12 @@ export class ShelterVerificationCallback implements ApprovalCallback {
         }),
       ),
     );
+    await this.notifyUseCase.notify({
+      recipientId: representativeId.toString(),
+      type: NotificationType.SHELTER_VERIFICATION_APPROVED,
+      subjectRef: shelterId.toString(),
+      context: { shelterId: shelterId.toString() },
+    });
   }
 
   public async onRejected(request: ApprovalRequest): Promise<void> {

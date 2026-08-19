@@ -144,6 +144,7 @@ describe("ShelterVerificationCallback", () => {
       userQueryPort,
       userPersistencePort,
       outboxPersistencePort,
+      { notify: jest.fn() },
     );
   });
 
