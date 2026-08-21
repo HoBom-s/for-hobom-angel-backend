@@ -16,6 +16,8 @@ import { AdoptionApplicationPersistencePort } from "src/hb-backend-api/adoption/
 import { AdoptionApplicationQueryPort } from "src/hb-backend-api/adoption/domain/ports/out/adoption-application-query.port";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-query.port";
+import { NotificationType } from "src/hb-backend-api/notification/domain/enums/notification-type.enum";
+import { NotifyUseCase } from "src/hb-backend-api/notification/domain/ports/in/notify.use-case";
 
 /**
  * Completes an ADOPTION decision. On approval it approves the application and
@@ -41,6 +43,8 @@ export class AdoptionApprovalCallback implements ApprovalCallback {
     private readonly outboxPersistencePort: OutboxPersistencePort,
     @Inject(DIToken.UserModule.UserQueryPort)
     private readonly userQueryPort: UserQueryPort,
+    @Inject(DIToken.NotificationModule.NotifyUseCase)
+    private readonly notifyUseCase: NotifyUseCase,
   ) {}
 
   public async authorize(
@@ -78,6 +82,12 @@ export class AdoptionApprovalCallback implements ApprovalCallback {
         }),
       ),
     );
+    await this.notifyUseCase.notify({
+      recipientId: application.getApplicantId.toString(),
+      type: NotificationType.ADOPTION_APPROVED,
+      subjectRef: application.getId.toString(),
+      context: { shelterId: application.getShelterId.toString() },
+    });
   }
 
   public async onRejected(request: ApprovalRequest): Promise<void> {

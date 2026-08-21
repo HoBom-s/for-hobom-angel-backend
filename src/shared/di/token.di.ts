@@ -512,6 +512,31 @@ class InquiryModuleToken extends TokenRegistry {
   public readonly InquiryRepository = this.register("inquiry.repository");
 }
 
+class NotificationModuleToken extends TokenRegistry {
+  public readonly NotifyUseCase = this.register("notification.notify.use-case");
+  public readonly ListMyNotificationsUseCase = this.register(
+    "notification.list-mine.use-case",
+  );
+  public readonly CountUnreadNotificationsUseCase = this.register(
+    "notification.count-unread.use-case",
+  );
+  public readonly MarkNotificationReadUseCase = this.register(
+    "notification.mark-read.use-case",
+  );
+  public readonly MarkAllNotificationsReadUseCase = this.register(
+    "notification.mark-all-read.use-case",
+  );
+  public readonly NotificationPersistencePort = this.register(
+    "notification.persistence.port",
+  );
+  public readonly NotificationQueryPort = this.register(
+    "notification.query.port",
+  );
+  public readonly NotificationRepository = this.register(
+    "notification.repository",
+  );
+}
+
 export const DIToken = {
   OutboxModule: new OutboxModuleToken(),
   MediaModule: new MediaModuleToken(),
@@ -528,6 +553,7 @@ export const DIToken = {
   VolunteerModule: new VolunteerModuleToken(),
   MessagingModule: new MessagingModuleToken(),
   InquiryModule: new InquiryModuleToken(),
+  NotificationModule: new NotificationModuleToken(),
   FavoriteModule: new FavoriteModuleToken(),
   ReportModule: new ReportModuleToken(),
   ReviewModule: new ReviewModuleToken(),

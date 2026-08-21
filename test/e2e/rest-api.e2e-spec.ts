@@ -501,6 +501,83 @@ describe("REST API (e2e)", () => {
       .expect(403);
   });
 
+  it("records an in-app notification for the applicant on adoption approval", async () => {
+    const admin = await seedUser();
+    const shelterId = await registerAndApproveShelter(
+      admin.token,
+      `notif-${Date.now()}`,
+    );
+    const animalRes = await request(app.getHttpServer())
+      .post(`${PREFIX}/shelters/${shelterId}/animals`)
+      .set(auth(admin.token))
+      .send({
+        name: `알림-${Date.now()}`,
+        species: AnimalSpecies.DOG,
+        traits: { sex: AnimalSex.FEMALE, size: AnimalSize.SMALL },
+        health: { neutered: true, vaccinated: true },
+        intake: { intakeDate: "2026-01-02T00:00:00.000Z" },
+      })
+      .expect(201);
+    const { animalId } = animalRes.body.items;
+
+    const applicant = await seedUser();
+    const submitted = await request(app.getHttpServer())
+      .post(`${PREFIX}/animals/${animalId}/adoption-applications`)
+      .set(auth(applicant.token))
+      .send({ answers: [] })
+      .expect(201);
+    const { applicationId } = submitted.body.items;
+
+    // Before the decision, the applicant has no notifications.
+    const before = await request(app.getHttpServer())
+      .get(`${PREFIX}/me/notifications/unread-count`)
+      .set(auth(applicant.token))
+      .expect(200);
+    expect(before.body.items.count).toBe(0);
+
+    // The shelter approves — a notification is recorded atomically.
+    await request(app.getHttpServer())
+      .post(`${PREFIX}/adoption-applications/${applicationId}/decision`)
+      .set(auth(admin.token))
+      .send({ decision: "APPROVE" })
+      .expect(204);
+
+    const feed = await request(app.getHttpServer())
+      .get(`${PREFIX}/me/notifications`)
+      .set(auth(applicant.token))
+      .expect(200);
+    const mine = feed.body.items.items;
+    expect(mine).toHaveLength(1);
+    expect(mine[0].type).toBe("ADOPTION_APPROVED");
+    expect(mine[0].subjectRef).toBe(applicationId);
+    expect(mine[0].read).toBe(false);
+    const notificationId = mine[0].id;
+
+    const unread = await request(app.getHttpServer())
+      .get(`${PREFIX}/me/notifications/unread-count`)
+      .set(auth(applicant.token))
+      .expect(200);
+    expect(unread.body.items.count).toBe(1);
+
+    // Another user cannot mark this notification read.
+    const outsider = await seedUser();
+    await request(app.getHttpServer())
+      .patch(`${PREFIX}/me/notifications/${notificationId}/read`)
+      .set(auth(outsider.token))
+      .expect(403);
+
+    // The owner marks it read → unread count drops to 0.
+    await request(app.getHttpServer())
+      .patch(`${PREFIX}/me/notifications/${notificationId}/read`)
+      .set(auth(applicant.token))
+      .expect(204);
+    const after = await request(app.getHttpServer())
+      .get(`${PREFIX}/me/notifications/unread-count`)
+      .set(auth(applicant.token))
+      .expect(200);
+    expect(after.body.items.count).toBe(0);
+  });
+
   it("exposes a shelter's verification dossier to an operator, not to others", async () => {
     const registrant = await seedUser();
     const reg = await request(app.getHttpServer())

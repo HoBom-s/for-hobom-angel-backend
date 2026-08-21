@@ -145,6 +145,7 @@ describe("AdoptionApprovalCallback", () => {
       animalPersistencePort,
       outboxPersistencePort,
       userQueryPort,
+      { notify: jest.fn() },
     );
   });
 

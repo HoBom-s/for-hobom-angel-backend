@@ -11,6 +11,7 @@ import { FosterApplicationDestroyer } from "src/hb-backend-api/foster/adapters/e
 import { MessagingModule } from "src/hb-backend-api/messaging/messaging.module";
 import { MessageSubjectResolverRegistry } from "src/hb-backend-api/messaging/application/message-subject-resolver.registry";
 import { OutboxModule } from "src/hb-backend-api/outbox/outbox.module";
+import { NotificationModule } from "src/hb-backend-api/notification/notification.module";
 import { QuestionnaireModule } from "src/hb-backend-api/questionnaire/questionnaire.module";
 import { UserModule } from "src/hb-backend-api/user/user.module";
 import { FosterApplicationEntity } from "src/hb-backend-api/foster/domain/model/foster-application.entity";
@@ -45,6 +46,7 @@ import { FosterController } from "src/hb-backend-api/foster/adapters/in/foster.c
     AdoptionModule,
     UserModule,
     OutboxModule,
+    NotificationModule,
     QuestionnaireModule,
     MessagingModule,
     ErasureModule,

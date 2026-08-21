@@ -40,6 +40,7 @@ import { ShelterStatsModule } from "src/hb-backend-api/shelter-stats/shelter-sta
 import { VolunteerPostModule } from "src/hb-backend-api/volunteer-post/volunteer-post.module";
 import { MessagingModule } from "src/hb-backend-api/messaging/messaging.module";
 import { InquiryModule } from "src/hb-backend-api/inquiry/inquiry.module";
+import { NotificationModule } from "src/hb-backend-api/notification/notification.module";
 import { OutboxModule } from "src/hb-backend-api/outbox/outbox.module";
 import { QuestionnaireModule } from "src/hb-backend-api/questionnaire/questionnaire.module";
 import { ReportModule } from "src/hb-backend-api/report/report.module";
@@ -102,6 +103,7 @@ import { VolunteerModule } from "src/hb-backend-api/volunteer/volunteer.module";
     QuestionnaireModule,
     MessagingModule,
     InquiryModule,
+    NotificationModule,
     AdoptionModule,
     FosterModule,
     VolunteerModule,
