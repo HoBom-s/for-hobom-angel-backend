@@ -578,6 +578,117 @@ describe("REST API (e2e)", () => {
     expect(after.body.items.count).toBe(0);
   });
 
+  const notificationsOf = async (
+    token: string,
+  ): Promise<{ type: string; subjectRef: string }[]> => {
+    const res = await request(app.getHttpServer())
+      .get(`${PREFIX}/me/notifications`)
+      .query({ limit: 50 })
+      .set(auth(token))
+      .expect(200);
+    return res.body.items.items;
+  };
+
+  it("alerts the shelter on a new application and the applicant on rejection", async () => {
+    const admin = await seedUser();
+    const shelterId = await registerAndApproveShelter(
+      admin.token,
+      `notif2-${Date.now()}`,
+    );
+    const animalRes = await request(app.getHttpServer())
+      .post(`${PREFIX}/shelters/${shelterId}/animals`)
+      .set(auth(admin.token))
+      .send({
+        name: `알림2-${Date.now()}`,
+        species: AnimalSpecies.DOG,
+        traits: { sex: AnimalSex.FEMALE, size: AnimalSize.SMALL },
+        health: { neutered: true, vaccinated: true },
+        intake: { intakeDate: "2026-01-02T00:00:00.000Z" },
+      })
+      .expect(201);
+    const { animalId } = animalRes.body.items;
+
+    const applicant = await seedUser();
+    const submitted = await request(app.getHttpServer())
+      .post(`${PREFIX}/animals/${animalId}/adoption-applications`)
+      .set(auth(applicant.token))
+      .send({ answers: [] })
+      .expect(201);
+    const { applicationId } = submitted.body.items;
+
+    // The shelter admin (representative) is alerted to the new application.
+    const adminFeed = await notificationsOf(admin.token);
+    expect(
+      adminFeed.some(
+        (n) =>
+          n.type === "NEW_ADOPTION_APPLICATION" &&
+          n.subjectRef === applicationId,
+      ),
+    ).toBe(true);
+
+    // Rejection notifies the applicant (previously silent).
+    await request(app.getHttpServer())
+      .post(`${PREFIX}/adoption-applications/${applicationId}/decision`)
+      .set(auth(admin.token))
+      .send({ decision: "REJECT", reason: "조건 불충족" })
+      .expect(204);
+    const applicantFeed = await notificationsOf(applicant.token);
+    expect(
+      applicantFeed.some(
+        (n) => n.type === "ADOPTION_REJECTED" && n.subjectRef === applicationId,
+      ),
+    ).toBe(true);
+  });
+
+  it("alerts the shelter on a new inquiry and the inquirer on a reply", async () => {
+    const admin = await seedUser();
+    const shelterId = await registerAndApproveShelter(
+      admin.token,
+      `notif3-${Date.now()}`,
+    );
+    const animalRes = await request(app.getHttpServer())
+      .post(`${PREFIX}/shelters/${shelterId}/animals`)
+      .set(auth(admin.token))
+      .send({
+        name: `알림3-${Date.now()}`,
+        species: AnimalSpecies.DOG,
+        traits: { sex: AnimalSex.FEMALE, size: AnimalSize.SMALL },
+        health: { neutered: true, vaccinated: true },
+        intake: { intakeDate: "2026-01-02T00:00:00.000Z" },
+      })
+      .expect(201);
+    const { animalId } = animalRes.body.items;
+
+    const inquirer = await seedUser();
+    const opened = await request(app.getHttpServer())
+      .post(`${PREFIX}/animals/${animalId}/inquiries`)
+      .set(auth(inquirer.token))
+      .send({ message: "문의드려요" })
+      .expect(201);
+    const { inquiryId } = opened.body.items;
+
+    // The shelter admin is alerted to the new inquiry.
+    const adminFeed = await notificationsOf(admin.token);
+    expect(
+      adminFeed.some(
+        (n) => n.type === "NEW_INQUIRY" && n.subjectRef === inquiryId,
+      ),
+    ).toBe(true);
+
+    // The shelter replies → the inquirer is notified of the message.
+    await request(app.getHttpServer())
+      .post(`${PREFIX}/conversations/INQUIRY/${inquiryId}/messages`)
+      .set(auth(admin.token))
+      .send({ body: "안녕하세요, 답변드려요" })
+      .expect(201);
+    const inquirerFeed = await notificationsOf(inquirer.token);
+    expect(
+      inquirerFeed.some(
+        (n) => n.type === "NEW_MESSAGE" && n.subjectRef === inquiryId,
+      ),
+    ).toBe(true);
+  });
+
   it("exposes a shelter's verification dossier to an operator, not to others", async () => {
     const registrant = await seedUser();
     const reg = await request(app.getHttpServer())

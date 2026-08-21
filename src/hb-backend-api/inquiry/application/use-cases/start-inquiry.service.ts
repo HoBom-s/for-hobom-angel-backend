@@ -11,6 +11,9 @@ import { MessageSubjectType } from "src/hb-backend-api/messaging/domain/enums/me
 import { PostMessageUseCase } from "src/hb-backend-api/messaging/domain/ports/in/post-message.use-case";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-query.port";
+import { ShelterQueryPort } from "src/hb-backend-api/shelter/domain/ports/out/shelter-query.port";
+import { NotificationType } from "src/hb-backend-api/notification/domain/enums/notification-type.enum";
+import { NotifyUseCase } from "src/hb-backend-api/notification/domain/ports/in/notify.use-case";
 import { Inquiry } from "src/hb-backend-api/inquiry/domain/model/inquiry";
 import {
   StartInquiryCommand,
@@ -40,6 +43,10 @@ export class StartInquiryService implements StartInquiryUseCase {
     private readonly inquiryPersistencePort: InquiryPersistencePort,
     @Inject(DIToken.MessagingModule.PostMessageUseCase)
     private readonly postMessageUseCase: PostMessageUseCase,
+    @Inject(DIToken.ShelterModule.ShelterQueryPort)
+    private readonly shelterQueryPort: ShelterQueryPort,
+    @Inject(DIToken.NotificationModule.NotifyUseCase)
+    private readonly notifyUseCase: NotifyUseCase,
   ) {}
 
   public async invoke(
@@ -69,6 +76,22 @@ export class StartInquiryService implements StartInquiryUseCase {
         animalId,
       });
       await this.inquiryPersistencePort.create(inquiry);
+
+      // Alert the shelter's representatives that a new inquiry opened. A repeat
+      // inquiry reuses the thread, so it does not re-notify.
+      const shelter = await this.shelterQueryPort.findById(animal.getShelterId);
+      for (const representativeId of shelter?.getRepresentatives ?? []) {
+        await this.notifyUseCase.notify({
+          recipientId: representativeId.toString(),
+          type: NotificationType.NEW_INQUIRY,
+          subjectRef: inquiry.getId.toString(),
+          context: {
+            shelterId: animal.getShelterId.toString(),
+            animalId: animalId.toString(),
+            inquirerId: command.inquirerId,
+          },
+        });
+      }
     }
 
     await this.postMessageUseCase.invoke({

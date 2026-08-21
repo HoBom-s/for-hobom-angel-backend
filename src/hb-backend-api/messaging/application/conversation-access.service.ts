@@ -10,6 +10,7 @@ import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-query.port";
 import { MessageSenderRole } from "src/hb-backend-api/messaging/domain/enums/message-sender-role.enum";
 import { MessageSubjectType } from "src/hb-backend-api/messaging/domain/enums/message-subject-type.enum";
+import { ConversationParticipants } from "src/hb-backend-api/messaging/domain/ports/out/message-subject-resolver";
 import { MessageSubjectResolverRegistry } from "src/hb-backend-api/messaging/application/message-subject-resolver.registry";
 
 /**
@@ -50,5 +51,19 @@ export class ConversationAccessService {
     }
 
     throw new ForbiddenException("이 대화에 참여할 수 없어요.");
+  }
+
+  /** The conversation's two sides, for routing an arrival notification. */
+  public async resolveParticipants(
+    subjectType: MessageSubjectType,
+    subjectRef: string,
+  ): Promise<ConversationParticipants> {
+    const participants = await this.registry
+      .get(subjectType)
+      .resolve(subjectRef);
+    if (!participants) {
+      throw new NotFoundException("대화를 찾을 수 없어요.");
+    }
+    return participants;
   }
 }

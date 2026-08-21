@@ -101,6 +101,13 @@ export class ShelterVerificationCallback implements ApprovalCallback {
     }
     shelter.reject(request.getReason ?? "심사에서 반려되었어요.");
     await this.shelterPersistencePort.save(shelter);
+
+    await this.notifyUseCase.notify({
+      recipientId: request.getRequesterId,
+      type: NotificationType.SHELTER_VERIFICATION_REJECTED,
+      subjectRef: shelterId.toString(),
+      context: { reason: request.getReason ?? null },
+    });
   }
 
   private resolveTier(request: ApprovalRequest): TrustTier {

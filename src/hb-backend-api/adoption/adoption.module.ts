@@ -5,6 +5,7 @@ import { DestroyerRegistry } from "src/shared/erasure/destroyer.registry";
 import { ErasureModule } from "src/shared/erasure/erasure.module";
 import { AnimalModule } from "src/hb-backend-api/animal/animal.module";
 import { ApprovalModule } from "src/hb-backend-api/approval/approval.module";
+import { ShelterModule } from "src/hb-backend-api/shelter/shelter.module";
 import { ApprovalCallbackRegistry } from "src/hb-backend-api/approval/application/approval-callback.registry";
 import { AdoptionApplicationDestroyer } from "src/hb-backend-api/adoption/adapters/erasure/adoption-application.destroyer";
 import { MessagingModule } from "src/hb-backend-api/messaging/messaging.module";
@@ -43,6 +44,7 @@ import { AdoptionController } from "src/hb-backend-api/adoption/adapters/in/adop
       },
     ]),
     ApprovalModule,
+    ShelterModule,
     AnimalModule,
     UserModule,
     OutboxModule,

@@ -42,6 +42,10 @@ const build = (opts: {
   const postMessageUseCase = {
     invoke: jest.fn().mockResolvedValue({ messageId: "m1" }),
   } as unknown as jest.Mocked<PostMessageUseCase>;
+  const shelterQueryPort = {
+    findById: jest.fn().mockResolvedValue(null),
+  } as never;
+  const notifyUseCase = { notify: jest.fn() } as never;
   return {
     service: new StartInquiryService(
       animalQueryPort,
@@ -49,6 +53,8 @@ const build = (opts: {
       inquiryQueryPort,
       inquiryPersistencePort,
       postMessageUseCase,
+      shelterQueryPort,
+      notifyUseCase,
     ),
     inquiryPersistencePort,
     postMessageUseCase,

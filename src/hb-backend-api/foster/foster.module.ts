@@ -6,6 +6,7 @@ import { ErasureModule } from "src/shared/erasure/erasure.module";
 import { AdoptionModule } from "src/hb-backend-api/adoption/adoption.module";
 import { AnimalModule } from "src/hb-backend-api/animal/animal.module";
 import { ApprovalModule } from "src/hb-backend-api/approval/approval.module";
+import { ShelterModule } from "src/hb-backend-api/shelter/shelter.module";
 import { ApprovalCallbackRegistry } from "src/hb-backend-api/approval/application/approval-callback.registry";
 import { FosterApplicationDestroyer } from "src/hb-backend-api/foster/adapters/erasure/foster-application.destroyer";
 import { MessagingModule } from "src/hb-backend-api/messaging/messaging.module";
@@ -42,6 +43,7 @@ import { FosterController } from "src/hb-backend-api/foster/adapters/in/foster.c
       { name: FosterApplicationEntity.name, schema: FosterApplicationSchema },
     ]),
     ApprovalModule,
+    ShelterModule,
     AnimalModule,
     AdoptionModule,
     UserModule,
