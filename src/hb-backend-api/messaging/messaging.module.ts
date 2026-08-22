@@ -4,6 +4,7 @@ import { DIToken } from "src/shared/di/token.di";
 import { DestroyerRegistry } from "src/shared/erasure/destroyer.registry";
 import { ErasureModule } from "src/shared/erasure/erasure.module";
 import { UserModule } from "src/hb-backend-api/user/user.module";
+import { NotificationModule } from "src/hb-backend-api/notification/notification.module";
 import { MessageDestroyer } from "src/hb-backend-api/messaging/adapters/erasure/message.destroyer";
 import { MessageEntity } from "src/hb-backend-api/messaging/domain/model/message.entity";
 import { MessageSchema } from "src/hb-backend-api/messaging/domain/model/message.schema";
@@ -28,6 +29,7 @@ import { MessageController } from "src/hb-backend-api/messaging/adapters/in/mess
       { name: MessageEntity.name, schema: MessageSchema },
     ]),
     UserModule,
+    NotificationModule,
     ErasureModule,
   ],
   controllers: [MessageController],

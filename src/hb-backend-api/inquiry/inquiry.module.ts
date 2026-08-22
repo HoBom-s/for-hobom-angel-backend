@@ -2,7 +2,9 @@ import { Module, OnModuleInit } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { DIToken } from "src/shared/di/token.di";
 import { AnimalModule } from "src/hb-backend-api/animal/animal.module";
+import { ShelterModule } from "src/hb-backend-api/shelter/shelter.module";
 import { UserModule } from "src/hb-backend-api/user/user.module";
+import { NotificationModule } from "src/hb-backend-api/notification/notification.module";
 import { MessagingModule } from "src/hb-backend-api/messaging/messaging.module";
 import { MessageSubjectResolverRegistry } from "src/hb-backend-api/messaging/application/message-subject-resolver.registry";
 import { InquiryEntity } from "src/hb-backend-api/inquiry/domain/model/inquiry.entity";
@@ -29,7 +31,9 @@ import { InquiryMessageSubjectResolver } from "src/hb-backend-api/inquiry/applic
     ]),
     MessagingModule,
     AnimalModule,
+    ShelterModule,
     UserModule,
+    NotificationModule,
   ],
   controllers: [InquiryController],
   providers: [

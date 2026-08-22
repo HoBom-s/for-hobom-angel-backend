@@ -99,6 +99,17 @@ export class AdoptionApprovalCallback implements ApprovalCallback {
 
     animal.release();
     await this.animalPersistencePort.save(animal);
+
+    await this.notifyUseCase.notify({
+      recipientId: application.getApplicantId.toString(),
+      type: NotificationType.ADOPTION_REJECTED,
+      subjectRef: application.getId.toString(),
+      context: {
+        shelterId: application.getShelterId.toString(),
+        animalId: animal.getId.toString(),
+        reason: request.getReason ?? null,
+      },
+    });
   }
 
   private async loadApplication(

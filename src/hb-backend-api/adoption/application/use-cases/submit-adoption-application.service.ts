@@ -26,6 +26,10 @@ import {
 } from "src/hb-backend-api/adoption/domain/ports/in/submit-adoption-application.use-case";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-query.port";
+import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
+import { ShelterQueryPort } from "src/hb-backend-api/shelter/domain/ports/out/shelter-query.port";
+import { NotificationType } from "src/hb-backend-api/notification/domain/enums/notification-type.enum";
+import { NotifyUseCase } from "src/hb-backend-api/notification/domain/ports/in/notify.use-case";
 
 /**
  * A member applies to adopt an animal. In one transaction: verify the animal is
@@ -50,6 +54,10 @@ export class SubmitAdoptionApplicationService implements SubmitAdoptionApplicati
     private readonly userQueryPort: UserQueryPort,
     @Inject(DIToken.ApprovalModule.SubmitApprovalUseCase)
     private readonly submitApprovalUseCase: SubmitApprovalUseCase,
+    @Inject(DIToken.ShelterModule.ShelterQueryPort)
+    private readonly shelterQueryPort: ShelterQueryPort,
+    @Inject(DIToken.NotificationModule.NotifyUseCase)
+    private readonly notifyUseCase: NotifyUseCase,
   ) {}
 
   @Transactional()
@@ -107,9 +115,32 @@ export class SubmitAdoptionApplicationService implements SubmitAdoptionApplicati
       context: { animalId: animal.getId.toString() },
     });
 
+    await this.notifyShelter(shelterId, application, animal.getId.toString());
+
     return {
       applicationId: application.getId.toString(),
       approvalId: approvalId.toString(),
     };
+  }
+
+  /** Alerts the shelter's representatives that a new application arrived. */
+  private async notifyShelter(
+    shelterId: ShelterId,
+    application: AdoptionApplication,
+    animalId: string,
+  ): Promise<void> {
+    const shelter = await this.shelterQueryPort.findById(shelterId);
+    for (const representativeId of shelter?.getRepresentatives ?? []) {
+      await this.notifyUseCase.notify({
+        recipientId: representativeId.toString(),
+        type: NotificationType.NEW_ADOPTION_APPLICATION,
+        subjectRef: application.getId.toString(),
+        context: {
+          shelterId: shelterId.toString(),
+          animalId,
+          applicantId: application.getApplicantId.toString(),
+        },
+      });
+    }
   }
 }
