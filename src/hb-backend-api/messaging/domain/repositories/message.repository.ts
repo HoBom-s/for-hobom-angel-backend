@@ -8,4 +8,9 @@ export interface MessageRepository {
     subjectType: MessageSubjectType,
     subjectRef: string,
   ): Promise<MessageEntity[]>;
+  /** The most recent message for each of the given subjects (inbox previews). */
+  findLatestBySubjects(
+    subjectType: MessageSubjectType,
+    subjectRefs: string[],
+  ): Promise<MessageEntity[]>;
 }

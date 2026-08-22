@@ -1,5 +1,5 @@
 import { Page } from "src/shared/pagination/page";
-import { Inquiry } from "src/hb-backend-api/inquiry/domain/model/inquiry";
+import { InquiryListItem } from "src/hb-backend-api/inquiry/domain/ports/in/inquiry-list-item";
 
 export interface ListMyInquiriesQuery {
   inquirerId: string;
@@ -7,7 +7,7 @@ export interface ListMyInquiriesQuery {
   limit: number;
 }
 
-/** A member's own inquiry threads, newest first, cursor-paged. */
+/** A member's own inquiry threads, newest first, cursor-paged, inbox-enriched. */
 export interface ListMyInquiriesUseCase {
-  invoke(query: ListMyInquiriesQuery): Promise<Page<Inquiry>>;
+  invoke(query: ListMyInquiriesQuery): Promise<Page<InquiryListItem>>;
 }

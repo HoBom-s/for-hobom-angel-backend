@@ -27,4 +27,19 @@ export class MessageRepositoryImpl implements MessageRepository {
       .sort({ createdAt: 1 })
       .exec();
   }
+
+  public async findLatestBySubjects(
+    subjectType: MessageSubjectType,
+    subjectRefs: string[],
+  ): Promise<MessageEntity[]> {
+    if (subjectRefs.length === 0) {
+      return [];
+    }
+    return this.model.aggregate<MessageEntity>([
+      { $match: { subjectType, subjectRef: { $in: subjectRefs } } },
+      { $sort: { createdAt: -1 } },
+      { $group: { _id: "$subjectRef", doc: { $first: "$$ROOT" } } },
+      { $replaceRoot: { newRoot: "$doc" } },
+    ]);
+  }
 }

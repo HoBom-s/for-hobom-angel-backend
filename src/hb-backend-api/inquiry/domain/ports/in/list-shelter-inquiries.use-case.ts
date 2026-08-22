@@ -1,5 +1,5 @@
 import { Page } from "src/shared/pagination/page";
-import { Inquiry } from "src/hb-backend-api/inquiry/domain/model/inquiry";
+import { InquiryListItem } from "src/hb-backend-api/inquiry/domain/ports/in/inquiry-list-item";
 
 export interface ListShelterInquiriesQuery {
   shelterId: string;
@@ -9,7 +9,7 @@ export interface ListShelterInquiriesQuery {
   limit: number;
 }
 
-/** A shelter's inquiry inbox, newest first, cursor-paged. Staff-only. */
+/** A shelter's inquiry inbox, newest first, cursor-paged, inbox-enriched. Staff-only. */
 export interface ListShelterInquiriesUseCase {
-  invoke(query: ListShelterInquiriesQuery): Promise<Page<Inquiry>>;
+  invoke(query: ListShelterInquiriesQuery): Promise<Page<InquiryListItem>>;
 }

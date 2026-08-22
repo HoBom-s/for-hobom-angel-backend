@@ -73,9 +73,7 @@ export class InquiryController {
       cursor: query.cursor,
       limit: query.limit ?? 20,
     });
-    return CursorPageResponse.of(page, (inquiry) =>
-      InquiryResponse.from(inquiry),
-    );
+    return CursorPageResponse.of(page, (item) => InquiryResponse.from(item));
   }
 
   @ApiOperation({ summary: "보호소 문의함 (담당자, 커서)" })
@@ -92,8 +90,6 @@ export class InquiryController {
       cursor: query.cursor,
       limit: query.limit ?? 20,
     });
-    return CursorPageResponse.of(page, (inquiry) =>
-      InquiryResponse.from(inquiry),
-    );
+    return CursorPageResponse.of(page, (item) => InquiryResponse.from(item));
   }
 }

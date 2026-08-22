@@ -7,4 +7,9 @@ export interface MessageQueryPort {
     subjectType: MessageSubjectType,
     subjectRef: string,
   ): Promise<Message[]>;
+  /** The most recent message for each of the given subjects (inbox previews). */
+  findLatestBySubjects(
+    subjectType: MessageSubjectType,
+    subjectRefs: string[],
+  ): Promise<Message[]>;
 }
