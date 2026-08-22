@@ -24,6 +24,7 @@ import { GetShelterStaffService } from "src/hb-backend-api/shelter/application/u
 import { GetShelterVerificationService } from "src/hb-backend-api/shelter/application/use-cases/get-shelter-verification.service";
 import { GetShelterProfileService } from "src/hb-backend-api/shelter/application/use-cases/get-shelter-profile.service";
 import { ListStaffPromotionsService } from "src/hb-backend-api/shelter/application/use-cases/list-staff-promotions.service";
+import { RemoveShelterStaffService } from "src/hb-backend-api/shelter/application/use-cases/remove-shelter-staff.service";
 import { ShelterVerificationCallback } from "src/hb-backend-api/shelter/application/shelter-verification.callback";
 import { StaffPromotionCallback } from "src/hb-backend-api/shelter/application/staff-promotion.callback";
 import { ShelterController } from "src/hb-backend-api/shelter/adapters/in/shelter.controller";
@@ -83,6 +84,10 @@ import { ShelterController } from "src/hb-backend-api/shelter/adapters/in/shelte
     {
       provide: DIToken.ShelterModule.ListStaffPromotionsUseCase,
       useClass: ListStaffPromotionsService,
+    },
+    {
+      provide: DIToken.ShelterModule.RemoveShelterStaffUseCase,
+      useClass: RemoveShelterStaffService,
     },
     {
       provide: DIToken.ShelterModule.VolunteerActivityPort,

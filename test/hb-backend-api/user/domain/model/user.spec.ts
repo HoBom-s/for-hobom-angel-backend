@@ -153,6 +153,30 @@ describe("User aggregate", () => {
       expect(() => user.grantShelterAdmin(s)).toThrow();
     });
 
+    it("revokeShelterStaff removes the staff grant and rejects a non-staff", () => {
+      const s = shelter();
+      const user = User.register(registration());
+      user.promoteToShelterStaff(s);
+      expect(user.isShelterStaffMember(s)).toBe(true);
+
+      user.revokeShelterStaff(s);
+      expect(user.isShelterStaffMember(s)).toBe(false);
+      expect(() => user.revokeShelterStaff(s)).toThrow("스태프가 아니에요");
+    });
+
+    it("isShelterStaffMember ignores the platform-admin bypass and admin grants", () => {
+      const s = shelter();
+      const admin = reconstitute({ roles: [UserRole.SYSTEM_ADMIN] });
+      // Platform admin "hasShelterRole" everywhere, but holds no concrete grant.
+      expect(admin.hasShelterRole(s, UserRole.SHELTER_STAFF)).toBe(true);
+      expect(admin.isShelterStaffMember(s)).toBe(false);
+
+      const shelterAdmin = User.register(registration());
+      shelterAdmin.grantShelterAdmin(s);
+      expect(shelterAdmin.isShelterStaffMember(s)).toBe(false);
+      expect(() => shelterAdmin.revokeShelterStaff(s)).toThrow();
+    });
+
     it("withdraw flips status and stamps timestamps", () => {
       const user = User.register(registration());
       const at = new Date("2026-07-06T00:00:00Z");

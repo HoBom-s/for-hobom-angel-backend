@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -48,6 +49,7 @@ import { GetShelterStaffUseCase } from "src/hb-backend-api/shelter/domain/ports/
 import { GetShelterVerificationUseCase } from "src/hb-backend-api/shelter/domain/ports/in/get-shelter-verification.use-case";
 import { GetShelterProfileUseCase } from "src/hb-backend-api/shelter/domain/ports/in/get-shelter-profile.use-case";
 import { ListStaffPromotionsUseCase } from "src/hb-backend-api/shelter/domain/ports/in/list-staff-promotions.use-case";
+import { RemoveShelterStaffUseCase } from "src/hb-backend-api/shelter/domain/ports/in/remove-shelter-staff.use-case";
 import { ShelterQueryPort } from "src/hb-backend-api/shelter/domain/ports/out/shelter-query.port";
 import { RegisterShelterDto } from "src/hb-backend-api/shelter/adapters/in/dto/register-shelter.dto";
 import { RequestStaffPromotionDto } from "src/hb-backend-api/shelter/adapters/in/dto/request-staff-promotion.dto";
@@ -85,6 +87,8 @@ export class ShelterController {
     private readonly getShelterProfileUseCase: GetShelterProfileUseCase,
     @Inject(DIToken.ShelterModule.ListStaffPromotionsUseCase)
     private readonly listStaffPromotionsUseCase: ListStaffPromotionsUseCase,
+    @Inject(DIToken.ShelterModule.RemoveShelterStaffUseCase)
+    private readonly removeShelterStaffUseCase: RemoveShelterStaffUseCase,
     @Inject(DIToken.ShelterModule.ShelterQueryPort)
     private readonly shelterQueryPort: ShelterQueryPort,
   ) {}
@@ -198,6 +202,22 @@ export class ShelterController {
     });
     const sid = ShelterId.fromString(shelterId);
     return members.map((member) => StaffMemberResponse.from(member, sid));
+  }
+
+  @ApiOperation({ summary: "보호소 스태프 제거 (관리자) — SHELTER_STAFF 회수" })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(":shelterId/staff/:userId")
+  public async removeStaff(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("shelterId") shelterId: string,
+    @Param("userId") userId: string,
+  ): Promise<void> {
+    await this.removeShelterStaffUseCase.invoke({
+      shelterId,
+      targetUserId: userId,
+      actorId: user.userId,
+    });
   }
 
   @ApiOperation({
