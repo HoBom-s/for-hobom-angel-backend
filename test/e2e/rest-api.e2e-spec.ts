@@ -684,6 +684,38 @@ describe("REST API (e2e)", () => {
       .expect(403);
   });
 
+  it("reads back a shelter's About profile for its staff, not for others", async () => {
+    const admin = await seedUser();
+    const shelterId = await registerAndApproveShelter(
+      admin.token,
+      `profile-${Date.now()}`,
+    );
+
+    // Edit the profile, then read it back for prefill.
+    await request(app.getHttpServer())
+      .patch(`${PREFIX}/shelters/${shelterId}/profile`)
+      .set(auth(admin.token))
+      .send({ intro: "우리 보호소 소개", representativeName: "김보호" })
+      .expect(204);
+
+    const res = await request(app.getHttpServer())
+      .get(`${PREFIX}/shelters/${shelterId}/profile`)
+      .set(auth(admin.token))
+      .expect(200);
+    const p = res.body.items;
+    expect(p.shelterId).toBe(shelterId);
+    expect(p.intro).toBe("우리 보호소 소개");
+    expect(p.representativeName).toBe("김보호");
+    expect(p.visitGuide).toBeNull();
+
+    // A non-staff user cannot read the shelter's profile.
+    const outsider = await seedUser();
+    await request(app.getHttpServer())
+      .get(`${PREFIX}/shelters/${shelterId}/profile`)
+      .set(auth(outsider.token))
+      .expect(403);
+  });
+
   it("returns animal detail with weight and the owning-shelter summary", async () => {
     const admin = await seedUser();
     const slug = `detail-${Date.now()}`;
