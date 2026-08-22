@@ -128,6 +128,17 @@ export class User {
     );
   }
 
+  /**
+   * Holds a concrete SHELTER_STAFF grant at this shelter — unlike
+   * {@link hasShelterRole}, this excludes the platform-admin bypass, so it
+   * answers "is this a staff member here?" for staff-management operations.
+   */
+  public isShelterStaffMember(shelterId: ShelterId): boolean {
+    return this.shelterRoles.some((grant) =>
+      grant.matches(shelterId, UserRole.SHELTER_STAFF),
+    );
+  }
+
   /** The tenant boundary this user may act within (see {@link TenantScope}). */
   public toTenantScope(): TenantScope {
     return TenantScope.of(
@@ -163,6 +174,21 @@ export class User {
     this.shelterRoles.push(
       ShelterRoleGrant.of(shelterId, UserRole.SHELTER_ADMIN),
     );
+  }
+
+  /**
+   * Revokes a member's shelter-staff grant. Admin grants are deliberately
+   * untouched — a representative isn't removed through staff management. Throws
+   * if the member isn't currently staff at the shelter.
+   */
+  public revokeShelterStaff(shelterId: ShelterId): void {
+    const index = this.shelterRoles.findIndex((grant) =>
+      grant.matches(shelterId, UserRole.SHELTER_STAFF),
+    );
+    if (index === -1) {
+      throw new Error("해당 보호소의 스태프가 아니에요.");
+    }
+    this.shelterRoles.splice(index, 1);
   }
 
   /** Rename the public display name. Uniqueness is enforced by the service + index. */

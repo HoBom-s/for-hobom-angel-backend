@@ -609,6 +609,62 @@ describe("REST API (e2e)", () => {
       .expect(403);
   });
 
+  it("removes a shelter staff member (admin only) and drops them from the roster", async () => {
+    const admin = await seedUser();
+    const shelterId = await registerAndApproveShelter(
+      admin.token,
+      `staffrm-${Date.now()}`,
+    );
+
+    // Seed a member and grant them SHELTER_STAFF at this shelter.
+    const staff = await seedUser();
+    await userModel
+      .updateOne(
+        { _id: new Types.ObjectId(staff.id) },
+        {
+          $set: {
+            shelterRoles: [
+              {
+                shelterId: new Types.ObjectId(shelterId),
+                role: UserRole.SHELTER_STAFF,
+              },
+            ],
+          },
+        },
+      )
+      .exec();
+
+    const rosterHas = async (id: string): Promise<boolean> => {
+      const res = await request(app.getHttpServer())
+        .get(`${PREFIX}/shelters/${shelterId}/staff`)
+        .set(auth(admin.token))
+        .expect(200);
+      return res.body.items.some((m: { id: string }) => m.id === id);
+    };
+
+    expect(await rosterHas(staff.id)).toBe(true);
+
+    // A non-admin cannot remove staff.
+    const outsider = await seedUser();
+    await request(app.getHttpServer())
+      .delete(`${PREFIX}/shelters/${shelterId}/staff/${staff.id}`)
+      .set(auth(outsider.token))
+      .expect(403);
+
+    // The admin removes them → gone from the roster.
+    await request(app.getHttpServer())
+      .delete(`${PREFIX}/shelters/${shelterId}/staff/${staff.id}`)
+      .set(auth(admin.token))
+      .expect(204);
+    expect(await rosterHas(staff.id)).toBe(false);
+
+    // Removing again → 404 (no longer a staff member).
+    await request(app.getHttpServer())
+      .delete(`${PREFIX}/shelters/${shelterId}/staff/${staff.id}`)
+      .set(auth(admin.token))
+      .expect(404);
+  });
+
   it("opens a shelter inquiry from an animal and threads it through messaging", async () => {
     const admin = await seedUser();
     const shelterId = await registerAndApproveShelter(
