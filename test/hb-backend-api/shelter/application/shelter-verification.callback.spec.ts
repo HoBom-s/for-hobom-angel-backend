@@ -25,6 +25,7 @@ import { Nickname } from "src/hb-backend-api/user/domain/model/vo/nickname.vo";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { UserPersistencePort } from "src/hb-backend-api/user/domain/ports/out/user-persistence.port";
 import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-query.port";
+import { NotificationType } from "src/hb-backend-api/notification/domain/enums/notification-type.enum";
 
 const shelterId = ShelterId.generate();
 const registrantId = UserId.generate();
@@ -110,6 +111,7 @@ describe("ShelterVerificationCallback", () => {
   let userQueryPort: jest.Mocked<UserQueryPort>;
   let userPersistencePort: jest.Mocked<UserPersistencePort>;
   let outboxPersistencePort: jest.Mocked<OutboxPersistencePort>;
+  let notifyUseCase: { notify: jest.Mock };
   let callback: ShelterVerificationCallback;
 
   beforeEach(() => {
@@ -138,13 +140,14 @@ describe("ShelterVerificationCallback", () => {
       markAsSent: jest.fn(),
       markAsFailed: jest.fn(),
     };
+    notifyUseCase = { notify: jest.fn() };
     callback = new ShelterVerificationCallback(
       shelterQueryPort,
       shelterPersistencePort,
       userQueryPort,
       userPersistencePort,
       outboxPersistencePort,
-      { notify: jest.fn() },
+      notifyUseCase,
     );
   });
 
@@ -232,6 +235,20 @@ describe("ShelterVerificationCallback", () => {
       expect(shelterPersistencePort.save).toHaveBeenCalledWith(shelter);
       expect(userPersistencePort.save).not.toHaveBeenCalled();
       expect(outboxPersistencePort.save).not.toHaveBeenCalled();
+    });
+
+    it("notifies the requester with shelterId in the deep-link context", async () => {
+      await callback.onRejected(request({ reason: "서류 불충분" }));
+
+      expect(notifyUseCase.notify).toHaveBeenCalledWith({
+        recipientId: registrantId.toString(),
+        type: NotificationType.SHELTER_VERIFICATION_REJECTED,
+        subjectRef: shelterId.toString(),
+        context: {
+          shelterId: shelterId.toString(),
+          reason: "서류 불충분",
+        },
+      });
     });
   });
 });

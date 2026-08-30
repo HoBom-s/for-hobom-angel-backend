@@ -106,7 +106,10 @@ export class ShelterVerificationCallback implements ApprovalCallback {
       recipientId: request.getRequesterId,
       type: NotificationType.SHELTER_VERIFICATION_REJECTED,
       subjectRef: shelterId.toString(),
-      context: { reason: request.getReason ?? null },
+      context: {
+        shelterId: shelterId.toString(),
+        reason: request.getReason ?? null,
+      },
     });
   }
 
