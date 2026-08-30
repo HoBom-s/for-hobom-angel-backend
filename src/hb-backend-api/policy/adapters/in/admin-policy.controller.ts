@@ -15,9 +15,9 @@ import {
 } from "src/shared/response/api-envelope.decorator";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
-import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
-import { JwtAuthGuard } from "src/hb-backend-api/auth/adapters/in/rest/guard/jwt-auth.guard";
-import { AuthenticatedUser } from "src/hb-backend-api/auth/domain/model/token-pair";
+import { CurrentUser } from "src/shared/auth/current-user.decorator";
+import { JwtAuthGuard } from "src/shared/auth/jwt-auth.guard";
+import { AuthenticatedUser } from "src/shared/auth/authenticated-user";
 import { PolicyType } from "src/hb-backend-api/policy/domain/enums/policy-type.enum";
 import { PublishPolicyUseCase } from "src/hb-backend-api/policy/domain/ports/in/publish-policy.use-case";
 import { ListPolicyVersionsUseCase } from "src/hb-backend-api/policy/domain/ports/in/list-policy-versions.use-case";

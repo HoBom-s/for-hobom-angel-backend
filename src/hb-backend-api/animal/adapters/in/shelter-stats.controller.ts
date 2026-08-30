@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ApiEnvelope } from "src/shared/response/api-envelope.decorator";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
-import { JwtAuthGuard } from "src/hb-backend-api/auth/adapters/in/rest/guard/jwt-auth.guard";
+import { JwtAuthGuard } from "src/shared/auth/jwt-auth.guard";
 import { GetShelterStatsUseCase } from "src/hb-backend-api/animal/domain/ports/in/get-shelter-stats.use-case";
 import { ShelterStatsResponse } from "src/hb-backend-api/animal/adapters/in/dto/shelter-stats.response";
 

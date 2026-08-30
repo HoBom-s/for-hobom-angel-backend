@@ -1,7 +1,7 @@
 import { ExecutionContext } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { IS_PUBLIC_KEY } from "src/hb-backend-api/auth/adapters/in/rest/decorator/public.decorator";
-import { JwtAuthGuard } from "src/hb-backend-api/auth/adapters/in/rest/guard/jwt-auth.guard";
+import { IS_PUBLIC_KEY } from "src/shared/auth/public.decorator";
+import { JwtAuthGuard } from "src/shared/auth/jwt-auth.guard";
 
 const handler = () => undefined;
 const klass = class {};
