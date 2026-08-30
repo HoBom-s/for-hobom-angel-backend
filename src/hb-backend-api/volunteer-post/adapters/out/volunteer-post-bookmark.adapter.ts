@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { Types } from "mongoose";
 import { Page } from "src/shared/pagination/page";
 import { DIToken } from "src/shared/di/token.di";
+import { parseCursor, toCursorPage } from "src/shared/pagination/keyset";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { VolunteerPostId } from "src/hb-backend-api/volunteer-post/domain/model/vo/volunteer-post-id.vo";
 import {
@@ -41,10 +41,7 @@ export class VolunteerPostBookmarkAdapter implements VolunteerPostBookmarkPort {
     cursor?: string;
     limit: number;
   }): Promise<Page<BookmarkRef>> {
-    const cursorId =
-      params.cursor && Types.ObjectId.isValid(params.cursor)
-        ? new Types.ObjectId(params.cursor)
-        : null;
+    const cursorId = parseCursor(params.cursor);
 
     const docs = await this.repository.listByUser(
       params.userId.raw,
@@ -52,17 +49,9 @@ export class VolunteerPostBookmarkAdapter implements VolunteerPostBookmarkPort {
       params.limit,
     );
 
-    const hasNext = docs.length > params.limit;
-    const pageDocs = hasNext ? docs.slice(0, params.limit) : docs;
-    const last = pageDocs[pageDocs.length - 1];
-
-    return {
-      items: pageDocs.map((doc) => ({
-        postId: VolunteerPostId.fromString(String(doc.postId)),
-        bookmarkId: String(doc._id),
-      })),
-      hasNext,
-      nextCursor: hasNext && last ? String(last._id) : null,
-    };
+    return toCursorPage(docs, params.limit, (doc) => ({
+      postId: VolunteerPostId.fromString(String(doc.postId)),
+      bookmarkId: String(doc._id),
+    }));
   }
 }

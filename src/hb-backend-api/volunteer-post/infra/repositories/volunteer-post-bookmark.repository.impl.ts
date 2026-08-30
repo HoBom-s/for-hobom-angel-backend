@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { MongoSessionContext } from "src/infra/mongo/transaction/transaction.context";
+import { keysetFilter } from "src/shared/pagination/keyset";
 import { VolunteerPostBookmarkEntity } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post-bookmark.entity";
 import { VolunteerPostBookmarkRepository } from "src/hb-backend-api/volunteer-post/domain/repositories/volunteer-post-bookmark.repository";
 
@@ -53,9 +54,8 @@ export class VolunteerPostBookmarkRepositoryImpl implements VolunteerPostBookmar
     cursorId: Types.ObjectId | null,
     limit: number,
   ): Promise<VolunteerPostBookmarkEntity[]> {
-    const query = cursorId ? { userId, _id: { $lt: cursorId } } : { userId };
     return this.model
-      .find(query)
+      .find({ userId, ...keysetFilter(cursorId) })
       .sort({ _id: -1 })
       .limit(limit + 1)
       .exec();

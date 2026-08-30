@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { Types } from "mongoose";
 import { Page } from "src/shared/pagination/page";
 import { DIToken } from "src/shared/di/token.di";
+import { parseCursor, toCursorPage } from "src/shared/pagination/keyset";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { VolunteerEvent } from "src/hb-backend-api/volunteer/domain/model/volunteer-event";
 import { VolunteerEventId } from "src/hb-backend-api/volunteer/domain/model/vo/volunteer-event-id.vo";
@@ -31,23 +31,13 @@ export class VolunteerEventQueryAdapter implements VolunteerEventQueryPort {
     cursor: string | undefined,
     limit: number,
   ): Promise<Page<VolunteerEvent>> {
-    const cursorId =
-      cursor && Types.ObjectId.isValid(cursor)
-        ? new Types.ObjectId(cursor)
-        : null;
+    const cursorId = parseCursor(cursor);
     const docs = await this.repository.findByShelterId(
       shelterId.raw,
       cursorId,
       limit,
     );
-    const hasNext = docs.length > limit;
-    const pageDocs = hasNext ? docs.slice(0, limit) : docs;
-    const last = pageDocs[pageDocs.length - 1];
-    return {
-      items: pageDocs.map(toDomain),
-      hasNext,
-      nextCursor: hasNext && last ? String(last._id) : null,
-    };
+    return toCursorPage(docs, limit, toDomain);
   }
 
   public async findUpcoming(

@@ -3,6 +3,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { MongoSessionContext } from "src/infra/mongo/transaction/transaction.context";
 import { OptimisticLockException } from "src/shared/exception/optimistic-lock.exception";
+import { keysetFilter } from "src/shared/pagination/keyset";
 import { ApprovalStatus } from "src/hb-backend-api/approval/domain/enums/approval-status.enum";
 import { ApprovalType } from "src/hb-backend-api/approval/domain/enums/approval-type.enum";
 import { ApprovalActionEntity } from "src/hb-backend-api/approval/domain/model/approval-action.entity";
@@ -84,11 +85,8 @@ export class ApprovalRepositoryImpl implements ApprovalRepository {
     if (type) {
       query.type = type;
     }
-    if (cursorId) {
-      query._id = { $lt: cursorId };
-    }
     return this.requestModel
-      .find(query)
+      .find({ ...query, ...keysetFilter(cursorId) })
       .sort({ _id: -1 })
       .limit(limit + 1)
       .exec();
