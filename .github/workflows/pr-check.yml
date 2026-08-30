@@ -8,6 +8,10 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Needed for the coverage comment to post/update on the PR (uses GITHUB_TOKEN, no extra secret).
+      pull-requests: write
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
@@ -25,5 +29,18 @@ jobs:
         run: npm run build
       - name: Unit + integration tests (with coverage gate)
         run: npm run test:cov
+      - name: Coverage PR comment
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: MishaKav/jest-coverage-comment@v1.0.27
+        with:
+          title: Coverage report (unit + integration)
+          coverage-summary-path: ./coverage/coverage-summary.json
+      - name: Upload coverage report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 14
       - name: E2E tests
         run: npm run test:e2e
