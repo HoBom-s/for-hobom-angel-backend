@@ -43,6 +43,9 @@ describe("RolesGuard", () => {
     await expect(guard.canActivate(ctxWith(undefined))).rejects.toThrow(
       ForbiddenException,
     );
+    await expect(guard.canActivate(ctxWith(undefined))).rejects.toThrow(
+      "인증이 필요해요.",
+    );
   });
 
   it("throws when the user is unknown or inactive", async () => {
@@ -50,7 +53,7 @@ describe("RolesGuard", () => {
       findByNickname: jest.fn().mockResolvedValue(null),
     });
     await expect(unknown.canActivate(ctxWith("n"))).rejects.toThrow(
-      ForbiddenException,
+      "비활성 상태이거나 알 수 없는 회원이에요.",
     );
 
     const inactive = guardWith([UserRole.SYSTEM_ADMIN], {
@@ -70,7 +73,7 @@ describe("RolesGuard", () => {
         .mockResolvedValue(fakeUser(true, [UserRole.USER])),
     });
     await expect(denied.canActivate(ctxWith("n"))).rejects.toThrow(
-      ForbiddenException,
+      "권한이 부족해요.",
     );
 
     const allowed = guardWith([UserRole.SYSTEM_ADMIN], {
