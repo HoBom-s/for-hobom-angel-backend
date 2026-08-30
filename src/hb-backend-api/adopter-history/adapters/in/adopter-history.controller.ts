@@ -3,9 +3,9 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ApiEnvelope } from "src/shared/response/api-envelope.decorator";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
-import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
-import { JwtAuthGuard } from "src/hb-backend-api/auth/adapters/in/rest/guard/jwt-auth.guard";
-import { AuthenticatedUser } from "src/hb-backend-api/auth/domain/model/token-pair";
+import { CurrentUser } from "src/shared/auth/current-user.decorator";
+import { JwtAuthGuard } from "src/shared/auth/jwt-auth.guard";
+import { AuthenticatedUser } from "src/shared/auth/authenticated-user";
 import { GetAdopterHistoryUseCase } from "src/hb-backend-api/adopter-history/domain/ports/in/get-adopter-history.use-case";
 import { AdopterHistoryResponse } from "src/hb-backend-api/adopter-history/adapters/in/dto/adopter-history.response";
 

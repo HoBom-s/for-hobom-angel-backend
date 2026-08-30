@@ -25,6 +25,8 @@ jobs:
         run: npm run typecheck
       - name: Lint
         run: npm run lint:check
+      - name: Architecture boundaries (dependency-cruiser)
+        run: npm run depcruise
       - name: Build
         run: npm run build
       - name: Unit + integration tests (with coverage gate)

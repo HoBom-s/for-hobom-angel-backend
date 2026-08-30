@@ -26,9 +26,9 @@ import {
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
 import { CursorPageResponse } from "src/shared/pagination/cursor-page.response";
-import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
-import { JwtAuthGuard } from "src/hb-backend-api/auth/adapters/in/rest/guard/jwt-auth.guard";
-import { AuthenticatedUser } from "src/hb-backend-api/auth/domain/model/token-pair";
+import { CurrentUser } from "src/shared/auth/current-user.decorator";
+import { JwtAuthGuard } from "src/shared/auth/jwt-auth.guard";
+import { AuthenticatedUser } from "src/shared/auth/authenticated-user";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { ReviewQueryPort } from "src/hb-backend-api/review/domain/ports/out/review-query.port";
 import {

@@ -29,9 +29,9 @@ import {
 import { CursorPageResponse } from "src/shared/pagination/cursor-page.response";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
-import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
-import { JwtAuthGuard } from "src/hb-backend-api/auth/adapters/in/rest/guard/jwt-auth.guard";
-import { AuthenticatedUser } from "src/hb-backend-api/auth/domain/model/token-pair";
+import { CurrentUser } from "src/shared/auth/current-user.decorator";
+import { JwtAuthGuard } from "src/shared/auth/jwt-auth.guard";
+import { AuthenticatedUser } from "src/shared/auth/authenticated-user";
 import {
   CreateVolunteerEventResult,
   CreateVolunteerEventUseCase,

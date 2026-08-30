@@ -1,7 +1,7 @@
 import { UploadPurpose } from "src/hb-backend-api/media/domain/enums/upload-purpose.enum";
 import { CreateUploadUrlUseCase } from "src/hb-backend-api/media/domain/ports/in/create-upload-url.use-case";
 import { MediaController } from "src/hb-backend-api/media/adapters/in/media.controller";
-import { AuthenticatedUser } from "src/hb-backend-api/auth/domain/model/token-pair";
+import { AuthenticatedUser } from "src/shared/auth/authenticated-user";
 
 describe("MediaController", () => {
   it("delegates to the use-case with the current user as uploader", async () => {

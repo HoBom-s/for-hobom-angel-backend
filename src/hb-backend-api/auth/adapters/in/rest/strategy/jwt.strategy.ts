@@ -3,7 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { PassportStrategy } from "@nestjs/passport";
 import { Request } from "express";
 import { ExtractJwt, Strategy } from "passport-jwt";
-import { AuthenticatedUser } from "src/hb-backend-api/auth/domain/model/token-pair";
+import { AuthenticatedUser } from "src/shared/auth/authenticated-user";
 import { TokenPayload } from "src/hb-backend-api/auth/domain/model/token-payload";
 
 /**

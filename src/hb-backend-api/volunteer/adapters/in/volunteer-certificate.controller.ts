@@ -6,9 +6,9 @@ import {
 } from "src/shared/response/api-envelope.decorator";
 import { EndPointPrefixConstant } from "src/shared/constants/endpoint-prefix.constant";
 import { DIToken } from "src/shared/di/token.di";
-import { CurrentUser } from "src/hb-backend-api/auth/adapters/in/rest/decorator/current-user.decorator";
-import { JwtAuthGuard } from "src/hb-backend-api/auth/adapters/in/rest/guard/jwt-auth.guard";
-import { AuthenticatedUser } from "src/hb-backend-api/auth/domain/model/token-pair";
+import { CurrentUser } from "src/shared/auth/current-user.decorator";
+import { JwtAuthGuard } from "src/shared/auth/jwt-auth.guard";
+import { AuthenticatedUser } from "src/shared/auth/authenticated-user";
 import { IssueVolunteerCertificateUseCase } from "src/hb-backend-api/volunteer/domain/ports/in/issue-volunteer-certificate.use-case";
 import { GetMyCertificatesUseCase } from "src/hb-backend-api/volunteer/domain/ports/in/get-my-certificates.use-case";
 import { VolunteerCertificateResponse } from "src/hb-backend-api/volunteer/adapters/in/dto/volunteer-certificate.response";
