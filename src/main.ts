@@ -38,18 +38,22 @@ async function bootstrap(): Promise<void> {
     new GlobalExceptionFilter(app.get(DiscordWebhookService)),
   );
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle("HoBom Angel Backend")
-    .setDescription("HoBom Angel Universe API")
-    .setVersion("0.1.0")
-    .addCookieAuth("accessToken")
-    .addBearerAuth()
-    .build();
-  SwaggerModule.setup(
-    "api-docs",
-    app,
-    SwaggerModule.createDocument(app, swaggerConfig),
-  );
+  // API docs are a development/staging aid — never exposed in production, where
+  // they would leak the full API surface (routes, DTO shapes) to anyone.
+  if (process.env.NODE_ENV !== "production") {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle("HoBom Angel Backend")
+      .setDescription("HoBom Angel Universe API")
+      .setVersion("0.1.0")
+      .addCookieAuth("accessToken")
+      .addBearerAuth()
+      .build();
+    SwaggerModule.setup(
+      "api-docs",
+      app,
+      SwaggerModule.createDocument(app, swaggerConfig),
+    );
+  }
 
   // Drives the ordered shutdown (onModuleDestroy → onApplicationShutdown),
   // which closes the HTTP server + microservices, the Mongo connection, and

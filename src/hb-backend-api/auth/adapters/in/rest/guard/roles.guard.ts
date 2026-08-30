@@ -37,15 +37,15 @@ export class RolesGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<Request>();
     const principal = request.user;
     if (!principal) {
-      throw new ForbiddenException("Not authenticated");
+      throw new ForbiddenException("인증이 필요해요.");
     }
 
     const user = await this.userQueryPort.findByNickname(principal.nickname);
     if (!user || !user.isActive()) {
-      throw new ForbiddenException("Inactive or unknown user");
+      throw new ForbiddenException("비활성 상태이거나 알 수 없는 회원이에요.");
     }
     if (!user.hasAnyRole(required)) {
-      throw new ForbiddenException("Insufficient role");
+      throw new ForbiddenException("권한이 부족해요.");
     }
     return true;
   }
