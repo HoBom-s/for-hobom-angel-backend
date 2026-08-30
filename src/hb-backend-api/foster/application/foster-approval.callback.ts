@@ -86,7 +86,10 @@ export class FosterApprovalCallback implements ApprovalCallback {
       recipientId: application.getApplicantId.toString(),
       type: NotificationType.FOSTER_APPROVED,
       subjectRef: application.getId.toString(),
-      context: { shelterId: application.getShelterId.toString() },
+      context: {
+        shelterId: application.getShelterId.toString(),
+        animalId: animal.getId.toString(),
+      },
     });
   }
 

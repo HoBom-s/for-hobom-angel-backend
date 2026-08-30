@@ -29,6 +29,7 @@ import { Email } from "src/hb-backend-api/user/domain/model/vo/email.vo";
 import { Nickname } from "src/hb-backend-api/user/domain/model/vo/nickname.vo";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-query.port";
+import { NotificationType } from "src/hb-backend-api/notification/domain/enums/notification-type.enum";
 
 const shelterId = ShelterId.generate();
 const applicantId = UserId.generate();
@@ -79,6 +80,7 @@ describe("AdoptionApprovalCallback", () => {
   let animalPersistencePort: jest.Mocked<AnimalPersistencePort>;
   let outboxPersistencePort: jest.Mocked<OutboxPersistencePort>;
   let userQueryPort: jest.Mocked<UserQueryPort>;
+  let notifyUseCase: { notify: jest.Mock };
   let callback: AdoptionApprovalCallback;
 
   const request = (over: { status?: ApprovalStatus; reason?: string } = {}) =>
@@ -138,6 +140,7 @@ describe("AdoptionApprovalCallback", () => {
       countCreatedBetween: jest.fn(),
       findWithdrawnToPurge: jest.fn(),
     };
+    notifyUseCase = { notify: jest.fn() };
     callback = new AdoptionApprovalCallback(
       applicationQueryPort,
       applicationPersistencePort,
@@ -145,7 +148,7 @@ describe("AdoptionApprovalCallback", () => {
       animalPersistencePort,
       outboxPersistencePort,
       userQueryPort,
-      { notify: jest.fn() },
+      notifyUseCase,
     );
   });
 
@@ -194,6 +197,20 @@ describe("AdoptionApprovalCallback", () => {
       const emitted = outboxPersistencePort.save.mock.calls[0][0];
       expect(emitted.eventType).toBe(EventType.ADOPTION_APPROVED);
       expect(emitted.payload.recipientUserId).toBe(applicantId.toString());
+    });
+
+    it("notifies the applicant with shelter + animal deep-link context", async () => {
+      await callback.onApproved(request());
+
+      expect(notifyUseCase.notify).toHaveBeenCalledWith({
+        recipientId: applicantId.toString(),
+        type: NotificationType.ADOPTION_APPROVED,
+        subjectRef: application.getId.toString(),
+        context: {
+          shelterId: shelterId.toString(),
+          animalId: animal.getId.toString(),
+        },
+      });
     });
   });
 

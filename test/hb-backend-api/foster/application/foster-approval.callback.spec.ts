@@ -29,6 +29,7 @@ import { Email } from "src/hb-backend-api/user/domain/model/vo/email.vo";
 import { Nickname } from "src/hb-backend-api/user/domain/model/vo/nickname.vo";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-query.port";
+import { NotificationType } from "src/hb-backend-api/notification/domain/enums/notification-type.enum";
 
 const shelterId = ShelterId.generate();
 const applicantId = UserId.generate();
@@ -79,6 +80,7 @@ describe("FosterApprovalCallback", () => {
   let animalPersistencePort: jest.Mocked<AnimalPersistencePort>;
   let outboxPersistencePort: jest.Mocked<OutboxPersistencePort>;
   let userQueryPort: jest.Mocked<UserQueryPort>;
+  let notifyUseCase: { notify: jest.Mock };
   let callback: FosterApprovalCallback;
 
   const request = (over: { status?: ApprovalStatus; reason?: string } = {}) =>
@@ -137,6 +139,7 @@ describe("FosterApprovalCallback", () => {
       countCreatedBetween: jest.fn(),
       findWithdrawnToPurge: jest.fn(),
     };
+    notifyUseCase = { notify: jest.fn() };
     callback = new FosterApprovalCallback(
       applicationQueryPort,
       applicationPersistencePort,
@@ -144,7 +147,7 @@ describe("FosterApprovalCallback", () => {
       animalPersistencePort,
       outboxPersistencePort,
       userQueryPort,
-      { notify: jest.fn() },
+      notifyUseCase,
     );
   });
 
@@ -189,6 +192,20 @@ describe("FosterApprovalCallback", () => {
     expect(outboxPersistencePort.save.mock.calls[0][0].eventType).toBe(
       EventType.FOSTER_APPROVED,
     );
+  });
+
+  it("notifies the applicant with shelter + animal deep-link context", async () => {
+    await callback.onApproved(request());
+
+    expect(notifyUseCase.notify).toHaveBeenCalledWith({
+      recipientId: applicantId.toString(),
+      type: NotificationType.FOSTER_APPROVED,
+      subjectRef: application.getId.toString(),
+      context: {
+        shelterId: shelterId.toString(),
+        animalId: animal.getId.toString(),
+      },
+    });
   });
 
   it("rejects the application and releases the animal, emitting nothing", async () => {

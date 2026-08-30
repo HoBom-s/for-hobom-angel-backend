@@ -554,6 +554,9 @@ describe("REST API (e2e)", () => {
     expect(mine).toHaveLength(1);
     expect(mine[0].type).toBe("ADOPTION_APPROVED");
     expect(mine[0].subjectRef).toBe(applicationId);
+    // The approval notification carries the deep-link context (shelter + animal),
+    // matching its rejection sibling so the FE can route from either.
+    expect(mine[0].context).toMatchObject({ shelterId, animalId });
     expect(mine[0].read).toBe(false);
     const notificationId = mine[0].id;
 
