@@ -347,6 +347,9 @@ class MessagingModuleToken extends TokenRegistry {
   public readonly ListConversationMessagesUseCase = this.register(
     "messaging.list-conversation-messages.use-case",
   );
+  public readonly GetLatestMessagesUseCase = this.register(
+    "messaging.get-latest-messages.use-case",
+  );
   public readonly MessagePersistencePort = this.register(
     "messaging.persistence.port",
   );

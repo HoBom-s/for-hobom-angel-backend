@@ -32,7 +32,11 @@ describe("REST API (e2e)", () => {
   let userModel: Model<UserEntity>;
 
   let seq = 0;
-  const seedUser = async (): Promise<{ id: string; token: string }> => {
+  const seedUser = async (): Promise<{
+    id: string;
+    token: string;
+    nickname: string;
+  }> => {
     const id = new Types.ObjectId();
     seq += 1;
     const nickname = `bom-${seq}`;
@@ -50,7 +54,7 @@ describe("REST API (e2e)", () => {
       version: 0,
     });
     const token = jwt.sign({ sub: nickname, uid: id.toHexString() });
-    return { id: id.toHexString(), token };
+    return { id: id.toHexString(), token, nickname };
   };
 
   // A platform operator (SYSTEM_ADMIN) — the decider for SHELTER_VERIFICATION.
@@ -782,11 +786,12 @@ describe("REST API (e2e)", () => {
       admin.token,
       `inquiry-${Date.now()}`,
     );
+    const animalName = `문의-${Date.now()}`;
     const animalRes = await request(app.getHttpServer())
       .post(`${PREFIX}/shelters/${shelterId}/animals`)
       .set(auth(admin.token))
       .send({
-        name: `문의-${Date.now()}`,
+        name: animalName,
         species: AnimalSpecies.DOG,
         traits: { sex: AnimalSex.FEMALE, size: AnimalSize.SMALL },
         health: { neutered: true, vaccinated: true },
@@ -821,27 +826,36 @@ describe("REST API (e2e)", () => {
       .expect(201);
     expect(again.body.items.inquiryId).toBe(inquiryId);
 
-    // The inquirer sees it in their list; the shelter sees it in its inbox.
+    // The inquirer sees it in their list, enriched with the shelter name, the
+    // animal name, and a preview of the last message they sent.
     const mine = await request(app.getHttpServer())
       .get(`${PREFIX}/me/inquiries`)
       .set(auth(inquirer.token))
       .expect(200);
-    expect(
-      mine.body.items.items.some(
-        (i: { inquiryId: string }) => i.inquiryId === inquiryId,
-      ),
-    ).toBe(true);
+    const myRow = mine.body.items.items.find(
+      (i: { inquiryId: string }) => i.inquiryId === inquiryId,
+    );
+    expect(myRow).toBeDefined();
+    expect(myRow.animalName).toBe(animalName);
+    expect(myRow.counterpartName).toBeTruthy();
+    expect(myRow.lastMessage).toMatchObject({
+      body: "한 번 더 여쭤봐요",
+      senderRole: "APPLICANT",
+    });
 
+    // The shelter sees it in its inbox, enriched with the inquirer's nickname.
     const inbox = await request(app.getHttpServer())
       .get(`${PREFIX}/shelters/${shelterId}/inquiries`)
       .set(auth(admin.token))
       .expect(200);
-    expect(
-      inbox.body.items.items.some(
-        (i: { inquiryId: string; animalId: string }) =>
-          i.inquiryId === inquiryId && i.animalId === animalId,
-      ),
-    ).toBe(true);
+    const inboxRow = inbox.body.items.items.find(
+      (i: { inquiryId: string }) => i.inquiryId === inquiryId,
+    );
+    expect(inboxRow).toBeDefined();
+    expect(inboxRow.animalId).toBe(animalId);
+    expect(inboxRow.animalName).toBe(animalName);
+    expect(inboxRow.counterpartName).toBe(inquirer.nickname);
+    expect(inboxRow.lastMessage.body).toBe("한 번 더 여쭤봐요");
 
     // A non-staff outsider cannot read the shelter's inbox.
     const outsider = await seedUser();

@@ -15,6 +15,7 @@ import { MessageSubjectResolverRegistry } from "src/hb-backend-api/messaging/app
 import { ConversationAccessService } from "src/hb-backend-api/messaging/application/conversation-access.service";
 import { PostMessageService } from "src/hb-backend-api/messaging/application/use-cases/post-message.service";
 import { ListConversationMessagesService } from "src/hb-backend-api/messaging/application/use-cases/list-conversation-messages.service";
+import { GetLatestMessagesService } from "src/hb-backend-api/messaging/application/use-cases/get-latest-messages.service";
 import { MessageController } from "src/hb-backend-api/messaging/adapters/in/message.controller";
 
 /**
@@ -46,6 +47,10 @@ import { MessageController } from "src/hb-backend-api/messaging/adapters/in/mess
       useClass: ListConversationMessagesService,
     },
     {
+      provide: DIToken.MessagingModule.GetLatestMessagesUseCase,
+      useClass: GetLatestMessagesService,
+    },
+    {
       provide: DIToken.MessagingModule.MessageRepository,
       useClass: MessageRepositoryImpl,
     },
@@ -61,6 +66,7 @@ import { MessageController } from "src/hb-backend-api/messaging/adapters/in/mess
   exports: [
     MessageSubjectResolverRegistry,
     DIToken.MessagingModule.PostMessageUseCase,
+    DIToken.MessagingModule.GetLatestMessagesUseCase,
   ],
 })
 export class MessagingModule implements OnModuleInit {

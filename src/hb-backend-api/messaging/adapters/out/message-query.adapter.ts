@@ -20,4 +20,15 @@ export class MessageQueryAdapter implements MessageQueryPort {
     const docs = await this.repository.findBySubject(subjectType, subjectRef);
     return docs.map(toDomain);
   }
+
+  public async findLatestBySubjects(
+    subjectType: MessageSubjectType,
+    subjectRefs: string[],
+  ): Promise<Message[]> {
+    const docs = await this.repository.findLatestBySubjects(
+      subjectType,
+      subjectRefs,
+    );
+    return docs.map(toDomain);
+  }
 }
