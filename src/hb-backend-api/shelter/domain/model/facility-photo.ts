@@ -1,4 +1,5 @@
 import { FacilityPhotoKind } from "src/hb-backend-api/shelter/domain/enums/facility-photo-kind.enum";
+import { InvalidInputError } from "src/shared/exception/domain-exception";
 
 /**
  * A public shelter facility photo (exterior/interior/…). Profile content that
@@ -21,7 +22,7 @@ export class FacilityPhoto {
     caption?: string | null;
   }): FacilityPhoto {
     if (!params.objectKey?.trim()) {
-      throw new Error("사진 object key가 필요해요.");
+      throw new InvalidInputError("사진 object key가 필요해요.");
     }
     return new FacilityPhoto(
       params.objectKey.trim(),

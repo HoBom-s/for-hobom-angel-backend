@@ -3,6 +3,10 @@ import { VolunteerEventStatus } from "src/hb-backend-api/volunteer/domain/enums/
 import { VolunteerType } from "src/hb-backend-api/volunteer/domain/enums/volunteer-type.enum";
 import { VolunteerEventId } from "src/hb-backend-api/volunteer/domain/model/vo/volunteer-event-id.vo";
 import { TransportDetails } from "src/hb-backend-api/volunteer/domain/model/vo/transport-details";
+import {
+  BusinessRuleViolationError,
+  InvalidInputError,
+} from "src/shared/exception/domain-exception";
 
 /**
  * Volunteer event aggregate — a shelter's scheduled volunteering with a capped
@@ -38,17 +42,17 @@ export class VolunteerEvent {
     transport?: TransportDetails | null;
   }): VolunteerEvent {
     if (!params.title?.trim()) {
-      throw new Error("봉사 제목이 필요해요.");
+      throw new InvalidInputError("봉사 제목이 필요해요.");
     }
     if (!Number.isInteger(params.capacity) || params.capacity < 1) {
-      throw new Error("모집 인원은 1명 이상이어야 해요.");
+      throw new InvalidInputError("모집 인원은 1명 이상이어야 해요.");
     }
     if (
       !(params.startAt instanceof Date) ||
       !(params.endAt instanceof Date) ||
       params.startAt.getTime() >= params.endAt.getTime()
     ) {
-      throw new Error("봉사 시작/종료 시간이 올바르지 않아요.");
+      throw new InvalidInputError("봉사 시작/종료 시간이 올바르지 않아요.");
     }
     const type = params.type ?? VolunteerType.GENERAL;
     const transport = params.transport ?? null;
@@ -105,10 +109,12 @@ export class VolunteerEvent {
     transport: TransportDetails | null,
   ): void {
     if (type === VolunteerType.OVERSEAS && !transport) {
-      throw new Error("해외 이동봉사는 출발/도착·항공 정보가 필요해요.");
+      throw new InvalidInputError(
+        "해외 이동봉사는 출발/도착·항공 정보가 필요해요.",
+      );
     }
     if (type === VolunteerType.GENERAL && transport) {
-      throw new Error("일반 봉사에는 이동 정보를 넣을 수 없어요.");
+      throw new InvalidInputError("일반 봉사에는 이동 정보를 넣을 수 없어요.");
     }
   }
 
@@ -116,13 +122,13 @@ export class VolunteerEvent {
   /** Hold a slot for a new signup; enforces open/timing/capacity. */
   public reserveSlot(now: Date): void {
     if (this.status !== VolunteerEventStatus.OPEN) {
-      throw new Error("모집 중인 봉사가 아니에요.");
+      throw new BusinessRuleViolationError("모집 중인 봉사가 아니에요.");
     }
     if (now.getTime() >= this.startAt.getTime()) {
-      throw new Error("이미 시작된 봉사예요.");
+      throw new BusinessRuleViolationError("이미 시작된 봉사예요.");
     }
     if (this.signedUpCount >= this.capacity) {
-      throw new Error("모집 인원이 찼어요.");
+      throw new BusinessRuleViolationError("모집 인원이 찼어요.");
     }
     this.signedUpCount += 1;
   }
@@ -151,7 +157,7 @@ export class VolunteerEvent {
   // ── profile edits ───────────────────────────────────────────────
   public updateDetails(params: { title: string; description?: string }): void {
     if (!params.title?.trim()) {
-      throw new Error("봉사 제목이 필요해요.");
+      throw new InvalidInputError("봉사 제목이 필요해요.");
     }
     this.title = params.title.trim();
     this.description = params.description?.trim() ?? "";
@@ -176,7 +182,9 @@ export class VolunteerEvent {
 
   private assertStatus(allowed: VolunteerEventStatus[], action: string): void {
     if (!allowed.includes(this.status)) {
-      throw new Error(`현재 상태(${this.status})에서는 ${action}할 수 없어요.`);
+      throw new BusinessRuleViolationError(
+        `현재 상태(${this.status})에서는 ${action}할 수 없어요.`,
+      );
     }
   }
 

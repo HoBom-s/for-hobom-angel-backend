@@ -5,6 +5,10 @@ import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { FosterApplicationStatus } from "src/hb-backend-api/foster/domain/enums/foster-application-status.enum";
 import { FosterEndReason } from "src/hb-backend-api/foster/domain/enums/foster-end-reason.enum";
 import { FosterApplicationId } from "src/hb-backend-api/foster/domain/model/vo/foster-application-id.vo";
+import {
+  BusinessRuleViolationError,
+  InvalidInputError,
+} from "src/shared/exception/domain-exception";
 
 /**
  * A member's foster (임시보호) request for one animal. Like an adoption
@@ -43,7 +47,7 @@ export class FosterApplication {
       (!(params.plannedEndDate instanceof Date) ||
         isNaN(params.plannedEndDate.getTime()))
     ) {
-      throw new Error("임시보호 종료 예정일이 올바르지 않아요.");
+      throw new InvalidInputError("임시보호 종료 예정일이 올바르지 않아요.");
     }
     return new FosterApplication(
       FosterApplicationId.generate(),
@@ -102,7 +106,7 @@ export class FosterApplication {
   public reject(reason: string): void {
     this.assertPending("반려");
     if (!reason?.trim()) {
-      throw new Error("반려 사유가 필요해요.");
+      throw new InvalidInputError("반려 사유가 필요해요.");
     }
     this.status = FosterApplicationStatus.REJECTED;
     this.decidedReason = reason.trim();
@@ -116,7 +120,7 @@ export class FosterApplication {
   /** End an active foster (expiry or early termination). */
   public terminate(reason: FosterEndReason, at: Date): void {
     if (!this.isActiveFoster()) {
-      throw new Error("진행 중인 임시보호가 아니에요.");
+      throw new BusinessRuleViolationError("진행 중인 임시보호가 아니에요.");
     }
     this.endedAt = at;
     this.endReason = reason;
@@ -125,7 +129,7 @@ export class FosterApplication {
   /** The fosterer adopts the animal — ends the foster as a successful outcome. */
   public convertToAdoption(at: Date): void {
     if (!this.isActiveFoster()) {
-      throw new Error("진행 중인 임시보호가 아니에요.");
+      throw new BusinessRuleViolationError("진행 중인 임시보호가 아니에요.");
     }
     this.endedAt = at;
     this.endReason = FosterEndReason.CONVERTED_TO_ADOPTION;
@@ -144,7 +148,7 @@ export class FosterApplication {
 
   private assertPending(action: string): void {
     if (this.status !== FosterApplicationStatus.PENDING) {
-      throw new Error(
+      throw new BusinessRuleViolationError(
         `이미 처리된 신청이에요(${this.status}). ${action}할 수 없어요.`,
       );
     }

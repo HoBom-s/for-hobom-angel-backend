@@ -1,3 +1,5 @@
+import { InvalidInputError } from "src/shared/exception/domain-exception";
+
 /**
  * Korean mobile number. Stored normalized to digits (`01012345678`); the raw
  * value is PII and encrypted at rest — never exposed unmasked without audit.
@@ -12,7 +14,7 @@ export class PhoneNumber {
   public static of(value: string): PhoneNumber {
     const digits = (value ?? "").replace(/\D/g, "");
     if (!PhoneNumber.PATTERN.test(digits)) {
-      throw new Error("올바르지 않은 휴대폰 번호 형식이에요.");
+      throw new InvalidInputError("올바르지 않은 휴대폰 번호 형식이에요.");
     }
     return new PhoneNumber(digits);
   }

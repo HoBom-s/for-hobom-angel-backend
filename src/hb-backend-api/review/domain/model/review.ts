@@ -3,6 +3,7 @@ import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { PlacementType } from "src/hb-backend-api/review/domain/enums/placement-type.enum";
 import { Rating } from "src/hb-backend-api/review/domain/model/vo/rating.vo";
 import { ReviewId } from "src/hb-backend-api/review/domain/model/vo/review-id.vo";
+import { InvalidInputError } from "src/shared/exception/domain-exception";
 
 const MAX_BODY_LENGTH = 2000;
 
@@ -84,10 +85,12 @@ export class Review {
   private static cleanBody(body: string): string {
     const trimmed = body?.trim() ?? "";
     if (!trimmed) {
-      throw new Error("후기 내용을 입력해 주세요.");
+      throw new InvalidInputError("후기 내용을 입력해 주세요.");
     }
     if (trimmed.length > MAX_BODY_LENGTH) {
-      throw new Error(`후기는 ${MAX_BODY_LENGTH}자 이하로 작성해 주세요.`);
+      throw new InvalidInputError(
+        `후기는 ${MAX_BODY_LENGTH}자 이하로 작성해 주세요.`,
+      );
     }
     return trimmed;
   }

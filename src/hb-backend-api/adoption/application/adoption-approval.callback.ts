@@ -18,6 +18,7 @@ import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-query.port";
 import { NotificationType } from "src/hb-backend-api/notification/domain/enums/notification-type.enum";
 import { NotifyUseCase } from "src/hb-backend-api/notification/domain/ports/in/notify.use-case";
+import { EntityNotFoundError } from "src/shared/exception/domain-exception";
 
 /**
  * Completes an ADOPTION decision. On approval it approves the application and
@@ -122,7 +123,7 @@ export class AdoptionApprovalCallback implements ApprovalCallback {
       ApplicationId.fromString(request.getSubjectRef),
     );
     if (!application) {
-      throw new Error("입양 신청을 찾을 수 없어요.");
+      throw new EntityNotFoundError("입양 신청을 찾을 수 없어요.");
     }
     return application;
   }
@@ -136,7 +137,7 @@ export class AdoptionApprovalCallback implements ApprovalCallback {
       AnimalId.fromString(animalId),
     );
     if (!animal) {
-      throw new Error("입양 대상 동물을 찾을 수 없어요.");
+      throw new EntityNotFoundError("입양 대상 동물을 찾을 수 없어요.");
     }
     return animal;
   }

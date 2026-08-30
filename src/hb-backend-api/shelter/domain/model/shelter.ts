@@ -10,6 +10,10 @@ import { BusinessNumber } from "src/hb-backend-api/shelter/domain/model/vo/busin
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { ShelterRegistrationNumber } from "src/hb-backend-api/shelter/domain/model/vo/shelter-registration-number.vo";
 import { ShelterSlug } from "src/hb-backend-api/shelter/domain/model/vo/shelter-slug.vo";
+import {
+  BusinessRuleViolationError,
+  InvalidInputError,
+} from "src/shared/exception/domain-exception";
 
 /**
  * Shelter aggregate — a tenant, and the root of the trust chain. It can only
@@ -54,16 +58,16 @@ export class Shelter {
     verificationSignals?: VerificationSignals | null;
   }): Shelter {
     if (!params.name?.trim()) {
-      throw new Error("보호소 이름이 필요해요.");
+      throw new InvalidInputError("보호소 이름이 필요해요.");
     }
     if (!params.registrationNumber && !params.businessNumber) {
-      throw new Error(
+      throw new InvalidInputError(
         "조직 증빙(보호센터등록번호 또는 사업자/고유번호)이 필요해요.",
       );
     }
     const photos = params.facilityPhotos ?? [];
     if (photos.length > Shelter.MAX_FACILITY_PHOTOS) {
-      throw new Error(
+      throw new InvalidInputError(
         `시설 사진은 최대 ${Shelter.MAX_FACILITY_PHOTOS}장까지예요.`,
       );
     }
@@ -134,7 +138,7 @@ export class Shelter {
   public reject(reason: string): void {
     this.assertStatus(ShelterStatus.PENDING_VERIFICATION, "반려");
     if (!reason?.trim()) {
-      throw new Error("반려 사유가 필요해요.");
+      throw new InvalidInputError("반려 사유가 필요해요.");
     }
     this.status = ShelterStatus.REJECTED;
     this.rejectionReason = reason.trim();
@@ -158,10 +162,12 @@ export class Shelter {
 
   public addRepresentative(userId: UserId): void {
     if (!this.isVerified()) {
-      throw new Error("검증된 보호소만 대표를 추가할 수 있어요.");
+      throw new BusinessRuleViolationError(
+        "검증된 보호소만 대표를 추가할 수 있어요.",
+      );
     }
     if (this.representatives.some((r) => r.equals(userId))) {
-      throw new Error("이미 대표로 등록된 사용자예요.");
+      throw new BusinessRuleViolationError("이미 대표로 등록된 사용자예요.");
     }
     this.representatives.push(userId);
   }
@@ -169,12 +175,12 @@ export class Shelter {
   // ── facility photos (profile content) ───────────────────────────
   public addFacilityPhoto(photo: FacilityPhoto): void {
     if (this.facilityPhotos.length >= Shelter.MAX_FACILITY_PHOTOS) {
-      throw new Error(
+      throw new InvalidInputError(
         `시설 사진은 최대 ${Shelter.MAX_FACILITY_PHOTOS}장까지예요.`,
       );
     }
     if (this.facilityPhotos.some((p) => p.hasKey(photo.getObjectKey))) {
-      throw new Error("이미 등록된 사진이에요.");
+      throw new BusinessRuleViolationError("이미 등록된 사진이에요.");
     }
     this.facilityPhotos.push(photo);
   }
@@ -235,7 +241,9 @@ export class Shelter {
 
   private assertStatus(expected: ShelterStatus, action: string): void {
     if (this.status !== expected) {
-      throw new Error(`현재 상태(${this.status})에서는 ${action}할 수 없어요.`);
+      throw new BusinessRuleViolationError(
+        `현재 상태(${this.status})에서는 ${action}할 수 없어요.`,
+      );
     }
   }
 

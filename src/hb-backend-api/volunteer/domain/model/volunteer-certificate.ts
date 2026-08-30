@@ -1,3 +1,5 @@
+import { BusinessRuleViolationError } from "src/shared/exception/domain-exception";
+
 /** One completed-participation line, snapshotted onto a certificate. */
 export interface CertificateItem {
   eventId: string;
@@ -34,7 +36,9 @@ export class VolunteerCertificate {
     now: Date;
   }): VolunteerCertificate {
     if (params.items.length === 0) {
-      throw new Error("완료된 봉사 참여가 없어 확인서를 발급할 수 없어요.");
+      throw new BusinessRuleViolationError(
+        "완료된 봉사 참여가 없어 확인서를 발급할 수 없어요.",
+      );
     }
     const totalMinutes = params.items.reduce((sum, i) => sum + i.minutes, 0);
     return new VolunteerCertificate(

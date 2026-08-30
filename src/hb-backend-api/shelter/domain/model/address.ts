@@ -1,4 +1,5 @@
 import { AddressVisibility } from "src/hb-backend-api/shelter/domain/enums/address-visibility.enum";
+import { InvalidInputError } from "src/shared/exception/domain-exception";
 
 export interface AddressPublicView {
   region: string;
@@ -34,10 +35,10 @@ export class Address {
     visibility: AddressVisibility;
   }): Address {
     if (!params.region?.trim()) {
-      throw new Error("지역(시/도)이 필요해요.");
+      throw new InvalidInputError("지역(시/도)이 필요해요.");
     }
     if (!params.roadAddress?.trim()) {
-      throw new Error("도로명 주소가 필요해요.");
+      throw new InvalidInputError("도로명 주소가 필요해요.");
     }
     return new Address(
       params.region.trim(),

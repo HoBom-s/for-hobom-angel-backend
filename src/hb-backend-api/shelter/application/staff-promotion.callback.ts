@@ -13,6 +13,7 @@ import { UserPersistencePort } from "src/hb-backend-api/user/domain/ports/out/us
 import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-query.port";
 import { NotificationType } from "src/hb-backend-api/notification/domain/enums/notification-type.enum";
 import { NotifyUseCase } from "src/hb-backend-api/notification/domain/ports/in/notify.use-case";
+import { EntityNotFoundError } from "src/shared/exception/domain-exception";
 
 /**
  * Completes a STAFF_PROMOTION decision. On approval it grants the candidate the
@@ -54,7 +55,7 @@ export class StaffPromotionCallback implements ApprovalCallback {
 
     const candidate = await this.userQueryPort.findById(candidateId);
     if (!candidate) {
-      throw new Error("승격 대상 회원을 찾을 수 없어요.");
+      throw new EntityNotFoundError("승격 대상 회원을 찾을 수 없어요.");
     }
     candidate.promoteToShelterStaff(shelterId);
     await this.userPersistencePort.save(candidate);

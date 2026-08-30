@@ -1,5 +1,6 @@
 import { ConsentStatus } from "src/hb-backend-api/consent/domain/enums/consent-status.enum";
 import { PolicyType } from "src/hb-backend-api/policy/domain/enums/policy-type.enum";
+import { BusinessRuleViolationError } from "src/shared/exception/domain-exception";
 
 /**
  * A user's standing consent to a policy type. Granting (or re-granting to a newer
@@ -64,7 +65,7 @@ export class Consent {
 
   public withdraw(now: Date): void {
     if (this.status !== ConsentStatus.GRANTED) {
-      throw new Error("동의한 내역이 없어요.");
+      throw new BusinessRuleViolationError("동의한 내역이 없어요.");
     }
     this.status = ConsentStatus.WITHDRAWN;
     this.withdrawnAt = now;

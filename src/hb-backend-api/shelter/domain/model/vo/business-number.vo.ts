@@ -1,3 +1,5 @@
+import { InvalidInputError } from "src/shared/exception/domain-exception";
+
 /**
  * Korean business / tax-exempt entity number (사업자등록번호 or 비영리 고유번호) —
  * 10 digits, stored normalized. Non-profit 고유번호 shares the 10-digit format, so
@@ -14,7 +16,7 @@ export class BusinessNumber {
   public static of(value: string): BusinessNumber {
     const digits = (value ?? "").replace(/\D/g, "");
     if (!BusinessNumber.PATTERN.test(digits)) {
-      throw new Error("사업자/고유번호는 10자리 숫자여야 해요.");
+      throw new InvalidInputError("사업자/고유번호는 10자리 숫자여야 해요.");
     }
     return new BusinessNumber(digits);
   }

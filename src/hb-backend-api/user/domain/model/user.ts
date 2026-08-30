@@ -1,4 +1,8 @@
 import { TenantScope } from "src/shared/tenant/tenant-scope";
+import {
+  BusinessRuleViolationError,
+  InvalidInputError,
+} from "src/shared/exception/domain-exception";
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { UserRole } from "src/hb-backend-api/user/domain/enums/user-role.enum";
 import { UserStatus } from "src/hb-backend-api/user/domain/enums/user-status.enum";
@@ -155,7 +159,7 @@ export class User {
         grant.matches(shelterId, UserRole.SHELTER_STAFF),
       )
     ) {
-      throw new Error("이미 해당 보호소의 스태프예요.");
+      throw new BusinessRuleViolationError("이미 해당 보호소의 스태프예요.");
     }
     this.shelterRoles.push(
       ShelterRoleGrant.of(shelterId, UserRole.SHELTER_STAFF),
@@ -169,7 +173,7 @@ export class User {
         grant.matches(shelterId, UserRole.SHELTER_ADMIN),
       )
     ) {
-      throw new Error("이미 해당 보호소의 관리자예요.");
+      throw new BusinessRuleViolationError("이미 해당 보호소의 관리자예요.");
     }
     this.shelterRoles.push(
       ShelterRoleGrant.of(shelterId, UserRole.SHELTER_ADMIN),
@@ -186,7 +190,7 @@ export class User {
       grant.matches(shelterId, UserRole.SHELTER_STAFF),
     );
     if (index === -1) {
-      throw new Error("해당 보호소의 스태프가 아니에요.");
+      throw new BusinessRuleViolationError("해당 보호소의 스태프가 아니에요.");
     }
     this.shelterRoles.splice(index, 1);
   }
@@ -208,10 +212,12 @@ export class User {
   /** Operator sanction: suspend an active member (blocks all actions). */
   public suspend(reason: string, at: Date): void {
     if (!reason?.trim()) {
-      throw new Error("제재 사유가 필요해요.");
+      throw new InvalidInputError("제재 사유가 필요해요.");
     }
     if (this.status !== UserStatus.ACTIVE) {
-      throw new Error("활성 상태의 회원만 제재할 수 있어요.");
+      throw new BusinessRuleViolationError(
+        "활성 상태의 회원만 제재할 수 있어요.",
+      );
     }
     this.status = UserStatus.SUSPENDED;
     this.suspendedAt = at;
@@ -221,7 +227,9 @@ export class User {
   /** Lift a sanction, returning the member to ACTIVE. */
   public reinstate(): void {
     if (this.status !== UserStatus.SUSPENDED) {
-      throw new Error("제재 중인 회원만 해제할 수 있어요.");
+      throw new BusinessRuleViolationError(
+        "제재 중인 회원만 해제할 수 있어요.",
+      );
     }
     this.status = UserStatus.ACTIVE;
     this.suspendedAt = null;
@@ -234,7 +242,9 @@ export class User {
 
   private assertActive(): void {
     if (!this.isActive()) {
-      throw new Error("활성 상태의 회원만 처리할 수 있어요.");
+      throw new BusinessRuleViolationError(
+        "활성 상태의 회원만 처리할 수 있어요.",
+      );
     }
   }
 

@@ -1,3 +1,5 @@
+import { InvalidInputError } from "src/shared/exception/domain-exception";
+
 /**
  * How and when the animal entered the shelter (입소일·구조 경위·공고번호). The
  * `noticeNumber` links to the public 유기동물 공고 (동물보호관리시스템); it's optional
@@ -21,7 +23,7 @@ export class IntakeRecord {
       !(params.intakeDate instanceof Date) ||
       isNaN(params.intakeDate.getTime())
     ) {
-      throw new Error("입소일이 올바르지 않아요.");
+      throw new InvalidInputError("입소일이 올바르지 않아요.");
     }
     return new IntakeRecord(
       params.intakeDate,

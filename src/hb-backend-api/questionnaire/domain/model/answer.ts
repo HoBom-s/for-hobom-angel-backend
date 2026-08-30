@@ -1,3 +1,5 @@
+import { InvalidInputError } from "src/shared/exception/domain-exception";
+
 /**
  * One applicant answer: the question it addresses and the chosen/entered values.
  * Values are always a string list — a boolean is ["true"], a single choice or
@@ -14,7 +16,7 @@ export class Answer {
 
   public static of(params: { questionId: string; values: string[] }): Answer {
     if (!params.questionId?.trim()) {
-      throw new Error("답변에 questionId가 필요해요.");
+      throw new InvalidInputError("답변에 questionId가 필요해요.");
     }
     return new Answer(
       params.questionId.trim(),
