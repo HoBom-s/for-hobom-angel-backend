@@ -1,4 +1,5 @@
 import { AnimalId } from "src/hb-backend-api/animal/domain/model/vo/animal-id.vo";
+import { InvalidInputError } from "src/shared/exception/domain-exception";
 
 /**
  * The extra logistics an OVERSEAS relocation ("이동봉사") carries: where the
@@ -31,16 +32,16 @@ export class TransportDetails {
     const departure = params.departure?.trim();
     const arrival = params.arrival?.trim();
     if (!departure) {
-      throw new Error("출발지가 필요해요.");
+      throw new InvalidInputError("출발지가 필요해요.");
     }
     if (!arrival) {
-      throw new Error("도착지가 필요해요.");
+      throw new InvalidInputError("도착지가 필요해요.");
     }
     if (
       !(params.flightAt instanceof Date) ||
       Number.isNaN(params.flightAt.getTime())
     ) {
-      throw new Error("항공편 시각이 올바르지 않아요.");
+      throw new InvalidInputError("항공편 시각이 올바르지 않아요.");
     }
     return new TransportDetails(
       departure,

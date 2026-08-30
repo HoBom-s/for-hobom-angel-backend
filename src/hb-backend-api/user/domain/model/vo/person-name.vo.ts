@@ -1,3 +1,5 @@
+import { InvalidInputError } from "src/shared/exception/domain-exception";
+
 /**
  * Legal real name. PII — encrypted at rest, exposed only masked (or unmasked via
  * an audited path). Present only in the registration write-model, never in the
@@ -11,7 +13,7 @@ export class PersonName {
   public static of(value: string): PersonName {
     const trimmed = value?.trim() ?? "";
     if (trimmed.length < 1 || trimmed.length > 50) {
-      throw new Error("실명은 1~50자여야 해요.");
+      throw new InvalidInputError("실명은 1~50자여야 해요.");
     }
     return new PersonName(trimmed);
   }

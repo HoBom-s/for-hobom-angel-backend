@@ -1,4 +1,5 @@
 import { QuestionType } from "src/hb-backend-api/questionnaire/domain/enums/question-type.enum";
+import { InvalidInputError } from "src/shared/exception/domain-exception";
 
 /**
  * One question a shelter defines. Immutable; it also knows how to validate an
@@ -25,17 +26,17 @@ export class Question {
     required?: boolean;
   }): Question {
     if (!params.id?.trim()) {
-      throw new Error("질문 id가 필요해요.");
+      throw new InvalidInputError("질문 id가 필요해요.");
     }
     if (!params.prompt?.trim()) {
-      throw new Error("질문 내용이 필요해요.");
+      throw new InvalidInputError("질문 내용이 필요해요.");
     }
     const options = (params.options ?? []).map((o) => o.trim()).filter(Boolean);
     const isChoice =
       params.type === QuestionType.SINGLE_CHOICE ||
       params.type === QuestionType.MULTI_CHOICE;
     if (isChoice && options.length === 0) {
-      throw new Error("선택형 질문에는 선택지가 필요해요.");
+      throw new InvalidInputError("선택형 질문에는 선택지가 필요해요.");
     }
     return new Question(
       params.id.trim(),
@@ -50,29 +51,37 @@ export class Question {
   public validateAnswer(values: string[]): void {
     if (values.length === 0) {
       if (this.required) {
-        throw new Error(`필수 질문에 답해야 해요: ${this.prompt}`);
+        throw new InvalidInputError(`필수 질문에 답해야 해요: ${this.prompt}`);
       }
       return;
     }
     switch (this.type) {
       case QuestionType.TEXT:
         if (values.length !== 1) {
-          throw new Error(`주관식 답변은 하나여야 해요: ${this.prompt}`);
+          throw new InvalidInputError(
+            `주관식 답변은 하나여야 해요: ${this.prompt}`,
+          );
         }
         break;
       case QuestionType.BOOLEAN:
         if (values.length !== 1 || !["true", "false"].includes(values[0])) {
-          throw new Error(`예/아니오로 답해야 해요: ${this.prompt}`);
+          throw new InvalidInputError(
+            `예/아니오로 답해야 해요: ${this.prompt}`,
+          );
         }
         break;
       case QuestionType.SINGLE_CHOICE:
         if (values.length !== 1 || !this.options.includes(values[0])) {
-          throw new Error(`선택지 중 하나를 골라야 해요: ${this.prompt}`);
+          throw new InvalidInputError(
+            `선택지 중 하나를 골라야 해요: ${this.prompt}`,
+          );
         }
         break;
       case QuestionType.MULTI_CHOICE:
         if (!values.every((v) => this.options.includes(v))) {
-          throw new Error(`선택지에 없는 값이 있어요: ${this.prompt}`);
+          throw new InvalidInputError(
+            `선택지에 없는 값이 있어요: ${this.prompt}`,
+          );
         }
         break;
     }

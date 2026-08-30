@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { UploadPurpose } from "src/hb-backend-api/media/domain/enums/upload-purpose.enum";
+import { InvalidInputError } from "src/shared/exception/domain-exception";
 
 /** Allowed upload MIME types → file extension. Anything else is rejected. */
 const ALLOWED_IMAGE_TYPES: Record<string, string> = {
@@ -29,7 +30,9 @@ export function buildObjectKey(
 ): string {
   const ext = ALLOWED_IMAGE_TYPES[contentType];
   if (!ext) {
-    throw new Error(`허용되지 않은 이미지 형식이에요: ${contentType}`);
+    throw new InvalidInputError(
+      `허용되지 않은 이미지 형식이에요: ${contentType}`,
+    );
   }
   return `${PREFIX_BY_PURPOSE[purpose]}/${randomUUID()}.${ext}`;
 }

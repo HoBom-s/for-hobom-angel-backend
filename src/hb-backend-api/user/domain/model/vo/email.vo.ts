@@ -1,3 +1,5 @@
+import { InvalidInputError } from "src/shared/exception/domain-exception";
+
 /** Email address. Normalized to lowercase; format-validated at construction. */
 export class Email {
   private static readonly PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -9,7 +11,7 @@ export class Email {
   public static of(value: string): Email {
     const normalized = value?.trim().toLowerCase() ?? "";
     if (!Email.PATTERN.test(normalized)) {
-      throw new Error(`올바르지 않은 이메일 형식이에요. ${value}`);
+      throw new InvalidInputError(`올바르지 않은 이메일 형식이에요. ${value}`);
     }
     return new Email(normalized);
   }

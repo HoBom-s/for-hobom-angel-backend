@@ -1,3 +1,5 @@
+import { InvalidInputError } from "src/shared/exception/domain-exception";
+
 /**
  * A public animal photo. Stored as an object key only — the bytes live in object
  * storage, uploaded and EXIF-stripped by the separate image server. Immutable.
@@ -15,7 +17,7 @@ export class AnimalPhoto {
     caption?: string | null;
   }): AnimalPhoto {
     if (!params.objectKey?.trim()) {
-      throw new Error("사진 object key가 필요해요.");
+      throw new InvalidInputError("사진 object key가 필요해요.");
     }
     return new AnimalPhoto(
       params.objectKey.trim(),

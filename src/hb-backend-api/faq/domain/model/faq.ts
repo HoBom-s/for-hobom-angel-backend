@@ -1,6 +1,7 @@
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { FaqId } from "src/hb-backend-api/faq/domain/model/vo/faq-id.vo";
+import { InvalidInputError } from "src/shared/exception/domain-exception";
 
 const MAX_QUESTION_LENGTH = 200;
 const MAX_ANSWER_LENGTH = 5000;
@@ -76,10 +77,12 @@ export class Faq {
   private static cleanQuestion(question: string): string {
     const trimmed = question?.trim() ?? "";
     if (!trimmed) {
-      throw new Error("질문을 입력해 주세요.");
+      throw new InvalidInputError("질문을 입력해 주세요.");
     }
     if (trimmed.length > MAX_QUESTION_LENGTH) {
-      throw new Error(`질문은 ${MAX_QUESTION_LENGTH}자 이하로 작성해 주세요.`);
+      throw new InvalidInputError(
+        `질문은 ${MAX_QUESTION_LENGTH}자 이하로 작성해 주세요.`,
+      );
     }
     return trimmed;
   }
@@ -87,17 +90,19 @@ export class Faq {
   private static cleanAnswer(answer: string): string {
     const trimmed = answer?.trim() ?? "";
     if (!trimmed) {
-      throw new Error("답변을 입력해 주세요.");
+      throw new InvalidInputError("답변을 입력해 주세요.");
     }
     if (trimmed.length > MAX_ANSWER_LENGTH) {
-      throw new Error(`답변은 ${MAX_ANSWER_LENGTH}자 이하로 작성해 주세요.`);
+      throw new InvalidInputError(
+        `답변은 ${MAX_ANSWER_LENGTH}자 이하로 작성해 주세요.`,
+      );
     }
     return trimmed;
   }
 
   private static cleanOrder(order: number): number {
     if (!Number.isInteger(order) || order < 0) {
-      throw new Error("정렬 순서는 0 이상의 정수여야 해요.");
+      throw new InvalidInputError("정렬 순서는 0 이상의 정수여야 해요.");
     }
     return order;
   }

@@ -2,6 +2,7 @@ import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { MessageSenderRole } from "src/hb-backend-api/messaging/domain/enums/message-sender-role.enum";
 import { MessageSubjectType } from "src/hb-backend-api/messaging/domain/enums/message-subject-type.enum";
 import { MessageId } from "src/hb-backend-api/messaging/domain/model/vo/message-id.vo";
+import { InvalidInputError } from "src/shared/exception/domain-exception";
 
 /**
  * One message in a subject-scoped conversation (an adoption/foster application).
@@ -31,10 +32,12 @@ export class Message {
   }): Message {
     const body = params.body?.trim() ?? "";
     if (!body) {
-      throw new Error("메시지 내용이 필요해요.");
+      throw new InvalidInputError("메시지 내용이 필요해요.");
     }
     if (body.length > Message.MAX_BODY) {
-      throw new Error(`메시지는 최대 ${Message.MAX_BODY}자까지예요.`);
+      throw new InvalidInputError(
+        `메시지는 최대 ${Message.MAX_BODY}자까지예요.`,
+      );
     }
     return new Message(
       MessageId.generate(),

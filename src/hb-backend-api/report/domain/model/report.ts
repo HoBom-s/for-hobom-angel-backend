@@ -4,6 +4,10 @@ import { ReportResolution } from "src/hb-backend-api/report/domain/enums/report-
 import { ReportStatus } from "src/hb-backend-api/report/domain/enums/report-status.enum";
 import { ReportTargetType } from "src/hb-backend-api/report/domain/enums/report-target-type.enum";
 import { ReportId } from "src/hb-backend-api/report/domain/model/vo/report-id.vo";
+import {
+  BusinessRuleViolationError,
+  InvalidInputError,
+} from "src/shared/exception/domain-exception";
 
 /**
  * Report aggregate — a member's report of an animal, shelter, or user. It owns
@@ -37,11 +41,13 @@ export class Report {
     detail?: string;
   }): Report {
     if (!params.targetRef?.trim()) {
-      throw new Error("신고 대상이 필요해요.");
+      throw new InvalidInputError("신고 대상이 필요해요.");
     }
     const detail = params.detail?.trim() ?? "";
     if (detail.length > Report.MAX_DETAIL) {
-      throw new Error(`신고 내용은 최대 ${Report.MAX_DETAIL}자까지예요.`);
+      throw new InvalidInputError(
+        `신고 내용은 최대 ${Report.MAX_DETAIL}자까지예요.`,
+      );
     }
     return new Report(
       ReportId.generate(),
@@ -97,7 +103,7 @@ export class Report {
     at: Date,
   ): void {
     if (this.status !== ReportStatus.PENDING) {
-      throw new Error("이미 처리된 신고예요.");
+      throw new BusinessRuleViolationError("이미 처리된 신고예요.");
     }
     this.status = ReportStatus.RESOLVED;
     this.resolution = resolution;

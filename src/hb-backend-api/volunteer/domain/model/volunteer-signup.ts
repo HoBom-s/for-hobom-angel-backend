@@ -2,6 +2,7 @@ import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { VolunteerSignupStatus } from "src/hb-backend-api/volunteer/domain/enums/volunteer-signup-status.enum";
 import { VolunteerEventId } from "src/hb-backend-api/volunteer/domain/model/vo/volunteer-event-id.vo";
 import { VolunteerSignupId } from "src/hb-backend-api/volunteer/domain/model/vo/volunteer-signup-id.vo";
+import { BusinessRuleViolationError } from "src/shared/exception/domain-exception";
 
 /**
  * A volunteer's signup for one event. Kept as its own aggregate (the roster) so
@@ -62,7 +63,7 @@ export class VolunteerSignup {
 
   public withdraw(): void {
     if (!this.isLive()) {
-      throw new Error("이미 처리된 지원이에요.");
+      throw new BusinessRuleViolationError("이미 처리된 지원이에요.");
     }
     this.status = VolunteerSignupStatus.WITHDRAWN;
   }
@@ -77,7 +78,9 @@ export class VolunteerSignup {
 
   private assertPending(action: string): void {
     if (this.status !== VolunteerSignupStatus.PENDING) {
-      throw new Error(`현재 상태(${this.status})에서는 ${action}할 수 없어요.`);
+      throw new BusinessRuleViolationError(
+        `현재 상태(${this.status})에서는 ${action}할 수 없어요.`,
+      );
     }
   }
 

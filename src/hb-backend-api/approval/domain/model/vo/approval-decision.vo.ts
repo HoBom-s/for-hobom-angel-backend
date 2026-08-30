@@ -1,4 +1,5 @@
 import { ApprovalActionType } from "src/hb-backend-api/approval/domain/enums/approval-action-type.enum";
+import { InvalidInputError } from "src/shared/exception/domain-exception";
 
 /**
  * An operator's decision. A value object (not a bare string) so callers ask
@@ -25,7 +26,7 @@ export class ApprovalDecision {
       case "REJECT":
         return ApprovalDecision.reject();
       default:
-        throw new Error(`알 수 없는 승인 결정이에요: ${value}`);
+        throw new InvalidInputError(`알 수 없는 승인 결정이에요: ${value}`);
     }
   }
 

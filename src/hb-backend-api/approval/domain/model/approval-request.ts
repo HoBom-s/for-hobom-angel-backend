@@ -1,6 +1,10 @@
 import { ApprovalStatus } from "src/hb-backend-api/approval/domain/enums/approval-status.enum";
 import { ApprovalType } from "src/hb-backend-api/approval/domain/enums/approval-type.enum";
 import { ApprovalId } from "src/hb-backend-api/approval/domain/model/vo/approval-id.vo";
+import {
+  BusinessRuleViolationError,
+  InvalidInputError,
+} from "src/shared/exception/domain-exception";
 
 /**
  * Approval request aggregate — one row per decision (shelter verification, staff
@@ -101,7 +105,7 @@ export class ApprovalRequest {
   public reject(actorId: string, at: Date, reason: string): void {
     this.assertPending("반려");
     if (!reason?.trim()) {
-      throw new Error("반려 사유가 필요해요.");
+      throw new InvalidInputError("반려 사유가 필요해요.");
     }
     this.status = ApprovalStatus.REJECTED;
     this.decidedBy = actorId;
@@ -126,7 +130,7 @@ export class ApprovalRequest {
 
   private assertPending(action: string): void {
     if (this.status !== ApprovalStatus.PENDING) {
-      throw new Error(
+      throw new BusinessRuleViolationError(
         `이미 처리된 요청이에요(${this.status}). ${action}할 수 없어요.`,
       );
     }

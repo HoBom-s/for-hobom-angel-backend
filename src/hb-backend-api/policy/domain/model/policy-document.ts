@@ -1,5 +1,6 @@
 import { PolicyStatus } from "src/hb-backend-api/policy/domain/enums/policy-status.enum";
 import { PolicyType } from "src/hb-backend-api/policy/domain/enums/policy-type.enum";
+import { InvalidInputError } from "src/shared/exception/domain-exception";
 
 /**
  * A legal-document version aggregate. Versions are immutable once published; an
@@ -29,13 +30,13 @@ export class PolicyDocument {
   }): PolicyDocument {
     const title = params.title.trim();
     if (!title) {
-      throw new Error("정책 제목이 필요해요.");
+      throw new InvalidInputError("정책 제목이 필요해요.");
     }
     if (!params.content.trim()) {
-      throw new Error("정책 본문이 필요해요.");
+      throw new InvalidInputError("정책 본문이 필요해요.");
     }
     if (params.version < 1) {
-      throw new Error("버전은 1 이상이어야 해요.");
+      throw new InvalidInputError("버전은 1 이상이어야 해요.");
     }
     return new PolicyDocument(
       null,

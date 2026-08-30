@@ -7,6 +7,10 @@ import { HealthProfile } from "src/hb-backend-api/animal/domain/model/health-pro
 import { IntakeRecord } from "src/hb-backend-api/animal/domain/model/intake-record";
 import { Traits } from "src/hb-backend-api/animal/domain/model/traits";
 import { AnimalId } from "src/hb-backend-api/animal/domain/model/vo/animal-id.vo";
+import {
+  BusinessRuleViolationError,
+  InvalidInputError,
+} from "src/shared/exception/domain-exception";
 
 /**
  * Animal aggregate — a shelter's adoptable friend, and the consistency boundary
@@ -53,7 +57,9 @@ export class Animal {
     const chosen = new Set(input ?? Animal.ALL_PLACEMENTS);
     const normalized = Animal.ALL_PLACEMENTS.filter((p) => chosen.has(p));
     if (normalized.length === 0) {
-      throw new Error("입양/임시보호 중 최소 한 가지 신청 유형이 필요해요.");
+      throw new InvalidInputError(
+        "입양/임시보호 중 최소 한 가지 신청 유형이 필요해요.",
+      );
     }
     return normalized;
   }
@@ -71,11 +77,13 @@ export class Animal {
     eligiblePlacements?: PlacementType[];
   }): Animal {
     if (!params.name?.trim()) {
-      throw new Error("동물 이름이 필요해요.");
+      throw new InvalidInputError("동물 이름이 필요해요.");
     }
     const photos = params.photos ?? [];
     if (photos.length > Animal.MAX_PHOTOS) {
-      throw new Error(`사진은 최대 ${Animal.MAX_PHOTOS}장까지예요.`);
+      throw new InvalidInputError(
+        `사진은 최대 ${Animal.MAX_PHOTOS}장까지예요.`,
+      );
     }
     return new Animal(
       AnimalId.generate(),
@@ -135,7 +143,7 @@ export class Animal {
     health: HealthProfile;
   }): void {
     if (!params.name?.trim()) {
-      throw new Error("동물 이름이 필요해요.");
+      throw new InvalidInputError("동물 이름이 필요해요.");
     }
     this.name = params.name.trim();
     this.species = params.species;
@@ -146,10 +154,12 @@ export class Animal {
 
   public addPhoto(photo: AnimalPhoto): void {
     if (this.photos.length >= Animal.MAX_PHOTOS) {
-      throw new Error(`사진은 최대 ${Animal.MAX_PHOTOS}장까지예요.`);
+      throw new InvalidInputError(
+        `사진은 최대 ${Animal.MAX_PHOTOS}장까지예요.`,
+      );
     }
     if (this.photos.some((p) => p.hasKey(photo.getObjectKey))) {
-      throw new Error("이미 등록된 사진이에요.");
+      throw new BusinessRuleViolationError("이미 등록된 사진이에요.");
     }
     this.photos.push(photo);
   }
@@ -246,7 +256,9 @@ export class Animal {
 
   private assertStatus(allowed: AnimalStatus[], action: string): void {
     if (!allowed.includes(this.status)) {
-      throw new Error(`현재 상태(${this.status})에서는 ${action}할 수 없어요.`);
+      throw new BusinessRuleViolationError(
+        `현재 상태(${this.status})에서는 ${action}할 수 없어요.`,
+      );
     }
   }
 

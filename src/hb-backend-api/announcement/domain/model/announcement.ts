@@ -1,6 +1,7 @@
 import { ShelterId } from "src/hb-backend-api/shelter/domain/model/vo/shelter-id.vo";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { AnnouncementId } from "src/hb-backend-api/announcement/domain/model/vo/announcement-id.vo";
+import { InvalidInputError } from "src/shared/exception/domain-exception";
 
 const MAX_TITLE_LENGTH = 120;
 const MAX_BODY_LENGTH = 10000;
@@ -74,10 +75,10 @@ export class Announcement {
   private static cleanTitle(title: string): string {
     const trimmed = title?.trim() ?? "";
     if (!trimmed) {
-      throw new Error("공지 제목을 입력해 주세요.");
+      throw new InvalidInputError("공지 제목을 입력해 주세요.");
     }
     if (trimmed.length > MAX_TITLE_LENGTH) {
-      throw new Error(
+      throw new InvalidInputError(
         `공지 제목은 ${MAX_TITLE_LENGTH}자 이하로 작성해 주세요.`,
       );
     }
@@ -87,10 +88,12 @@ export class Announcement {
   private static cleanBody(body: string): string {
     const trimmed = body?.trim() ?? "";
     if (!trimmed) {
-      throw new Error("공지 내용을 입력해 주세요.");
+      throw new InvalidInputError("공지 내용을 입력해 주세요.");
     }
     if (trimmed.length > MAX_BODY_LENGTH) {
-      throw new Error(`공지 내용은 ${MAX_BODY_LENGTH}자 이하로 작성해 주세요.`);
+      throw new InvalidInputError(
+        `공지 내용은 ${MAX_BODY_LENGTH}자 이하로 작성해 주세요.`,
+      );
     }
     return trimmed;
   }

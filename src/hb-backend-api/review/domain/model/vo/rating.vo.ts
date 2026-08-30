@@ -1,3 +1,5 @@
+import { InvalidInputError } from "src/shared/exception/domain-exception";
+
 /** A 1–5 star rating. Whole stars only; anything else is rejected at construction. */
 export class Rating {
   public static readonly MIN = 1;
@@ -9,7 +11,7 @@ export class Rating {
 
   public static of(value: number): Rating {
     if (!Number.isInteger(value) || value < Rating.MIN || value > Rating.MAX) {
-      throw new Error("별점은 1점부터 5점까지의 정수여야 해요.");
+      throw new InvalidInputError("별점은 1점부터 5점까지의 정수여야 해요.");
     }
     return new Rating(value);
   }

@@ -1,6 +1,7 @@
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { VolunteerPostId } from "src/hb-backend-api/volunteer-post/domain/model/vo/volunteer-post-id.vo";
 import { VolunteerPostCommentId } from "src/hb-backend-api/volunteer-post/domain/model/vo/volunteer-post-comment-id.vo";
+import { InvalidInputError } from "src/shared/exception/domain-exception";
 
 const MAX_BODY_LENGTH = 1000;
 
@@ -55,10 +56,12 @@ export class VolunteerPostComment {
   private static cleanBody(body: string): string {
     const trimmed = body?.trim();
     if (!trimmed) {
-      throw new Error("댓글 내용이 필요해요.");
+      throw new InvalidInputError("댓글 내용이 필요해요.");
     }
     if (trimmed.length > MAX_BODY_LENGTH) {
-      throw new Error(`댓글은 ${MAX_BODY_LENGTH}자까지 쓸 수 있어요.`);
+      throw new InvalidInputError(
+        `댓글은 ${MAX_BODY_LENGTH}자까지 쓸 수 있어요.`,
+      );
     }
     return trimmed;
   }

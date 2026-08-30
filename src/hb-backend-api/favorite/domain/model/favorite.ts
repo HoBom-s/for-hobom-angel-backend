@@ -1,6 +1,7 @@
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { FavoriteTargetType } from "src/hb-backend-api/favorite/domain/enums/favorite-target-type.enum";
 import { FavoriteId } from "src/hb-backend-api/favorite/domain/model/vo/favorite-id.vo";
+import { InvalidInputError } from "src/shared/exception/domain-exception";
 
 /**
  * Favorite aggregate — a member's interest in an animal (찜) or shelter (팔로우).
@@ -23,7 +24,7 @@ export class Favorite {
     targetRef: string;
   }): Favorite {
     if (!params.targetRef?.trim()) {
-      throw new Error("찜/팔로우 대상이 필요해요.");
+      throw new InvalidInputError("찜/팔로우 대상이 필요해요.");
     }
     return new Favorite(
       FavoriteId.generate(),

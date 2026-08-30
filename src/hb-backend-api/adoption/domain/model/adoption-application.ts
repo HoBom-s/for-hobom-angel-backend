@@ -4,6 +4,10 @@ import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { Answer } from "src/hb-backend-api/questionnaire/domain/model/answer";
 import { AdoptionApplicationStatus } from "src/hb-backend-api/adoption/domain/enums/adoption-application-status.enum";
 import { ApplicationId } from "src/hb-backend-api/adoption/domain/model/vo/application-id.vo";
+import {
+  BusinessRuleViolationError,
+  InvalidInputError,
+} from "src/shared/exception/domain-exception";
 
 /**
  * An applicant's adoption request for one animal. It carries an immutable
@@ -115,7 +119,7 @@ export class AdoptionApplication {
   public reject(reason: string): void {
     this.assertPending("반려");
     if (!reason?.trim()) {
-      throw new Error("반려 사유가 필요해요.");
+      throw new InvalidInputError("반려 사유가 필요해요.");
     }
     this.status = AdoptionApplicationStatus.REJECTED;
     this.decidedReason = reason.trim();
@@ -129,10 +133,12 @@ export class AdoptionApplication {
   /** The animal came back after an approved adoption (파양/반환). */
   public markReturned(reason: string, at: Date): void {
     if (this.status !== AdoptionApplicationStatus.APPROVED) {
-      throw new Error("완료된 입양만 반환 처리할 수 있어요.");
+      throw new BusinessRuleViolationError(
+        "완료된 입양만 반환 처리할 수 있어요.",
+      );
     }
     if (!reason?.trim()) {
-      throw new Error("반환 사유가 필요해요.");
+      throw new InvalidInputError("반환 사유가 필요해요.");
     }
     this.status = AdoptionApplicationStatus.RETURNED;
     this.returnedAt = at;
@@ -145,7 +151,7 @@ export class AdoptionApplication {
 
   private assertPending(action: string): void {
     if (this.status !== AdoptionApplicationStatus.PENDING) {
-      throw new Error(
+      throw new BusinessRuleViolationError(
         `이미 처리된 신청이에요(${this.status}). ${action}할 수 없어요.`,
       );
     }

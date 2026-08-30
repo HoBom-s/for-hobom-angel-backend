@@ -1,5 +1,6 @@
 import { AnimalSex } from "src/hb-backend-api/animal/domain/enums/animal-sex.enum";
 import { AnimalSize } from "src/hb-backend-api/animal/domain/enums/animal-size.enum";
+import { InvalidInputError } from "src/shared/exception/domain-exception";
 
 /**
  * Descriptive characteristics used for display and discovery filters (성별·크기·
@@ -30,10 +31,10 @@ export class Traits {
     weightKg?: number | null;
   }): Traits {
     if (params.ageMonths != null && params.ageMonths < 0) {
-      throw new Error("나이(개월)는 음수일 수 없어요.");
+      throw new InvalidInputError("나이(개월)는 음수일 수 없어요.");
     }
     if (params.weightKg != null && params.weightKg < 0) {
-      throw new Error("몸무게(kg)는 음수일 수 없어요.");
+      throw new InvalidInputError("몸무게(kg)는 음수일 수 없어요.");
     }
     return new Traits(
       params.sex,

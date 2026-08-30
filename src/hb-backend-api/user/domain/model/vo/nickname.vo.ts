@@ -1,3 +1,5 @@
+import { InvalidInputError } from "src/shared/exception/domain-exception";
+
 /**
  * Public display name — the ONLY identity field shown in the system (real name
  * and contact are private). 2–20 chars: letters, digits, Korean, `_`, `-`.
@@ -12,7 +14,7 @@ export class Nickname {
   public static of(value: string): Nickname {
     const trimmed = value?.trim() ?? "";
     if (!Nickname.PATTERN.test(trimmed)) {
-      throw new Error(
+      throw new InvalidInputError(
         "닉네임은 2~20자의 한글/영문/숫자/_/- 만 사용할 수 있어요.",
       );
     }

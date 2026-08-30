@@ -16,6 +16,7 @@ import { UserPersistencePort } from "src/hb-backend-api/user/domain/ports/out/us
 import { UserQueryPort } from "src/hb-backend-api/user/domain/ports/out/user-query.port";
 import { NotificationType } from "src/hb-backend-api/notification/domain/enums/notification-type.enum";
 import { NotifyUseCase } from "src/hb-backend-api/notification/domain/ports/in/notify.use-case";
+import { EntityNotFoundError } from "src/shared/exception/domain-exception";
 
 /**
  * Completes a SHELTER_VERIFICATION decision. On approval it verifies the shelter,
@@ -59,7 +60,7 @@ export class ShelterVerificationCallback implements ApprovalCallback {
     const shelterId = ShelterId.fromString(request.getSubjectRef);
     const shelter = await this.shelterQueryPort.findById(shelterId);
     if (!shelter) {
-      throw new Error("승인 대상 보호소를 찾을 수 없어요.");
+      throw new EntityNotFoundError("승인 대상 보호소를 찾을 수 없어요.");
     }
 
     const now = new Date();
@@ -69,7 +70,7 @@ export class ShelterVerificationCallback implements ApprovalCallback {
     const representativeId = UserId.fromString(request.getRequesterId);
     const representative = await this.userQueryPort.findById(representativeId);
     if (!representative) {
-      throw new Error("보호소 대표 회원을 찾을 수 없어요.");
+      throw new EntityNotFoundError("보호소 대표 회원을 찾을 수 없어요.");
     }
     representative.grantShelterAdmin(shelterId);
     await this.userPersistencePort.save(representative);
@@ -97,7 +98,7 @@ export class ShelterVerificationCallback implements ApprovalCallback {
     const shelterId = ShelterId.fromString(request.getSubjectRef);
     const shelter = await this.shelterQueryPort.findById(shelterId);
     if (!shelter) {
-      throw new Error("반려 대상 보호소를 찾을 수 없어요.");
+      throw new EntityNotFoundError("반려 대상 보호소를 찾을 수 없어요.");
     }
     shelter.reject(request.getReason ?? "심사에서 반려되었어요.");
     await this.shelterPersistencePort.save(shelter);
