@@ -3,6 +3,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { MongoSessionContext } from "src/infra/mongo/transaction/transaction.context";
 import { OptimisticLockException } from "src/shared/exception/optimistic-lock.exception";
+import { keysetFilter } from "src/shared/pagination/keyset";
 import { VolunteerEventStatus } from "src/hb-backend-api/volunteer/domain/enums/volunteer-event-status.enum";
 import { VolunteerEventEntity } from "src/hb-backend-api/volunteer/domain/model/volunteer-event.entity";
 import {
@@ -57,11 +58,8 @@ export class VolunteerEventRepositoryImpl implements VolunteerEventRepository {
     cursorId: Types.ObjectId | null,
     limit: number,
   ): Promise<VolunteerEventEntity[]> {
-    const query = cursorId
-      ? { shelterId, _id: { $lt: cursorId } }
-      : { shelterId };
     return this.model
-      .find(query)
+      .find({ shelterId, ...keysetFilter(cursorId) })
       .sort({ _id: -1 })
       .limit(limit + 1)
       .exec();

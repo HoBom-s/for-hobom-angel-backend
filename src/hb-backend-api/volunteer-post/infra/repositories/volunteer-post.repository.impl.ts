@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { MongoSessionContext } from "src/infra/mongo/transaction/transaction.context";
+import { keysetFilter } from "src/shared/pagination/keyset";
 import { VolunteerPostEntity } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post.entity";
 import { VolunteerPostRepository } from "src/hb-backend-api/volunteer-post/domain/repositories/volunteer-post.repository";
 
@@ -64,9 +65,8 @@ export class VolunteerPostRepositoryImpl implements VolunteerPostRepository {
     cursorId: Types.ObjectId | null,
     limit: number,
   ): Promise<VolunteerPostEntity[]> {
-    const query = cursorId ? { _id: { $lt: cursorId } } : {};
     return this.model
-      .find(query)
+      .find(keysetFilter(cursorId))
       .sort({ _id: -1 })
       .limit(limit + 1)
       .exec();

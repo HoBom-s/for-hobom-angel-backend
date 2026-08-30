@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { Types } from "mongoose";
 import { Page } from "src/shared/pagination/page";
 import { DIToken } from "src/shared/di/token.di";
+import { parseCursor, toCursorPage } from "src/shared/pagination/keyset";
 import { VolunteerPost } from "src/hb-backend-api/volunteer-post/domain/model/volunteer-post";
 import { VolunteerPostId } from "src/hb-backend-api/volunteer-post/domain/model/vo/volunteer-post-id.vo";
 import { VolunteerPostQueryPort } from "src/hb-backend-api/volunteer-post/domain/ports/out/volunteer-post-query.port";
@@ -29,21 +29,10 @@ export class VolunteerPostQueryAdapter implements VolunteerPostQueryPort {
     cursor?: string;
     limit: number;
   }): Promise<Page<VolunteerPost>> {
-    const cursorId =
-      params.cursor && Types.ObjectId.isValid(params.cursor)
-        ? new Types.ObjectId(params.cursor)
-        : null;
+    const cursorId = parseCursor(params.cursor);
 
     const docs = await this.repository.listFeed(cursorId, params.limit);
 
-    const hasNext = docs.length > params.limit;
-    const pageDocs = hasNext ? docs.slice(0, params.limit) : docs;
-    const last = pageDocs[pageDocs.length - 1];
-
-    return {
-      items: pageDocs.map(toDomain),
-      hasNext,
-      nextCursor: hasNext && last ? String(last._id) : null,
-    };
+    return toCursorPage(docs, params.limit, toDomain);
   }
 }

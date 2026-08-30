@@ -2,6 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { Types } from "mongoose";
 import { Page } from "src/shared/pagination/page";
 import { DIToken } from "src/shared/di/token.di";
+import { parseCursor, toCursorPage } from "src/shared/pagination/keyset";
 import { PlacementType } from "src/hb-backend-api/review/domain/enums/placement-type.enum";
 import { Review } from "src/hb-backend-api/review/domain/model/review";
 import { ReviewId } from "src/hb-backend-api/review/domain/model/vo/review-id.vo";
@@ -29,10 +30,7 @@ export class ReviewQueryAdapter implements ReviewQueryPort {
     cursor: string | null,
     limit: number,
   ): Promise<Page<Review>> {
-    const cursorId =
-      cursor && Types.ObjectId.isValid(cursor)
-        ? new Types.ObjectId(cursor)
-        : null;
+    const cursorId = parseCursor(cursor);
 
     const docs = await this.reviewRepository.findByShelter(
       shelterId.raw,
@@ -40,15 +38,7 @@ export class ReviewQueryAdapter implements ReviewQueryPort {
       limit,
     );
 
-    const hasNext = docs.length > limit;
-    const pageDocs = hasNext ? docs.slice(0, limit) : docs;
-    const last = pageDocs[pageDocs.length - 1];
-
-    return {
-      items: pageDocs.map(toDomain),
-      hasNext,
-      nextCursor: hasNext && last ? String(last._id) : null,
-    };
+    return toCursorPage(docs, limit, toDomain);
   }
 
   public hasReviewedPlacement(

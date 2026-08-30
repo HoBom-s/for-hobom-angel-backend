@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { MongoSessionContext } from "src/infra/mongo/transaction/transaction.context";
+import { keysetFilter } from "src/shared/pagination/keyset";
 import { InquiryEntity } from "src/hb-backend-api/inquiry/domain/model/inquiry.entity";
 import { InquiryRepository } from "src/hb-backend-api/inquiry/domain/repositories/inquiry.repository";
 
@@ -34,7 +35,7 @@ export class InquiryRepositoryImpl implements InquiryRepository {
     limit: number,
   ): Promise<InquiryEntity[]> {
     return this.inquiryModel
-      .find({ inquirerId, ...(cursorId && { _id: { $lt: cursorId } }) })
+      .find({ inquirerId, ...keysetFilter(cursorId) })
       .sort({ _id: -1 })
       .limit(limit + 1)
       .exec();
@@ -46,7 +47,7 @@ export class InquiryRepositoryImpl implements InquiryRepository {
     limit: number,
   ): Promise<InquiryEntity[]> {
     return this.inquiryModel
-      .find({ shelterId, ...(cursorId && { _id: { $lt: cursorId } }) })
+      .find({ shelterId, ...keysetFilter(cursorId) })
       .sort({ _id: -1 })
       .limit(limit + 1)
       .exec();

@@ -3,6 +3,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { MongoSessionContext } from "src/infra/mongo/transaction/transaction.context";
 import { OptimisticLockException } from "src/shared/exception/optimistic-lock.exception";
+import { keysetFilter } from "src/shared/pagination/keyset";
 import { AdoptionApplicationStatus } from "src/hb-backend-api/adoption/domain/enums/adoption-application-status.enum";
 import { AdoptionApplicationEntity } from "src/hb-backend-api/adoption/domain/model/adoption-application.entity";
 import {
@@ -72,11 +73,8 @@ export class AdoptionApplicationRepositoryImpl implements AdoptionApplicationRep
     if (status) {
       query.status = status;
     }
-    if (cursorId) {
-      query._id = { $lt: cursorId };
-    }
     return this.model
-      .find(query)
+      .find({ ...query, ...keysetFilter(cursorId) })
       .sort({ _id: -1 })
       .limit(limit + 1)
       .exec();

@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { MongoSessionContext } from "src/infra/mongo/transaction/transaction.context";
+import { keysetFilter } from "src/shared/pagination/keyset";
 import { NotificationEntity } from "src/hb-backend-api/notification/domain/model/notification.entity";
 import { NotificationRepository } from "src/hb-backend-api/notification/domain/repositories/notification.repository";
 
@@ -27,7 +28,7 @@ export class NotificationRepositoryImpl implements NotificationRepository {
     limit: number,
   ): Promise<NotificationEntity[]> {
     return this.notificationModel
-      .find({ recipientId, ...(cursorId && { _id: { $lt: cursorId } }) })
+      .find({ recipientId, ...keysetFilter(cursorId) })
       .sort({ _id: -1 })
       .limit(limit + 1)
       .exec();

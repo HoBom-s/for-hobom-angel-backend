@@ -3,6 +3,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { MongoSessionContext } from "src/infra/mongo/transaction/transaction.context";
 import { OptimisticLockException } from "src/shared/exception/optimistic-lock.exception";
+import { keysetFilter } from "src/shared/pagination/keyset";
 import { FosterApplicationStatus } from "src/hb-backend-api/foster/domain/enums/foster-application-status.enum";
 import { FosterApplicationEntity } from "src/hb-backend-api/foster/domain/model/foster-application.entity";
 import {
@@ -70,11 +71,8 @@ export class FosterApplicationRepositoryImpl implements FosterApplicationReposit
     if (status) {
       query.status = status;
     }
-    if (cursorId) {
-      query._id = { $lt: cursorId };
-    }
     return this.model
-      .find(query)
+      .find({ ...query, ...keysetFilter(cursorId) })
       .sort({ _id: -1 })
       .limit(limit + 1)
       .exec();

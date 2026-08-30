@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { Types } from "mongoose";
 import { Page } from "src/shared/pagination/page";
 import { DIToken } from "src/shared/di/token.di";
+import { parseCursor, toCursorPage } from "src/shared/pagination/keyset";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { FavoriteTargetType } from "src/hb-backend-api/favorite/domain/enums/favorite-target-type.enum";
 import { Favorite } from "src/hb-backend-api/favorite/domain/model/favorite";
@@ -30,23 +30,13 @@ export class FavoriteQueryAdapter implements FavoriteQueryPort {
     cursor: string | undefined,
     limit: number,
   ): Promise<Page<Favorite>> {
-    const cursorId =
-      cursor && Types.ObjectId.isValid(cursor)
-        ? new Types.ObjectId(cursor)
-        : null;
+    const cursorId = parseCursor(cursor);
     const docs = await this.repository.findByUser(
       userId.raw,
       targetType,
       cursorId,
       limit,
     );
-    const hasNext = docs.length > limit;
-    const pageDocs = hasNext ? docs.slice(0, limit) : docs;
-    const last = pageDocs[pageDocs.length - 1];
-    return {
-      items: pageDocs.map(toDomain),
-      hasNext,
-      nextCursor: hasNext && last ? String(last._id) : null,
-    };
+    return toCursorPage(docs, limit, toDomain);
   }
 }

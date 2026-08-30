@@ -3,6 +3,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { MongoSessionContext } from "src/infra/mongo/transaction/transaction.context";
 import { OptimisticLockException } from "src/shared/exception/optimistic-lock.exception";
+import { keysetFilter } from "src/shared/pagination/keyset";
 import { ReviewEntity } from "src/hb-backend-api/review/domain/model/review.entity";
 import { ShelterReputation } from "src/hb-backend-api/review/domain/model/shelter-reputation";
 import {
@@ -67,12 +68,8 @@ export class ReviewRepositoryImpl implements ReviewRepository {
     cursorId: Types.ObjectId | null,
     limit: number,
   ): Promise<ReviewEntity[]> {
-    const filter: Record<string, unknown> = { shelterId };
-    if (cursorId) {
-      filter._id = { $lt: cursorId };
-    }
     return this.reviewModel
-      .find(filter)
+      .find({ shelterId, ...keysetFilter(cursorId) })
       .sort({ _id: -1 })
       .limit(limit + 1)
       .exec();

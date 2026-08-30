@@ -1,10 +1,9 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { Types } from "mongoose";
 import { DIToken } from "src/shared/di/token.di";
 import { Page } from "src/shared/pagination/page";
+import { parseCursor, toCursorPage } from "src/shared/pagination/keyset";
 import { UserId } from "src/hb-backend-api/user/domain/model/vo/user-id.vo";
 import { Notification } from "src/hb-backend-api/notification/domain/model/notification";
-import { NotificationEntity } from "src/hb-backend-api/notification/domain/model/notification.entity";
 import { NotificationId } from "src/hb-backend-api/notification/domain/model/vo/notification-id.vo";
 import { NotificationQueryPort } from "src/hb-backend-api/notification/domain/ports/out/notification-query.port";
 import { NotificationRepository } from "src/hb-backend-api/notification/domain/repositories/notification.repository";
@@ -27,24 +26,13 @@ export class NotificationQueryAdapter implements NotificationQueryPort {
     cursor: string | null,
     limit: number,
   ): Promise<Page<Notification>> {
-    const cursorId =
-      cursor && Types.ObjectId.isValid(cursor)
-        ? new Types.ObjectId(cursor)
-        : null;
+    const cursorId = parseCursor(cursor);
     const docs = await this.notificationRepository.findPageByRecipient(
       recipientId.raw,
       cursorId,
       limit,
     );
-    const hasNext = docs.length > limit;
-    const pageDocs = hasNext ? docs.slice(0, limit) : docs;
-    const last = pageDocs[pageDocs.length - 1] as
-      NotificationEntity | undefined;
-    return {
-      items: pageDocs.map(toDomain),
-      hasNext,
-      nextCursor: hasNext && last ? String(last._id) : null,
-    };
+    return toCursorPage(docs, limit, toDomain);
   }
 
   public countUnread(recipientId: UserId): Promise<number> {
